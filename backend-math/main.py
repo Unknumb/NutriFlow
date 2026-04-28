@@ -1,10 +1,12 @@
 from fastapi import FastAPI
 from api.alimentos import router as alimentos_router
+from api.calculos import router as calculos_router
 
 app = FastAPI(title="NutriFlow Math Engine")
 
 # Aquí le decimos a FastAPI que incluya las rutas que creaste
 app.include_router(alimentos_router, prefix="/api")
+app.include_router(calculos_router, prefix="/api/calculadoras")
 
 @app.get("/")
 def home():

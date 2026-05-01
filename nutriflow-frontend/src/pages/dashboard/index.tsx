@@ -21,7 +21,10 @@ export const DashboardPage = () => {
             {/* Fila 3: Grid de 2 columnas para Pesos y Macros */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <ReferenceWeightsCard />
+
                 <MacrosCard />
+
+
             </div>
         </DashboardLayout>
     );

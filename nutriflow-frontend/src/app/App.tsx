@@ -1,22 +1,59 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { DashboardPage } from '../pages/dashboard/index';
+import { RouterProvider, createRouter, createRoute, createRootRoute, redirect, lazyRouteComponent } from '@tanstack/react-router';
 
-function App() {
+// 1. LAZY LOADING: Importamos solo la estructura base, no las vistas pesadas.
+// (Asumimos que tienes un archivo auth.ts que revisa si el usuario está logueado)
+import { isAuthenticated } from '../shared/utils/auth'; 
+import { DashboardLayout } from '../shared/ui/organisms/DashboardLayout';
 
-  return (
-    <BrowserRouter>
-      <Routes>
-        {/* Ruta principal: Si alguien entra a la raíz '/', lo mandamos al dashboard */}
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+const rootRoute = createRootRoute({
+    component: DashboardLayout,
+});
 
-        {/* Tu primera vista real conectada al Layout */}
-        <Route path="/dashboard" element={<DashboardPage />} />
+// 2. ROUTE GUARD: Protegemos todas las rutas internas de un plumazo
+const protectedLayout = createRoute({
+    getParentRoute: () => rootRoute,
+    id: 'protected',
+    beforeLoad: async () => {
+        // Si no hay sesión, lo pateamos al login instantáneamente a nivel de red
+        if (!isAuthenticated()) {
+            throw redirect({ to: '/login' });
+        }
+    },
+});
 
-        {/* Aquí agregaremos las demás pantallas en el futuro */}
-        {/* <Route path="/pacientes" element={<PacientesPage />} /> */}
-      </Routes>
-    </BrowserRouter>
-  )
+const dashboardRoute = createRoute({
+    getParentRoute: () => protectedLayout,
+    path: '/dashboard',
+    // LAZY LOADING en acción: solo descarga este JS si entra aquí
+    component: lazyRouteComponent(() => import('../pages/dashboard/index'), 'DashboardPage'),
+    // 3. LOADER: Pre-cargamos los pacientes ANTES de renderizar la vista
+    loader: async () => {
+        return fetch('/api/resumen-dashboard').then(res => res.json());
+    }
+});
+
+const pautasRoute = createRoute({
+    getParentRoute: () => protectedLayout,
+    path: '/pautas',
+    component: lazyRouteComponent(() => import('../pages/pautas'), 'PautasPage'),
+});
+
+// Ensamblaje modular
+const routeTree = rootRoute.addChildren([
+    protectedLayout.addChildren([
+        dashboardRoute, 
+        pautasRoute
+    ])
+]);
+
+const router = createRouter({ routeTree });
+
+declare module '@tanstack/react-router' {
+    interface Register {
+        router: typeof router
+    }
 }
 
-export default App
+export default function App() {
+    return <RouterProvider router={router} />;
+}

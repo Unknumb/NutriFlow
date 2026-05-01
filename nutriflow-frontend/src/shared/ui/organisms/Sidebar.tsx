@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Calculator, User } from 'lucide-react';
+import { Calculator, PieChart, User, FileText } from 'lucide-react';
 
 export const Sidebar = () => {
     return (
@@ -18,6 +18,19 @@ export const Sidebar = () => {
                         </Link>
                     </li>
                     {/* Puedes agregar los demás Links aquí luego */}
+                    <li>
+                        <Link to="/macronutrientes" className="flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-gray-700 hover:bg-teal-50 hover:text-teal-700">
+                            <PieChart className="w-5 h-5" />
+                            <span className="text-sm font-medium">Macronutrientes Interactivo</span>
+                        </Link>
+                    </li>
+                    <li>
+                        {/* 3. Nuevo Link para la nueva página */}
+                        <Link to="/pautas" className="flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-gray-700 hover:bg-teal-50 hover:text-teal-700">
+                            <FileText className="w-5 h-5" />
+                            <span className="text-sm font-medium">Armador de Pautas</span>
+                        </Link>
+                    </li>
                 </ul>
             </nav>
 

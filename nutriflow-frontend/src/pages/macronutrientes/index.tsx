@@ -1,4 +1,4 @@
-import { DashboardLayout } from "../../shared/ui/organisms/DashboardLayout";
+// ❌ Eliminamos la importación de DashboardLayout
 import { MacronutrientSetupCard } from "../../features/macronutrients/components/MacronutrientSetupCard";
 import { MacronutrientsChartsColumn } from "../../features/macronutrients/components/MacronutrientsChartsColumn";
 import { MacronutrientsHeader } from "../../features/macronutrients/components/MacronutrientsHeader";
@@ -14,7 +14,8 @@ export const MacronutrientesPage = () => {
     const setup = useMacronutrientsSetup();
 
     return (
-        <DashboardLayout>
+        // Reemplazamos el Layout por el contenedor estándar de nuestra arquitectura
+        <div className="p-4 max-w-[1400px] mx-auto w-full">
             <div className="mb-6">
                 <h1 className="text-3xl font-semibold text-gray-900">Planificación de Macronutrientes</h1>
                 <p className="text-gray-600 mt-1">Ajuste manual y visualización en tiempo real</p>
@@ -28,7 +29,7 @@ export const MacronutrientesPage = () => {
                 onTmbChange={setTmbPromedio} 
             />
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-6">
                 <div className="lg:col-span-7">
                     {/* Alerta: En MacronutrientSetupCard debes cambiar el { ...: any } por los tipos que creamos */}
                     <MacronutrientSetupCard {...setup} />
@@ -37,6 +38,6 @@ export const MacronutrientesPage = () => {
                     <MacronutrientsChartsColumn totals={setup.totals} context={setup.context} />
                 </div>
             </div>
-        </DashboardLayout>
+        </div>
     );
 };

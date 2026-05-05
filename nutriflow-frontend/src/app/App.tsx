@@ -1,7 +1,6 @@
 import { RouterProvider, createRouter, createRoute, createRootRoute, redirect, lazyRouteComponent } from '@tanstack/react-router';
 
-// 1. LAZY LOADING: Importamos solo la estructura base, no las vistas pesadas.
-// (Asumimos que tienes un archivo auth.ts que revisa si el usuario está logueado)
+// 1. LAZY LOADING
 import { isAuthenticated } from '../shared/utils/auth'; 
 import { DashboardLayout } from '../shared/ui/organisms/DashboardLayout';
 
@@ -9,27 +8,39 @@ const rootRoute = createRootRoute({
     component: DashboardLayout,
 });
 
-// 2. ROUTE GUARD: Protegemos todas las rutas internas de un plumazo
+// 2. ROUTE GUARD
 const protectedLayout = createRoute({
     getParentRoute: () => rootRoute,
     id: 'protected',
     beforeLoad: async () => {
-        // Si no hay sesión, lo pateamos al login instantáneamente a nivel de red
         if (!isAuthenticated()) {
-            throw redirect({ to: '/login' });
+            // Como no tenemos /login todavía, lo mandamos a /dashboard
+            throw redirect({ to: '/dashboard' }); 
         }
+    },
+});
+
+const indexRoute = createRoute({
+    getParentRoute: () => protectedLayout,
+    path: '/',
+    beforeLoad: () => {
+        throw redirect({ to: '/dashboard' });
     },
 });
 
 const dashboardRoute = createRoute({
     getParentRoute: () => protectedLayout,
     path: '/dashboard',
-    // LAZY LOADING en acción: solo descarga este JS si entra aquí
     component: lazyRouteComponent(() => import('../pages/dashboard/index'), 'DashboardPage'),
-    // 3. LOADER: Pre-cargamos los pacientes ANTES de renderizar la vista
     loader: async () => {
-        return fetch('/api/resumen-dashboard').then(res => res.json());
+        return { message: "ok" }; 
     }
+});
+
+const macronutrientesRoute = createRoute({
+    getParentRoute: () => protectedLayout,
+    path: '/macronutrientes',
+    component: lazyRouteComponent(() => import('../pages/macronutrientes'), 'MacronutrientesPage'),
 });
 
 const pautasRoute = createRoute({
@@ -38,11 +49,21 @@ const pautasRoute = createRoute({
     component: lazyRouteComponent(() => import('../pages/pautas'), 'PautasPage'),
 });
 
-// Ensamblaje modular
+// 🚨 1. NUEVO: Creamos la ruta para la página de Porciones
+const porcionesRoute = createRoute({
+    getParentRoute: () => protectedLayout,
+    path: '/porciones',
+    component: lazyRouteComponent(() => import('../pages/porciones'), 'PorcionesPage'),
+});
+
+// 🚨 ÁRBOL DE RUTAS ENSAMBLADO
 const routeTree = rootRoute.addChildren([
     protectedLayout.addChildren([
+        indexRoute,
         dashboardRoute, 
-        pautasRoute
+        macronutrientesRoute, 
+        pautasRoute,
+        porcionesRoute // 🚨 2. NUEVO: Registramos la ruta en el árbol
     ])
 ]);
 

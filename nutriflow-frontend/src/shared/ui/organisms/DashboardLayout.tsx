@@ -1,17 +1,15 @@
-import React from 'react';
 import { Sidebar } from './Sidebar';
+import { Outlet } from '@tanstack/react-router'; // <-- Importa Outlet
 
-export const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
+// Ya no pedimos 'children'
+export const DashboardLayout = () => {
     return (
-        <div className="flex h-screen w-full bg-gray-50 overflow-hidden">
+        <div className="flex h-screen bg-gray-50 overflow-hidden font-sans">
             <Sidebar />
-            <div className="flex-1 flex flex-col overflow-hidden">
-                <main className="flex-1 overflow-auto p-8">
-                    <div className="max-w-7xl mx-auto">
-                        {children}
-                    </div>
-                </main>
-            </div>
+            <main className="flex-1 overflow-auto">
+                {/* Aquí TanStack inyectará la página dinámica (Dashboard, Pautas, etc) */}
+                <Outlet /> 
+            </main>
         </div>
     );
 };

@@ -7,11 +7,12 @@ import { PrismaService } from '../prisma/prisma.service';
 export class PacientesService {
   constructor(private prisma: PrismaService) {}
 
-  create(createPacienteDto: CreatePacienteDto) {
+  create(createPacienteDto: CreatePacienteDto, nutricionista_id: string) {
     return this.prisma.pacientes.create({
       data: {
         ...createPacienteDto,
         fecha_nacimiento: new Date(createPacienteDto.fecha_nacimiento),
+        nutricionista_id,
       },
     });
   }

@@ -1,11 +1,7 @@
-import { IsString, IsEmail, IsDateString, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
+import { IsString, IsEmail, IsDateString, IsNotEmpty, IsOptional } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreatePacienteDto {
-  @ApiProperty({ description: 'ID UUID del nutricionista asignado', example: '123e4567-e89b-12d3-a456-426614174000' })
-  @IsUUID()
-  @IsNotEmpty()
-  nutricionista_id: string;
 
   @ApiProperty({ description: 'Nombre del paciente', example: 'Juan' })
   @IsString()

@@ -19,6 +19,7 @@ async function bootstrap() {
     .setTitle('NutriFlow Core API')
     .setDescription('API principal para la gestión de pacientes y orquestación.')
     .setVersion('1.0')
+    .addBearerAuth()
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);

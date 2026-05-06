@@ -11,3 +11,16 @@ env/
 # Archivos de SO
 .DS_Store
 Thumbs.db
+
+# Node
+node_modules/
+dist/
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+
+
+# Mac
+.DS_Store

@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from core.config import settings
@@ -10,6 +10,10 @@ from api.pizarra import router as pizarra_router
 from api.menus import router as menus_router
 
 app = FastAPI(title=settings.PROJECT_NAME)
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    return Response(status_code=204)
 
 # Configuración de CORS
 origins = [

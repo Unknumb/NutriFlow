@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: . # Usa el Dockerfile de esta misma carpeta
+    ports:
+      - "5173:5173" # Conecta el puerto de Vite a tu PC
+    volumes:
+      # 🚨 LA MAGIA DEL HOT-RELOAD: Sincroniza tu código local con el contenedor
+      - .:/app
+      # 🚨 EL ESCUDO: Evita que tu PC sobreescriba los node_modules de Linux
+      - /app/node_modules
+    environment:
+      # Fuerza a Vite a detectar los cambios en Windows/Mac
+      - CHOKIDAR_USEPOLLING=true

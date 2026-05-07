@@ -564,6 +564,7 @@ model pacientes {
   consultas               consultas[]
   perfiles_nutricionistas perfiles_nutricionistas @relation(fields: [nutricionista_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   Pauta                   Pauta[]
+  Evaluacion              Evaluacion[]
 
   @@index([nutricionista_id], map: "idx_pacientes_nutricionista")
   @@schema("public")
@@ -679,6 +680,22 @@ model Pauta {
 
   // Relación con el paciente
   paciente            pacientes @relation(fields: [paciente_id], references: [id], onDelete: Cascade)
+
+  @@schema("public")
+}
+
+model Evaluacion {
+  id                     String    @id @default(uuid()) @db.Uuid
+  paciente_id            String    @db.Uuid
+  nutricionista_id       String    @db.Uuid
+  fecha_evaluacion       DateTime  @default(now()) @db.Timestamptz(6)
+  peso_actual            Float
+  talla_cm               Float
+  nivel_actividad_fisica String
+  objetivo               String
+
+  // Relación con el paciente
+  paciente               pacientes @relation(fields: [paciente_id], references: [id], onDelete: Cascade)
 
   @@schema("public")
 }

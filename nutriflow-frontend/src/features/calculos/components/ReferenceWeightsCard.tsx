@@ -21,7 +21,6 @@ export const ReferenceWeightsCard = ({ data }: WeightsProps) => {
         <Card>
             <CardHeader title="Pesos de Referencia" />
             <CardContent>
-                {data && <div className="hidden">{JSON.stringify(data)}</div>}
                 <div className="space-y-3">
                     {weightsData.map((w) => {
                         const isSelected = selectedWeightId === w.id;

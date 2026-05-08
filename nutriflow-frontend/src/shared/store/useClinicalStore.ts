@@ -1,13 +1,22 @@
 import { create } from 'zustand';
 
+export interface PatientData {
+  id: string;
+  nombre: string;
+  edad: number;
+  sexo: string;
+  talla: number;
+  peso: number;
+}
+
 export interface ClinicalState {
   pesoActivo: number;
   tmbPromedio: number;
-  activePatient: { id: string; nombre: string } | null;
+  activePatient: PatientData | null;
 
   setPesoActivo: (peso: number) => void;
   setTmbPromedio: (tmb: number) => void;
-  setActivePatient: (paciente: { id: string; nombre: string } | null) => void;
+  setActivePatient: (paciente: PatientData | null) => void;
 }
 
 export const useClinicalStore = create<ClinicalState>((set) => ({
@@ -23,5 +32,5 @@ export const useClinicalStore = create<ClinicalState>((set) => ({
   // ==========================================
   setPesoActivo: (peso) => set({ pesoActivo: peso }),
   setTmbPromedio: (tmb) => set({ tmbPromedio: tmb }),
-  setActivePatient: (paciente) => set({ activePatient: paciente }), // 🚨 Faltaba crear la función real
+  setActivePatient: (paciente) => set({ activePatient: paciente, pesoActivo: paciente?.peso || 67.4 }), // Actualizamos el peso activo al seleccionar paciente
 }));

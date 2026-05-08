@@ -1,55 +1,73 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Calculator } from 'lucide-react';
 import { Card, CardHeader, CardContent } from '../../../shared/ui/atoms/Card';
+import type { TmbData } from '../api/dashboardApi';
+import { useClinicalStore } from '../../../shared/store/useClinicalStore';
 
-// 👉 1. ABRIMOS LA PUERTA: Definimos que esta tarjeta puede recibir 'data'
 interface TmbProps {
-    data?: any;
+    data?: TmbData;
 }
 
-const FORMULAS_DATA = [
-    { id: 'oms', name: 'OMS', kcal: 1865 },
-    { id: 'harris', name: 'Harris-Benedict', kcal: 1807 },
-    { id: 'mifflin', name: 'Mifflin-St Jeor', kcal: 1910 },
-    { id: 'ireton', name: 'Ireton-Jones', kcal: 1950 },
-];
-
-// 👉 2. RECIBIMOS LA PROP: Añadimos { data }: TmbProps
 export const TmbCalculatorCard = ({ data }: TmbProps) => {
-    const [selectedFormulas, setSelectedFormulas] = useState<string[]>(['oms', 'harris']);
+    // Array of formula names (keys from data.resultados_individuales)
+    const [selectedFormulas, setSelectedFormulas] = useState<string[]>([]);
+    const { setTmbPromedio } = useClinicalStore();
 
-    const toggleFormula = (id: string) => {
-        if (selectedFormulas.includes(id)) {
-            setSelectedFormulas(selectedFormulas.filter(fId => fId !== id));
-        } else {
-            setSelectedFormulas([...selectedFormulas, id]);
+    useEffect(() => {
+        if (data && data.resultados_individuales) {
+            // Select all formulas by default when data arrives
+            setSelectedFormulas(Object.keys(data.resultados_individuales));
         }
-    };
+    }, [data]);
 
-    const activeData = FORMULAS_DATA.filter(f => selectedFormulas.includes(f.id));
+    const formulas = data?.resultados_individuales 
+        ? Object.entries(data.resultados_individuales).map(([name, kcal]) => ({ id: name, name, kcal }))
+        : [];
+
+    const activeData = formulas.filter(f => selectedFormulas.includes(f.name));
 
     const averageKcal = activeData.length > 0
         ? Math.round(activeData.reduce((sum, item) => sum + item.kcal, 0) / activeData.length)
         : 0;
 
+    useEffect(() => {
+        setTmbPromedio(averageKcal);
+    }, [averageKcal, setTmbPromedio]);
+
+    const toggleFormula = (formulaName: string) => {
+        if (selectedFormulas.includes(formulaName)) {
+            setSelectedFormulas(selectedFormulas.filter(name => name !== formulaName));
+        } else {
+            setSelectedFormulas([...selectedFormulas, formulaName]);
+        }
+    };
+
+    if (!data || !data.resultados_individuales) {
+        return (
+            <Card className="mb-6">
+                <CardHeader title="Calculadora de Tasa Metabólica Basal (TMB)" icon={Calculator} />
+                <CardContent>
+                    <div className="p-4 text-gray-500">Esperando datos...</div>
+                </CardContent>
+            </Card>
+        );
+    }
+
     return (
         <Card className="mb-6">
             <CardHeader title="Calculadora de Tasa Metabólica Basal (TMB)" icon={Calculator} />
             <CardContent>
-                {/* Opcional: Mostrar los datos reales crudos que vienen del backend si existen */}
-                {data && <div className="hidden">{JSON.stringify(data)}</div>}
-                
                 <div className="mb-4">
                     <label className="block text-sm font-medium text-gray-700 mb-3">
                         Seleccionar Fórmulas para Promediar
                     </label>
                     <div className="flex flex-wrap gap-2">
-                        {FORMULAS_DATA.map((formula) => {
-                            const isSelected = selectedFormulas.includes(formula.id);
+                        {formulas.map((formula) => {
+                            const isSelected = selectedFormulas.includes(formula.name);
                             return (
                                 <button
                                     key={formula.id}
-                                    onClick={() => toggleFormula(formula.id)}
+                                    onClick={() => toggleFormula(formula.name)}
                                     className={`px-4 py-2 rounded-md text-xs font-medium transition-colors ${isSelected
                                         ? 'bg-mist-600 text-white shadow-sm' 
                                         : 'border border-gray-200 text-gray-600 hover:bg-gray-50' 
@@ -75,7 +93,7 @@ export const TmbCalculatorCard = ({ data }: TmbProps) => {
                                 {activeData.map((d) => (
                                     <tr key={d.id} className="border-b border-gray-100 last:border-b-0">
                                         <td className="py-2 text-sm text-gray-600">{d.name}</td>
-                                        <td className="py-2 text-sm text-gray-900 text-right font-medium">{d.kcal}</td>
+                                        <td className="py-2 text-sm text-gray-900 text-right font-medium">{d.kcal.toFixed(1)}</td>
                                     </tr>
                                 ))}
                             </tbody>

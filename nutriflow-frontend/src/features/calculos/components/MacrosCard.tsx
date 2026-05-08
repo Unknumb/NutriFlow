@@ -10,7 +10,6 @@ export const MacrosCard = ({ data }: MacrosProps) => {
         <Card>
             <CardHeader title="Distribución de Macronutrientes" />
             <CardContent>
-                 {data && <div className="hidden">{JSON.stringify(data)}</div>}
                 <div className="space-y-6">
                     <div>
                         <div className="flex justify-between items-center mb-2">

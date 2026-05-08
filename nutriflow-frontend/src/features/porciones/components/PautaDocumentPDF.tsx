@@ -117,19 +117,23 @@ export const PautaDocumentPDF = ({ data }: any) => {
         </View>
 
         <Text style={styles.summaryTitle}>Resumen de Porciones Diarias</Text>
-        <View style={styles.summaryGrid}>
-          {GROUPS.map((g) => {
-              const isExact = totals[g.id] === targets[g.id];
-              return (
-                <View key={g.id} style={[styles.summaryBadge, { borderColor: isExact ? '#a7f3d0' : '#fde68a' }]}>
-                  <Text style={{ fontSize: 7, color: '#374151' }}>{g.emoji} {g.label}</Text>
-                  <Text style={{ fontSize: 10, fontWeight: 'bold', color: isExact ? '#047857' : '#b45309', marginTop: 2 }}>
-                    {totals[g.id]}/{targets[g.id] || 0}
-                  </Text>
-                </View>
-              )
-          })}
-        </View>
+      <View style={styles.summaryGrid}>
+        {GROUPS.map((g) => {
+            const isExact = totals[g.id] === targets[g.id];
+            return (
+              <View key={g.id} style={[styles.summaryBadge, { borderColor: isExact ? '#a7f3d0' : '#fde68a' }]}>
+                {/* 🚨 CORRECCIÓN: Quitamos el g.emoji y mejoramos la tipografía del label */}
+                <Text style={{ fontSize: 8, color: '#374151', fontWeight: 'bold', textTransform: 'uppercase' }}>
+                  {g.label}
+                </Text>
+                {/* 🚨 Ajusté un poquito el tamaño de los números para que destaquen más */}
+                <Text style={{ fontSize: 11, fontWeight: 'bold', color: isExact ? '#047857' : '#b45309', marginTop: 3 }}>
+                  {totals[g.id]}/{targets[g.id] || 0}
+                </Text>
+              </View>
+            )
+        })}
+      </View>
       </Page>
     </Document>
   );

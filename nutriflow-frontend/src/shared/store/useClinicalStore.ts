@@ -1,18 +1,27 @@
 import { create } from 'zustand';
 
-interface ClinicalState {
-    pesoActivo: number;
-    tmbPromedio: number;
-    setPesoActivo: (peso: number) => void;
-    setTmbPromedio: (tmb: number) => void;
+export interface ClinicalState {
+  pesoActivo: number;
+  tmbPromedio: number;
+  activePatient: { id: string; nombre: string } | null;
+
+  setPesoActivo: (peso: number) => void;
+  setTmbPromedio: (tmb: number) => void;
+  setActivePatient: (paciente: { id: string; nombre: string } | null) => void;
 }
 
 export const useClinicalStore = create<ClinicalState>((set) => ({
-    // Valores iniciales por defecto (luego TanStack Query los llenará con datos reales)
-    pesoActivo: 67.4,
-    tmbPromedio: 1766,
+  // ==========================================
+  // 1. ESTADO INICIAL (Valores por defecto)
+  // ==========================================
+  pesoActivo: 67.4,
+  tmbPromedio: 1766,
+  activePatient: null, // 🚨 Faltaba inicializar esta variable
 
-    // Acciones para actualizar el estado desde cualquier parte de la app
-    setPesoActivo: (peso) => set({ pesoActivo: peso }),
-    setTmbPromedio: (tmb) => set({ tmbPromedio: tmb }),
+  // ==========================================
+  // 2. ACCIONES (Mutadores del estado)
+  // ==========================================
+  setPesoActivo: (peso) => set({ pesoActivo: peso }),
+  setTmbPromedio: (tmb) => set({ tmbPromedio: tmb }),
+  setActivePatient: (paciente) => set({ activePatient: paciente }), // 🚨 Faltaba crear la función real
 }));

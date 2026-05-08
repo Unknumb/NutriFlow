@@ -34,11 +34,15 @@ export const usePortionsStore = create<PortionsState>((set) => ({
     decrementPortion: (mealId, groupId) => set((state) => {
         const current = state.distributions[mealId]?.[groupId] || 0;
         if (current <= 0) return state; // Evita valores negativos
+        
         return {
-            ...state.distributions,
-            [mealId]: {
-                ...state.distributions[mealId],
-                [groupId]: current - 1
+            // 🚨 CORRECCIÓN: Faltaba esta llave "distributions:" envolviendo el retorno
+            distributions: {
+                ...state.distributions,
+                [mealId]: {
+                    ...state.distributions[mealId],
+                    [groupId]: current - 1
+                }
             }
         };
     })

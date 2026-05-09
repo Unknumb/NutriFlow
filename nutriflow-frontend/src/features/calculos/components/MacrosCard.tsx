@@ -1,13 +1,16 @@
 import { Card, CardHeader, CardContent } from '../../../shared/ui/atoms/Card';
 import { Input } from '../../../shared/ui/atoms/Input';
 
-export const MacrosCard = () => {
+interface MacrosProps {
+    data?: any;
+}
+
+export const MacrosCard = ({ data }: MacrosProps) => {
     return (
         <Card>
             <CardHeader title="Distribución de Macronutrientes" />
             <CardContent>
                 <div className="space-y-6">
-                    {/* Proteínas */}
                     <div>
                         <div className="flex justify-between items-center mb-2">
                             <label className="text-sm font-medium text-gray-700">Proteínas</label>
@@ -20,7 +23,6 @@ export const MacrosCard = () => {
                         <p className="text-xs text-gray-500 mt-1">1.2 g/kg × 67.4 kg = 81 g</p>
                     </div>
 
-                    {/* Carbohidratos */}
                     <div>
                         <div className="flex justify-between items-center mb-2">
                             <label className="text-sm font-medium text-gray-700">Carbohidratos</label>
@@ -33,7 +35,6 @@ export const MacrosCard = () => {
                         <p className="text-xs text-gray-500 mt-1">50%</p>
                     </div>
 
-                    {/* Grasas */}
                     <div>
                         <div className="flex justify-between items-center mb-2">
                             <label className="text-sm font-medium text-gray-700">Grasas</label>

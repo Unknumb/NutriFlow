@@ -1,7 +1,7 @@
 import { RouterProvider, createRouter, createRoute, createRootRoute, redirect, lazyRouteComponent } from '@tanstack/react-router';
 
 // 1. LAZY LOADING
-import { isAuthenticated } from '../shared/utils/auth'; 
+import { isAuthenticated } from '../shared/utils/supabase'; 
 import { DashboardLayout } from '../shared/ui/organisms/DashboardLayout';
 
 const rootRoute = createRootRoute({

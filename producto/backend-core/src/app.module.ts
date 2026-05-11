@@ -7,6 +7,7 @@ import { PacientesModule } from './pacientes/pacientes.module';
 import { AuthModule } from './auth/auth.module';
 import { PautasModule } from './pautas/pautas.module';
 import { EvaluacionesModule } from './evaluaciones/evaluaciones.module';
+import { CalculosModule } from './calculos/calculos.module';
 
 @Module({
   imports: [
@@ -15,7 +16,8 @@ import { EvaluacionesModule } from './evaluaciones/evaluaciones.module';
     PacientesModule, 
     AuthModule, 
     PautasModule,
-    EvaluacionesModule
+    EvaluacionesModule,
+    CalculosModule
   ],
   controllers: [AppController],
   providers: [AppService],

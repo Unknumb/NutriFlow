@@ -1,0 +1,26 @@
+# Dependencias
+node_modules/
+__pycache__/
+venv/
+env/
+
+# Variables de entorno (Secretos)
+.env
+.env.local
+
+# Archivos de SO
+.DS_Store
+Thumbs.db
+
+# Node
+node_modules/
+dist/
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+
+
+# Mac
+.DS_Store

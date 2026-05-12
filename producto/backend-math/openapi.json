@@ -1,0 +1,826 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "NutriFlow Math Engine",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/api/alimentos": {
+      "get": {
+        "summary": "Obtener Alimentos",
+        "operationId": "obtener_alimentos_api_alimentos_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/calculadoras/tmb": {
+      "post": {
+        "summary": "Calcular TMB Inteligente",
+        "operationId": "calcular_tmb_api_calculadoras_tmb_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DatosPaciente"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultadoTMB"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/calculadoras/cuadrador": {
+      "post": {
+        "summary": "Cuadrador Dinámico de Macronutrientes",
+        "operationId": "cuadrar_macros_api_calculadoras_cuadrador_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InputCuadrador"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OutputCuadrador"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/pautas/armar-pauta": {
+      "post": {
+        "tags": [
+          "Armador de Pautas"
+        ],
+        "summary": "Calcular Pauta",
+        "description": "Recibe la cantidad de porciones asignadas a los grupos de alimentos y opcionalmente metas (del cuadrador).\nRetorna la sumatoria total de Kcal y Macronutrientes, y las diferencias respecto a las metas si se envían.",
+        "operationId": "calcular_pauta_api_pautas_armar_pauta_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InputPauta"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OutputPauta"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/pizarra/validar-pizarra": {
+      "post": {
+        "tags": [
+          "Pizarra Visual"
+        ],
+        "summary": "Validar Pizarra",
+        "description": "Recibe la pauta total y la distribución por tiempos de comida.\nEl Schema 'InputPizarra' se encarga internamente de validar que\nlas porciones distribuidas coincidan exactamente con la pauta total.",
+        "operationId": "validar_pizarra_api_pizarra_validar_pizarra_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InputPizarra"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OutputPizarra"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/menus/generar-menu": {
+      "post": {
+        "tags": [
+          "Generador de Menús"
+        ],
+        "summary": "Generar Menu Endpoint",
+        "description": "Recibe las porciones disponibles en un tiempo de comida y los alimentos rechazados.\nRetorna dos listas de preparaciones sugeridas: matches_exactos y matches_parciales.",
+        "operationId": "generar_menu_endpoint_api_menus_generar_menu_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InputGenerador"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OutputGenerador"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/": {
+      "get": {
+        "summary": "Home",
+        "operationId": "home__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "DatosPaciente": {
+        "properties": {
+          "sexo": {
+            "type": "string",
+            "title": "Sexo",
+            "description": "'M' para masculino o 'F' para femenino"
+          },
+          "edad": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Edad",
+            "description": "Edad en años"
+          },
+          "talla_cm": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "Talla Cm",
+            "description": "Estatura en centímetros"
+          },
+          "peso_kg": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "Peso Kg",
+            "description": "Peso actual en kilogramos"
+          },
+          "porcentaje_grasa": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 100.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Porcentaje Grasa",
+            "description": "Porcentaje de grasa corporal (opcional)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sexo",
+          "edad",
+          "talla_cm",
+          "peso_kg"
+        ],
+        "title": "DatosPaciente"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "InputCuadrador": {
+        "properties": {
+          "estrategia_calculo": {
+            "type": "string",
+            "enum": [
+              "porcentajes",
+              "gramos_por_kilo"
+            ],
+            "title": "Estrategia Calculo",
+            "description": "Estrategia a utilizar para el cuadre"
+          },
+          "peso_kg": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "Peso Kg",
+            "description": "Peso del paciente en kg para cálculo de gramos relativos"
+          },
+          "calorias_totales": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "Calorias Totales",
+            "description": "Calorías totales objetivo"
+          },
+          "porcentaje_proteina": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 100.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Porcentaje Proteina"
+          },
+          "porcentaje_grasa": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 100.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Porcentaje Grasa"
+          },
+          "porcentaje_carbohidrato": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 100.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Porcentaje Carbohidrato"
+          },
+          "g_kg_proteina": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "G Kg Proteina"
+          },
+          "g_kg_grasa": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "G Kg Grasa"
+          }
+        },
+        "type": "object",
+        "required": [
+          "estrategia_calculo",
+          "peso_kg",
+          "calorias_totales"
+        ],
+        "title": "InputCuadrador"
+      },
+      "InputGenerador": {
+        "properties": {
+          "porciones_disponibles": {
+            "$ref": "#/components/schemas/PorcionesInput"
+          },
+          "alimentos_rechazados": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Alimentos Rechazados"
+          }
+        },
+        "type": "object",
+        "required": [
+          "porciones_disponibles"
+        ],
+        "title": "InputGenerador"
+      },
+      "InputPauta": {
+        "properties": {
+          "porciones": {
+            "$ref": "#/components/schemas/PorcionesInput"
+          },
+          "metas_cuadrador": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MetasInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "porciones"
+        ],
+        "title": "InputPauta"
+      },
+      "InputPizarra": {
+        "properties": {
+          "pauta_total": {
+            "$ref": "#/components/schemas/PorcionesInput"
+          },
+          "distribucion": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/PorcionesInput"
+            },
+            "type": "object",
+            "title": "Distribucion"
+          }
+        },
+        "type": "object",
+        "required": [
+          "pauta_total",
+          "distribucion"
+        ],
+        "title": "InputPizarra"
+      },
+      "MacroResult": {
+        "properties": {
+          "porcentaje": {
+            "type": "number",
+            "title": "Porcentaje"
+          },
+          "calorias": {
+            "type": "number",
+            "title": "Calorias"
+          },
+          "gramos": {
+            "type": "number",
+            "title": "Gramos"
+          },
+          "gramos_por_kg": {
+            "type": "number",
+            "title": "Gramos Por Kg"
+          }
+        },
+        "type": "object",
+        "required": [
+          "porcentaje",
+          "calorias",
+          "gramos",
+          "gramos_por_kg"
+        ],
+        "title": "MacroResult"
+      },
+      "MetasInput": {
+        "properties": {
+          "kcal": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Kcal"
+          },
+          "prot": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Prot"
+          },
+          "lip": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Lip"
+          },
+          "cho": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Cho"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kcal",
+          "prot",
+          "lip",
+          "cho"
+        ],
+        "title": "MetasInput"
+      },
+      "OutputCuadrador": {
+        "properties": {
+          "estrategia_utilizada": {
+            "type": "string",
+            "title": "Estrategia Utilizada"
+          },
+          "calorias_totales": {
+            "type": "number",
+            "title": "Calorias Totales"
+          },
+          "peso_kg": {
+            "type": "number",
+            "title": "Peso Kg"
+          },
+          "distribucion": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/MacroResult"
+            },
+            "type": "object",
+            "title": "Distribucion"
+          }
+        },
+        "type": "object",
+        "required": [
+          "estrategia_utilizada",
+          "calorias_totales",
+          "peso_kg",
+          "distribucion"
+        ],
+        "title": "OutputCuadrador"
+      },
+      "OutputGenerador": {
+        "properties": {
+          "matches_exactos": {
+            "items": {
+              "$ref": "#/components/schemas/RecetaOut"
+            },
+            "type": "array",
+            "title": "Matches Exactos"
+          },
+          "matches_parciales": {
+            "items": {
+              "$ref": "#/components/schemas/RecetaOut"
+            },
+            "type": "array",
+            "title": "Matches Parciales"
+          }
+        },
+        "type": "object",
+        "required": [
+          "matches_exactos",
+          "matches_parciales"
+        ],
+        "title": "OutputGenerador"
+      },
+      "OutputPauta": {
+        "properties": {
+          "totales_acumulados": {
+            "$ref": "#/components/schemas/TotalesNutricionales"
+          },
+          "diferencias": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TotalesNutricionales"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "totales_acumulados"
+        ],
+        "title": "OutputPauta"
+      },
+      "OutputPizarra": {
+        "properties": {
+          "mensaje": {
+            "type": "string",
+            "title": "Mensaje"
+          },
+          "datos_validados": {
+            "$ref": "#/components/schemas/InputPizarra"
+          }
+        },
+        "type": "object",
+        "required": [
+          "mensaje",
+          "datos_validados"
+        ],
+        "title": "OutputPizarra"
+      },
+      "PorcionesInput": {
+        "properties": {
+          "cereales_papas_legumbres_frescas": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Cereales Papas Legumbres Frescas",
+            "default": 0.0
+          },
+          "verduras_general": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Verduras General",
+            "default": 0.0
+          },
+          "verduras_libre_consumo": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Verduras Libre Consumo",
+            "default": 0.0
+          },
+          "frutas": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Frutas",
+            "default": 0.0
+          },
+          "lacteos_bajos_grasa": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Lacteos Bajos Grasa",
+            "default": 0.0
+          },
+          "lacteos_medios_grasa": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Lacteos Medios Grasa",
+            "default": 0.0
+          },
+          "lacteos_altos_grasa": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Lacteos Altos Grasa",
+            "default": 0.0
+          },
+          "carnes_bajas_grasa": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Carnes Bajas Grasa",
+            "default": 0.0
+          },
+          "carnes_altas_grasa": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Carnes Altas Grasa",
+            "default": 0.0
+          },
+          "leguminosas_secas": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Leguminosas Secas",
+            "default": 0.0
+          },
+          "alimentos_ricos_en_lipidos": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Alimentos Ricos En Lipidos",
+            "default": 0.0
+          },
+          "aceites_y_grasas": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Aceites Y Grasas",
+            "default": 0.0
+          },
+          "azucares": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Azucares",
+            "default": 0.0
+          }
+        },
+        "type": "object",
+        "title": "PorcionesInput"
+      },
+      "RecetaOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "nombre": {
+            "type": "string",
+            "title": "Nombre"
+          },
+          "ingredientes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Ingredientes"
+          },
+          "porciones_requeridas": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Porciones Requeridas"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "nombre",
+          "ingredientes",
+          "porciones_requeridas"
+        ],
+        "title": "RecetaOut"
+      },
+      "ResultadoTMB": {
+        "properties": {
+          "resultados_individuales": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Resultados Individuales"
+          },
+          "promedio_calculado": {
+            "type": "number",
+            "title": "Promedio Calculado"
+          }
+        },
+        "type": "object",
+        "required": [
+          "resultados_individuales",
+          "promedio_calculado"
+        ],
+        "title": "ResultadoTMB"
+      },
+      "TotalesNutricionales": {
+        "properties": {
+          "kcal": {
+            "type": "number",
+            "title": "Kcal"
+          },
+          "prot": {
+            "type": "number",
+            "title": "Prot"
+          },
+          "lip": {
+            "type": "number",
+            "title": "Lip"
+          },
+          "cho": {
+            "type": "number",
+            "title": "Cho"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kcal",
+          "prot",
+          "lip",
+          "cho"
+        ],
+        "title": "TotalesNutricionales"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}

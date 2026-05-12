@@ -5,7 +5,7 @@ interface MacrosProps {
     data?: any;
 }
 
-export const MacrosCard = ({ data }: MacrosProps) => {
+export const MacrosCard = (_props: MacrosProps) => {
     return (
         <Card>
             <CardHeader title="Distribución de Macronutrientes" />

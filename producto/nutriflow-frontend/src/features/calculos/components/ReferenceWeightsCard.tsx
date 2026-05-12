@@ -5,8 +5,8 @@ interface WeightsProps {
     data?: any;
 }
 
-export const ReferenceWeightsCard = ({ data }: WeightsProps) => {
-    const [weightsData, setWeightsData] = useState([
+export const ReferenceWeightsCard = (_props: WeightsProps) => {
+    const [weightsData] = useState([
         { id: 'ideal', label: 'Peso Ideal', value: 67.4 },
         { id: 'maximo', label: 'Peso Máximo Saludable', value: 76.6 },
         { id: 'ajustado25', label: 'Peso Ajustado 25%', value: 71.8 },

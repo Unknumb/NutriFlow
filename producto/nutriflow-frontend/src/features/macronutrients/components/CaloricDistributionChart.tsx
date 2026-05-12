@@ -30,7 +30,7 @@ export const CaloricDistributionChart = ({ pieData }: { pieData: any[] }) => {
                                 ))}
                             </Pie>
                             <Tooltip
-                                formatter={(value: number) => [`${value}%`, 'Porcentaje']}
+                                formatter={(value: any) => [`${value}%`, 'Porcentaje']}
                                 contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb' }}
                             />
                         </PieChart>

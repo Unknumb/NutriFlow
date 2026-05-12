@@ -30,6 +30,7 @@ export class CalculosController {
       pacienteId: id,
       tmb: resultadoTMB,
       macros: null, // Por ahora
+      pesos: null,  // Añadido para coincidir con la interfaz del Frontend
       status: 'success'
     };
   }

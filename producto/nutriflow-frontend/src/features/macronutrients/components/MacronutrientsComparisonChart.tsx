@@ -27,7 +27,7 @@ export const MacronutrientsComparisonChart = ({ barData }: { barData: any[] }) =
                             />
                             <Tooltip
                                 cursor={{ fill: '#f3f4f6' }}
-                                formatter={(value: number) => [`${value} kcal`, 'Calorías']}
+                                formatter={(value: any) => [`${value} kcal`, 'Calorías']}
                                 contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb' }}
                             />
                             <Bar dataKey="kcal" fill="#14b8a6" radius={[4, 4, 0, 0]} />

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
+import { GuardarDistribucionMacrosDto } from './dto/guardar-distribucion.dto';
 
 @Injectable()
 export class MathEngineService {
@@ -30,5 +31,18 @@ export class MathEngineService {
       this.httpService.post(`${this.pythonUrl}/cuadrador`, datos)
     );
     return data;
+  }
+
+  /**
+   * Recibe la distribución configurada por la nutricionista y la guarda.
+   * Mock temporal.
+   */
+  async guardarDistribucionMacros(dto: GuardarDistribucionMacrosDto) {
+    // Aquí a futuro guardaremos en Prisma o conectaremos con FastAPI
+    return {
+      status: 'success',
+      message: 'Distribución guardada correctamente',
+      data: dto,
+    };
   }
 }

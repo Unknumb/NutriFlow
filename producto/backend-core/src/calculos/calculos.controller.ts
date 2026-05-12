@@ -1,11 +1,15 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Controller, Get, Param, Query, Post, Body } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBody } from '@nestjs/swagger';
 import { MathEngineService } from './math.engine.service';
+import { GuardarDistribucionMacrosDto } from './dto/guardar-distribucion.dto';
 
+@ApiTags('Dashboard Clínico')
 @Controller('dashboard-clinico')
 export class CalculosController {
   constructor(private readonly mathService: MathEngineService) {}
 
   @Get(':pacienteId')
+  @ApiOperation({ summary: 'Obtiene las métricas iniciales del paciente (TMB)' })
   async obtenerMetricas(
     @Param('pacienteId') id: string,
     @Query('peso') peso: string,
@@ -33,5 +37,12 @@ export class CalculosController {
       pesos: null,  // Añadido para coincidir con la interfaz del Frontend
       status: 'success'
     };
+  }
+
+  @Post('macronutrientes')
+  @ApiOperation({ summary: 'Guarda la distribución de macronutrientes configurada por la nutricionista' })
+  @ApiBody({ type: GuardarDistribucionMacrosDto })
+  async guardarMacronutrientes(@Body() dto: GuardarDistribucionMacrosDto) {
+    return this.mathService.guardarDistribucionMacros(dto);
   }
 }

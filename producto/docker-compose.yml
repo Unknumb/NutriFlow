@@ -1,0 +1,25 @@
+services:
+  backend-math:
+    build:
+      context: ./backend-math
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+  redis-cache:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+  backend-core:
+    build:
+      context: ./backend-core
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./backend-core/.env
+    depends_on:
+      - backend-math
+      - redis-cache
+    restart: unless-stopped

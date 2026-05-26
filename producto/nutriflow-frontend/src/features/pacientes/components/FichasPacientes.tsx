@@ -185,7 +185,7 @@ export const FichasPacientes: React.FC = () => {
                     <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
                       <label className="text-sm font-semibold text-gray-900 mb-2 block">Reportar Nuevo Síntoma</label>
                       <textarea 
-                        className="w-full min-h-[80px] p-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none resize-none mb-3" 
+                        className="w-full min-h-20 p-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none resize-none mb-3" 
                         placeholder="Describe el síntoma o sensación..."
                       ></textarea>
                       <div className="flex gap-3 mb-4">

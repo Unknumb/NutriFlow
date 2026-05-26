@@ -1,40 +1,38 @@
-import { RouterProvider, createRouter, createRoute, createRootRoute, redirect, lazyRouteComponent } from '@tanstack/react-router';
+import { RouterProvider, createRouter, createRoute, createRootRoute, lazyRouteComponent, Outlet } from '@tanstack/react-router';
 
-// 1. LAZY LOADING
-import { isAuthenticated } from '../shared/utils/supabase'; 
+// 1. IMPORTACIONES
 import { DashboardLayout } from '../shared/ui/organisms/DashboardLayout';
 
+// 2. ROOT NEUTRO
 const rootRoute = createRootRoute({
-    component: DashboardLayout,
+    component: () => <Outlet />, 
 });
 
-// 2. ROUTE GUARD
+// 3. LAYOUT PROTEGIDO (Sidebar activo, pero sin guardias de seguridad)
 const protectedLayout = createRoute({
     getParentRoute: () => rootRoute,
     id: 'protected',
-    beforeLoad: async () => {
-        if (!isAuthenticated()) {
-            // Como no tenemos /login todavía, lo mandamos a /dashboard
-            throw redirect({ to: '/dashboard' }); 
-        }
-    },
+    component: DashboardLayout,
 });
 
+// 4. LOGIN (Acceso libre)
+const loginRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/login',
+    component: lazyRouteComponent(() => import('../pages/login/index'), 'LoginPage'),
+});
+
+// 5. RUTAS HIJAS DEL DASHBOARD
 const indexRoute = createRoute({
     getParentRoute: () => protectedLayout,
     path: '/',
-    beforeLoad: () => {
-        throw redirect({ to: '/dashboard' });
-    },
+    component: () => <div>Home</div>, // Eliminé la redirección automática
 });
 
 const dashboardRoute = createRoute({
     getParentRoute: () => protectedLayout,
     path: '/dashboard',
     component: lazyRouteComponent(() => import('../pages/dashboard/index'), 'DashboardPage'),
-    loader: async () => {
-        return { message: "ok" }; 
-    }
 });
 
 const macronutrientesRoute = createRoute({
@@ -49,7 +47,6 @@ const pautasRoute = createRoute({
     component: lazyRouteComponent(() => import('../pages/pautas'), 'PautasPage'),
 });
 
-// 🚨 1. NUEVO: Creamos la ruta para la página de Porciones
 const porcionesRoute = createRoute({
     getParentRoute: () => protectedLayout,
     path: '/porciones',
@@ -71,12 +68,12 @@ const generadorRoute = createRoute({
 const pacientesRoute = createRoute({
     getParentRoute: () => protectedLayout,
     path: '/pacientes',
-    // Apunta al archivo index que actualizamos hace un momento
     component: lazyRouteComponent(() => import('../pages/pacientes/index'), 'PacientesPage'),
 });
 
-// 🚨 ÁRBOL DE RUTAS ENSAMBLADO
+// 6. ENSAMBLADO DEL ÁRBOL
 const routeTree = rootRoute.addChildren([
+    loginRoute, 
     protectedLayout.addChildren([
         indexRoute,
         dashboardRoute, 
@@ -88,8 +85,6 @@ const routeTree = rootRoute.addChildren([
         pacientesRoute
     ])
 ]);
-
-
 
 const router = createRouter({ routeTree });
 

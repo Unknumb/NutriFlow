@@ -7,6 +7,7 @@ import { AuthModule } from './auth/auth.module';
 import { PautasModule } from './pautas/pautas.module';
 import { EvaluacionesModule } from './evaluaciones/evaluaciones.module';
 import { CalculosModule } from './calculos/calculos.module';
+import { MenusModule } from './menus/menus.module';
 
 @Module({
   imports: [
@@ -16,7 +17,8 @@ import { CalculosModule } from './calculos/calculos.module';
     AuthModule, 
     PautasModule,
     EvaluacionesModule,
-    CalculosModule
+    CalculosModule,
+    MenusModule
   ],
   controllers: [AppController],
   providers: [],

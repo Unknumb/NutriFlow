@@ -56,6 +56,25 @@ const porcionesRoute = createRoute({
     component: lazyRouteComponent(() => import('../pages/porciones'), 'PorcionesPage'),
 });
 
+const bibliotecaRoute = createRoute({
+    getParentRoute: () => protectedLayout,
+    path: '/biblioteca',
+    component: lazyRouteComponent(() => import('../pages/biblioteca/index'), 'BibliotecaPage'),
+});
+
+const generadorRoute = createRoute({
+    getParentRoute: () => protectedLayout,
+    path: '/generador',
+    component: lazyRouteComponent(() => import('../pages/generador/index'), 'GeneradorPage'),
+});
+
+const pacientesRoute = createRoute({
+    getParentRoute: () => protectedLayout,
+    path: '/pacientes',
+    // Apunta al archivo index que actualizamos hace un momento
+    component: lazyRouteComponent(() => import('../pages/pacientes/index'), 'PacientesPage'),
+});
+
 // 🚨 ÁRBOL DE RUTAS ENSAMBLADO
 const routeTree = rootRoute.addChildren([
     protectedLayout.addChildren([
@@ -63,9 +82,14 @@ const routeTree = rootRoute.addChildren([
         dashboardRoute, 
         macronutrientesRoute, 
         pautasRoute,
-        porcionesRoute // 🚨 2. NUEVO: Registramos la ruta en el árbol
+        porcionesRoute,
+        bibliotecaRoute,
+        generadorRoute,
+        pacientesRoute
     ])
 ]);
+
+
 
 const router = createRouter({ routeTree });
 

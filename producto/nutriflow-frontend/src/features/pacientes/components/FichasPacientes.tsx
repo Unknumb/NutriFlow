@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { usePacientes } from '../hooks/usePacientes';
 import { useClinicalStore } from '../../../shared/store/useClinicalStore';
-import { Loader2 } from 'lucide-react';
+import { useAuthStore } from '../../../shared/store/useAuthStore';
+import { Loader2, Star } from 'lucide-react';
 import type { Paciente } from '../types/paciente.types';
 import { useEvaluacionesByPaciente, useCreateEvaluacion } from '../../evaluaciones/hooks/useEvaluaciones';
 import type { CreateEvaluacionPayload } from '../../evaluaciones/types/evaluacion.types';
@@ -29,32 +30,43 @@ const mapToPatientData = (p: Paciente) => ({
 export const FichasPacientes: React.FC = () => {
   const { data: pacientes, isLoading, error } = usePacientes();
   const { activePatient, setActivePatient, setPesoActivo, setTmbPromedio } = useClinicalStore();
+  const { user } = useAuthStore();
+  const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('datos');
 
-  const { data: evaluaciones, isLoading: loadingEvals } = useEvaluacionesByPaciente(activePatient?.id);
+  const { data: evaluaciones, isLoading: loadingEvals } = useEvaluacionesByPaciente(selectedPatientId || '');
   const createEvaluacion = useCreateEvaluacion();
   
   const { data: pautasAll, isLoading: loadingPautas } = usePautas();
-  const pautasDelPaciente = pautasAll?.filter(p => p.paciente_id === activePatient?.id) || [];
-  const deletePauta = useDeletePauta(activePatient?.id || '');
+  const pautasDelPaciente = pautasAll?.filter(p => p.paciente_id === selectedPatientId) || [];
+  const deletePauta = useDeletePauta(selectedPatientId || '');
 
-  // Seleccionar automáticamente el primer paciente si no hay ninguno seleccionado
+  // Seleccionar localmente el primer paciente o el activo si existe
   useEffect(() => {
-    if (pacientes && pacientes.length > 0 && !activePatient) {
-      setActivePatient({...mapToPatientData(pacientes[0]), talla: 0, peso: 0});
+    if (pacientes && pacientes.length > 0 && !selectedPatientId) {
+      if (activePatient && pacientes.find(p => p.id === activePatient.id)) {
+        setSelectedPatientId(activePatient.id);
+      } else {
+        setSelectedPatientId(pacientes[0].id);
+      }
     }
-  }, [pacientes, activePatient, setActivePatient]);
+  }, [pacientes, selectedPatientId, activePatient]);
 
-  // Actualizar store con los datos de la última evaluación
-  useEffect(() => {
-    if (evaluaciones && evaluaciones.length > 0) {
-      const latest = evaluaciones[0]; // Asumimos orden DESC
-      setPesoActivo(latest.peso_actual);
-      if (latest.tmb) setTmbPromedio(latest.tmb);
+  const pacienteSeleccionado = pacientes?.find(p => p.id === selectedPatientId);
+
+  // Manejar establecimiento de paciente activo
+  const handleSetActive = () => {
+    if (!pacienteSeleccionado) return;
+    const latestEval = evaluaciones && evaluaciones.length > 0 ? evaluaciones[0] : null;
+    const peso = latestEval?.peso_actual || 0;
+    const talla = latestEval?.talla_cm || 0;
+    
+    setActivePatient({...mapToPatientData(pacienteSeleccionado), talla, peso});
+    if (latestEval) {
+      setPesoActivo(latestEval.peso_actual);
+      if (latestEval.tmb) setTmbPromedio(latestEval.tmb);
     }
-  }, [evaluaciones, setPesoActivo, setTmbPromedio]);
-
-  const pacienteSeleccionado = pacientes?.find(p => p.id === activePatient?.id);
+  };
 
   // Estado local para nueva evaluación
   const [showNuevaEval, setShowNuevaEval] = useState(false);
@@ -105,11 +117,11 @@ export const FichasPacientes: React.FC = () => {
                   <div 
                     key={paciente.id}
                     onClick={() => {
-                        setActivePatient({...mapToPatientData(paciente), talla: 0, peso: 0});
+                        setSelectedPatientId(paciente.id);
                         setShowNuevaEval(false);
                     }}
                     className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                      activePatient?.id === paciente.id 
+                      selectedPatientId === paciente.id 
                         ? 'border-teal-500 bg-teal-50' 
                         : 'border-gray-200 hover:border-gray-300 bg-white'
                     }`}
@@ -159,12 +171,22 @@ export const FichasPacientes: React.FC = () => {
                     </span>
                     <div>
                       <h2 className="text-2xl font-semibold text-gray-900">{pacienteSeleccionado.nombre} {pacienteSeleccionado.apellido}</h2>
-                      <p className="text-gray-600">Nutricionista: Dr. Álvaro Uribe</p>
+                      <p className="text-gray-600">Nutricionista: {user?.user_metadata?.nombre || user?.email || 'Nutricionista'}</p>
                     </div>
                   </div>
-                  <span className="inline-flex items-center justify-center rounded-md border border-teal-300 px-2 py-0.5 text-xs font-medium bg-teal-100 text-teal-800">
-                    Paciente Activo
-                  </span>
+                  {activePatient?.id === pacienteSeleccionado.id ? (
+                    <span className="inline-flex items-center justify-center rounded-md border border-teal-300 px-2 py-0.5 text-xs font-medium bg-teal-100 text-teal-800">
+                      Paciente Activo en Sistema
+                    </span>
+                  ) : (
+                    <button
+                      onClick={handleSetActive}
+                      className="inline-flex items-center justify-center rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium bg-white text-gray-700 hover:bg-teal-50 hover:text-teal-700 transition-colors shadow-sm gap-2"
+                    >
+                      <Star className="w-4 h-4" />
+                      Establecer como Paciente Activo
+                    </button>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 mb-6">

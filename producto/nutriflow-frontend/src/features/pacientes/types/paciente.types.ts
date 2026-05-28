@@ -8,6 +8,10 @@ export interface Paciente {
   email?: string;
   telefono?: string;
   fecha_creacion: string; // ISO string DateTime
+  Evaluacion?: Array<{
+    peso_actual: number;
+    talla_cm: number;
+  }>;
 }
 
 export interface CreatePacientePayload {
@@ -17,6 +21,8 @@ export interface CreatePacientePayload {
   sexo_biologico?: string;
   email?: string;
   telefono?: string;
+  talla_cm: number;
+  peso_kg: number;
 }
 
 export interface UpdatePacientePayload extends Partial<CreatePacientePayload> {}

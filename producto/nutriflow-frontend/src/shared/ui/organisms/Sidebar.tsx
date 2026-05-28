@@ -3,6 +3,7 @@ import { Calculator, PieChart, User, FileText, Grid3x3, BookOpen, Sparkles, User
 import { supabase } from '../../utils/supabase';
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useAuthStore } from '../../store/useAuthStore';
 
 // 1. Catálogo centralizado de rutas
 const MENU_ITEMS = [
@@ -19,6 +20,7 @@ const MENU_ITEMS = [
 
 export const Sidebar = () => {
     const [showLogoutModal, setShowLogoutModal] = useState(false);
+    const { user } = useAuthStore();
 
     const handleLogout = async () => {
         await supabase.auth.signOut();
@@ -65,8 +67,10 @@ export const Sidebar = () => {
                 <div className="flex items-center justify-between px-4 py-3 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors group">
                     <div className="flex items-center gap-3">
                         <User className="w-5 h-5 text-gray-700" />
-                        <div>
-                            <p className="text-sm font-medium text-gray-900">Dra. Javiera Silva</p>
+                        <div className="overflow-hidden">
+                            <p className="text-sm font-medium text-gray-900 truncate" title={user?.user_metadata?.nombre || user?.email || 'Nutricionista'}>
+                                {user?.user_metadata?.nombre || user?.email || 'Nutricionista'}
+                            </p>
                             <p className="text-xs text-gray-500">Nutricionista</p>
                         </div>
                     </div>

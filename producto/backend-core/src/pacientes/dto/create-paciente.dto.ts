@@ -31,5 +31,13 @@ export class CreatePacienteDto {
   @IsString()
   @IsOptional()
   telefono?: string;
+
+  @ApiProperty({ description: 'Talla inicial en cm', example: 170 })
+  @IsNotEmpty()
+  talla_cm: number;
+
+  @ApiProperty({ description: 'Peso inicial en kg', example: 70 })
+  @IsNotEmpty()
+  peso_kg: number;
 }
 

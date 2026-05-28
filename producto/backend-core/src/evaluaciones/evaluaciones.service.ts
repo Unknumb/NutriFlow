@@ -44,8 +44,9 @@ export class EvaluacionesService {
     }
 
     const edad = this.calculateAge(paciente.fecha_nacimiento);
-    // Asumimos que sexo_biologico es "MASCULINO" o "FEMENINO"
-    const sexoStr = paciente.sexo_biologico?.toUpperCase() === 'MASCULINO' ? 'M' : 'F';
+    // Asumimos que sexo_biologico es "MASCULINO" o "FEMENINO" o "M" o "F"
+    const sexoUpper = paciente.sexo_biologico?.toUpperCase();
+    const sexoStr = (sexoUpper === 'MASCULINO' || sexoUpper === 'M') ? 'M' : 'F';
 
     let calculosTmb;
     try {

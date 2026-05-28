@@ -18,11 +18,15 @@ export class CalculosController {
     @Query('sexo') sexo: string,
   ) {
     // 1. Mapeamos los datos exactamente como los espera 'DatosPaciente' en FastAPI
+    const parsedPeso = peso ? parseFloat(peso) : 0;
+    const parsedTalla = talla ? parseFloat(talla) : 0;
+    const parsedEdad = edad ? parseInt(edad, 10) : 0;
+    
     const datosParaPython = {
-      peso_kg: peso ? parseFloat(peso) : 67.4,
-      talla_cm: talla ? parseFloat(talla) : 170,
-      edad: edad ? parseInt(edad, 10) : 23,
-      sexo: sexo || 'M',
+      peso_kg: parsedPeso > 0 ? parsedPeso : 67.4,
+      talla_cm: parsedTalla > 0 ? parsedTalla : 170,
+      edad: parsedEdad > 0 ? parsedEdad : 23,
+      sexo: (sexo === 'M' || sexo === 'F') ? sexo : 'M',
       porcentaje_grasa: null
     };
 

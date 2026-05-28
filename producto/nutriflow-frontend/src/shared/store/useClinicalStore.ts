@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 export interface PatientData {
   id: string;
@@ -19,18 +20,25 @@ export interface ClinicalState {
   setActivePatient: (paciente: PatientData | null) => void;
 }
 
-export const useClinicalStore = create<ClinicalState>((set) => ({
-  // ==========================================
-  // 1. ESTADO INICIAL (Valores por defecto)
-  // ==========================================
-  pesoActivo: 67.4,
-  tmbPromedio: 1766,
-  activePatient: null, // 🚨 Faltaba inicializar esta variable
+export const useClinicalStore = create<ClinicalState>()(
+  persist(
+    (set) => ({
+      // ==========================================
+      // 1. ESTADO INICIAL (Valores por defecto)
+      // ==========================================
+      pesoActivo: 67.4,
+      tmbPromedio: 1766,
+      activePatient: null, 
 
-  // ==========================================
-  // 2. ACCIONES (Mutadores del estado)
-  // ==========================================
-  setPesoActivo: (peso) => set({ pesoActivo: peso }),
-  setTmbPromedio: (tmb) => set({ tmbPromedio: tmb }),
-  setActivePatient: (paciente) => set({ activePatient: paciente, pesoActivo: paciente?.peso || 67.4 }), // Actualizamos el peso activo al seleccionar paciente
-}));
+      // ==========================================
+      // 2. ACCIONES (Mutadores del estado)
+      // ==========================================
+      setPesoActivo: (peso) => set({ pesoActivo: peso }),
+      setTmbPromedio: (tmb) => set({ tmbPromedio: tmb }),
+      setActivePatient: (paciente) => set({ activePatient: paciente, pesoActivo: paciente?.peso || 67.4 }), 
+    }),
+    {
+      name: 'clinical-storage', // nombre en localStorage
+    }
+  )
+);

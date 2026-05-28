@@ -16,9 +16,18 @@ export const MacronutrientesPage = () => {
     return (
         // Reemplazamos el Layout por el contenedor estándar de nuestra arquitectura
         <div className="p-4 max-w-[1400px] mx-auto w-full">
-            <div className="mb-6">
-                <h1 className="text-3xl font-semibold text-gray-900">Planificación de Macronutrientes</h1>
-                <p className="text-gray-600 mt-1">Ajuste manual y visualización en tiempo real</p>
+            <div className="mb-6 flex justify-between items-end">
+                <div>
+                    <h1 className="text-3xl font-semibold text-gray-900">Planificación de Macronutrientes</h1>
+                    <p className="text-gray-600 mt-1">Ajuste manual y visualización en tiempo real</p>
+                </div>
+                <button 
+                    onClick={setup.actions.handleSave}
+                    disabled={setup.isSaving}
+                    className="px-6 py-2.5 bg-teal-600 hover:bg-teal-700 disabled:bg-teal-400 text-white font-medium rounded-lg shadow-sm transition-colors"
+                >
+                    {setup.isSaving ? 'Guardando...' : 'Guardar Pauta'}
+                </button>
             </div>
 
             {/* 3. Inyectamos las dependencias hacia abajo (DIP) */}

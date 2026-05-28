@@ -8,6 +8,12 @@ export const apiClient = axios.create({
     timeout: 10000, // 🚨 Senior: Timeout de 10s para evitar que la UI se bloquee
 });
 
+export interface ApiError {
+    message: string | string[];
+    error: string;
+    statusCode: number;
+}
+
 // 2. Request Interceptor (Auth)
 apiClient.interceptors.request.use(async (config) => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -19,22 +25,24 @@ apiClient.interceptors.request.use(async (config) => {
 
 apiClient.interceptors.response.use(
     (response) => response,
-    async (error: AxiosError) => {
-        // 🚨 Senior fix: Extraemos el status de forma segura usando el signo de interrogación
+    async (error: AxiosError<ApiError>) => {
         const status = error.response?.status;
+        const apiError = error.response?.data;
 
-        // Ahora TypeScript sabe que 'status' es un número | undefined
         if (status === 401) {
             console.error('Sesión expirada, redirigiendo a login...');
             await supabase.auth.signOut();
             window.location.href = '/login';
         }
         
+        if (status === 400) {
+            console.error('Error de validación:', apiError?.message);
+        }
+
         if (status === 500) {
             console.error('Error interno del servidor en NutriFlow');
         }
 
-        // Caso especial: El servidor ni siquiera respondió (ej: timeout o internet desconectado)
         if (!error.response) {
             console.error('Error de red o el servidor no responde');
         }

@@ -1,9 +1,25 @@
-import React, { useState, useEffect } from 'react';
-import { Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react'; 
+import React, { useState, useEffect } from "react";
+import { Mail, Lock, ArrowRight, Eye, EyeOff, Loader2 } from "lucide-react";
+import { useAuth } from "../../../shared/hooks/useAuth";
+import { useRouter } from "@tanstack/react-router";
+import { useAuthStore } from "../../../shared/store/useAuthStore";
 
 export const LoginScreen: React.FC = () => {
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-  const [showPassword, setShowPassword] = useState(false); // Estado para visibilidad
+  const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const { login, isLoggingIn, loginError } = useAuth();
+  const router = useRouter();
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+
+  // Si ya está autenticado, redirigir al dashboard
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.navigate({ to: "/dashboard" });
+    }
+  }, [isAuthenticated, router]);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -12,34 +28,39 @@ export const LoginScreen: React.FC = () => {
         y: e.clientY / window.innerHeight,
       });
     };
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
   }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await login({ email, password });
+    // La redirección ocurre automáticamente vía el useEffect de isAuthenticated
+  };
 
   return (
     <div className="min-h-screen flex flex-col font-sans antialiased overflow-hidden bg-[#f8f9ff] text-[#0b1c30] relative z-0">
-      
       {/* Efectos de fondo */}
-      <div 
+      <div
         className="fixed w-[80vw] h-[80vh] rounded-full top-[-20vh] right-[-20vw] -z-10 pointer-events-none transition-transform duration-75 ease-out"
         style={{
-          background: 'radial-gradient(circle, rgba(125,211,252,0.15) 0%, rgba(255,255,255,0) 70%)',
-          transform: `translate(${mousePos.x * 20}px, ${mousePos.y * 20}px)`
+          background:
+            "radial-gradient(circle, rgba(125,211,252,0.15) 0%, rgba(255,255,255,0) 70%)",
+          transform: `translate(${mousePos.x * 20}px, ${mousePos.y * 20}px)`,
         }}
       />
-      <div 
+      <div
         className="fixed w-[60vw] h-[60vh] rounded-full bottom-[-10vh] left-[-10vw] -z-10 pointer-events-none transition-transform duration-75 ease-out"
         style={{
-          background: 'radial-gradient(circle, rgba(203,219,245,0.2) 0%, rgba(255,255,255,0) 70%)',
-          transform: `translate(${mousePos.x * -30}px, ${mousePos.y * -30}px)`
+          background:
+            "radial-gradient(circle, rgba(203,219,245,0.2) 0%, rgba(255,255,255,0) 70%)",
+          transform: `translate(${mousePos.x * -30}px, ${mousePos.y * -30}px)`,
         }}
       />
 
-      <main className="flex-grow flex items-center justify-center p-4 md:p-16 relative z-10">
+      <main className="grow flex items-center justify-center p-4 md:p-16 relative z-10">
         <div className="w-full max-w-[480px]">
-          
-          <div className="bg-white/85 backdrop-blur-[24px] border border-white/40 shadow-[0_30px_60px_-15px_rgba(203,219,245,0.4),0_10px_20px_-5px_rgba(203,219,245,0.2),inset_0_1px_0_rgba(255,255,255,0.8)] rounded-2xl p-8 md:p-12 transition-all duration-500 hover:shadow-[0_40px_80px_-20px_rgba(203,219,245,0.5)]">
-            
+          <div className="bg-white/85 backdrop-blur-xl border border-white/40 shadow-[0_30px_60px_-15px_rgba(203,219,245,0.4),0_10px_20px_-5px_rgba(203,219,245,0.2),inset_0_1px_0_rgba(255,255,255,0.8)] rounded-2xl p-8 md:p-12 transition-all duration-500 hover:shadow-[0_40px_80px_-20px_rgba(203,219,245,0.5)]">
             <div className="text-center mb-10">
               <h1 className="text-3xl md:text-[32px] font-semibold tracking-tight text-[#0b1c30] mb-2">
                 Iniciar Sesión
@@ -49,44 +70,66 @@ export const LoginScreen: React.FC = () => {
               </p>
             </div>
 
-            <form className="space-y-6 flex flex-col" onSubmit={(e) => e.preventDefault()}>
-              
-              {/* Animación invertida: Password con delay menor, Email con delay mayor */}
+            {/* Error de login */}
+            {loginError && (
+              <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 animate-in fade-in duration-300">
+                {loginError}
+              </div>
+            )}
+
+            <form className="space-y-6 flex flex-col" onSubmit={handleSubmit}>
+              {/* Email */}
               <div className="flex flex-col gap-1.5 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
-                <label className="text-xs font-semibold tracking-wide text-[#3f484e] ml-1 uppercase" htmlFor="email">
+                <label
+                  className="text-xs font-semibold tracking-wide text-[#3f484e] ml-1 uppercase"
+                  htmlFor="email"
+                >
                   Correo Electrónico
                 </label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-black" />
-                  <input 
-                    id="email" 
-                    name="email" 
-                    type="email" 
-                    placeholder="nombre@ejemplo.com" 
-                    required 
-                    className="w-full bg-white/50 backdrop-blur-sm border-b-2 border-transparent focus:border-[#7dd3fc] focus:bg-white focus:ring-0 rounded-t-lg px-3 py-2.5 pl-11 text-base text-[#0b1c30] placeholder-[#bec8ce] transition-all duration-300 outline-none shadow-inner"
+                  <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="nombre@ejemplo.com"
+                    required
+                    disabled={isLoggingIn}
+                    className="w-full bg-white/50 backdrop-blur-sm border-b-2 border-transparent focus:border-[#7dd3fc] focus:bg-white focus:ring-0 rounded-t-lg px-3 py-2.5 pl-11 text-base text-[#0b1c30] placeholder-[#bec8ce] transition-all duration-300 outline-none shadow-inner disabled:opacity-50"
                   />
                 </div>
               </div>
 
+              {/* Password */}
               <div className="flex flex-col gap-1.5 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
                 <div className="flex justify-between items-baseline ml-1 mr-1">
-                  <label className="text-xs font-semibold tracking-wide text-[#3f484e] uppercase" htmlFor="password">
+                  <label
+                    className="text-xs font-semibold tracking-wide text-[#3f484e] uppercase"
+                    htmlFor="password"
+                  >
                     Contraseña
                   </label>
-                  <a href="#" className="text-xs font-semibold text-[#006686] hover:text-[#7bd1fa] transition-colors">
+                  <a
+                    href="#"
+                    className="text-xs font-semibold text-[#006686] hover:text-[#7bd1fa] transition-colors"
+                  >
                     ¿Olvidaste tu contraseña?
                   </a>
                 </div>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-black" />
-                  <input 
-                    id="password" 
-                    name="password" 
-                    type={showPassword ? 'text' : 'password'} 
-                    placeholder="••••••••" 
-                    required 
-                    className="w-full bg-white/50 backdrop-blur-sm border-b-2 border-transparent focus:border-[#7dd3fc] focus:bg-white focus:ring-0 rounded-t-lg px-3 py-2.5 pl-11 pr-11 text-base text-[#0b1c30] placeholder-[#bec8ce] transition-all duration-300 outline-none shadow-inner"
+                  <input
+                    id="password"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    required
+                    disabled={isLoggingIn}
+                    className="w-full bg-white/50 backdrop-blur-sm border-b-2 border-transparent focus:border-[#7dd3fc] focus:bg-white focus:ring-0 rounded-t-lg px-3 py-2.5 pl-11 pr-11 text-base text-[#0b1c30] placeholder-[#bec8ce] transition-all duration-300 outline-none shadow-inner disabled:opacity-50"
                   />
                   {/* Botón para mostrar/ocultar */}
                   <button
@@ -100,20 +143,35 @@ export const LoginScreen: React.FC = () => {
               </div>
 
               <div className="pt-2 mt-2 flex flex-col gap-4">
-                <button 
-                  type="submit" 
-                  className="w-full bg-[#7dd3fc] text-white font-medium text-[15px] py-3 rounded-xl hover:bg-[#6ecaf4] hover:shadow-[0_0_20px_rgba(125,211,252,0.4)] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2"
+                <button
+                  type="submit"
+                  disabled={isLoggingIn}
+                  className="w-full bg-[#7dd3fc] text-white font-medium text-[15px] py-3 rounded-xl hover:bg-[#6ecaf4] hover:shadow-[0_0_20px_rgba(125,211,252,0.4)] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:shadow-none disabled:active:scale-100"
                 >
-                  Ingresar
-                  <ArrowRight className="w-5 h-5" />
+                  {isLoggingIn ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Ingresando...
+                    </>
+                  ) : (
+                    <>
+                      Ingresar
+                      <ArrowRight className="w-5 h-5" />
+                    </>
+                  )}
                 </button>
-                
+
                 <p className="text-center text-sm text-[#3f484e] mt-2">
-                  ¿No tienes una cuenta? <a href="#" className="text-[#006686] font-medium hover:underline">Solicitar Acceso</a>
+                  ¿No tienes una cuenta?{" "}
+                  <a
+                    href="#"
+                    className="text-[#006686] font-medium hover:underline"
+                  >
+                    Solicitar Acceso
+                  </a>
                 </p>
               </div>
             </form>
-
           </div>
         </div>
       </main>

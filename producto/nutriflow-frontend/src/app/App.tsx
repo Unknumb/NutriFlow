@@ -1,4 +1,5 @@
-import { RouterProvider, createRouter, createRoute, createRootRoute, lazyRouteComponent, Outlet } from '@tanstack/react-router';
+import { RouterProvider, createRouter, createRoute, createRootRoute, lazyRouteComponent, Outlet, redirect } from '@tanstack/react-router';
+import { useAuthStore } from '../shared/store/useAuthStore';
 
 // 1. IMPORTACIONES
 import { DashboardLayout } from '../shared/ui/organisms/DashboardLayout';
@@ -8,11 +9,24 @@ const rootRoute = createRootRoute({
     component: () => <Outlet />, 
 });
 
-// 3. LAYOUT PROTEGIDO (Sidebar activo, pero sin guardias de seguridad)
+// 3. LAYOUT PROTEGIDO (Requiere autenticación)
 const protectedLayout = createRoute({
     getParentRoute: () => rootRoute,
     id: 'protected',
     component: DashboardLayout,
+    beforeLoad: async () => {
+        // Obtenemos la sesión actual en caso de que el store aún esté cargando
+        const state = useAuthStore.getState();
+        if (state.isLoading) {
+            const { supabase } = await import('../shared/utils/supabase');
+            const { data } = await supabase.auth.getSession();
+            if (!data.session) {
+                throw redirect({ to: '/login' });
+            }
+        } else if (!state.isAuthenticated) {
+            throw redirect({ to: '/login' });
+        }
+    },
 });
 
 // 4. LOGIN (Acceso libre)
@@ -24,9 +38,11 @@ const loginRoute = createRoute({
 
 // 5. RUTAS HIJAS DEL DASHBOARD
 const indexRoute = createRoute({
-    getParentRoute: () => protectedLayout,
+    getParentRoute: () => rootRoute,
     path: '/',
-    component: () => <div>Home</div>, // Eliminé la redirección automática
+    beforeLoad: () => {
+        throw redirect({ to: '/login' });
+    },
 });
 
 const dashboardRoute = createRoute({
@@ -73,9 +89,9 @@ const pacientesRoute = createRoute({
 
 // 6. ENSAMBLADO DEL ÁRBOL
 const routeTree = rootRoute.addChildren([
+    indexRoute,
     loginRoute, 
     protectedLayout.addChildren([
-        indexRoute,
         dashboardRoute, 
         macronutrientesRoute, 
         pautasRoute,

@@ -1,23 +1,21 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { passportJwtSecret } from 'jwks-rsa';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor() {
+  constructor(private configService: ConfigService) {
+    const secret = configService.get<string>('SUPABASE_JWT_SECRET');
+    if (!secret) {
+      throw new Error('FATAL ERROR: SUPABASE_JWT_SECRET is not defined in the environment variables.');
+    }
+    
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      // Supabase ahora usa claves asimétricas (ES256/RS256) en proyectos recientes, 
-      // por lo que debemos obtener la llave pública dinámica (JWKS) en lugar del secreto simétrico.
-      secretOrKeyProvider: passportJwtSecret({
-        cache: true,
-        rateLimit: true,
-        jwksRequestsPerMinute: 5,
-        jwksUri: `${process.env.SUPABASE_URL}/auth/v1/jwks`,
-      }),
-      algorithms: ['RS256', 'ES256', 'HS256'],
+      secretOrKey: secret,
+      algorithms: ['HS256'],
     });
   }
 

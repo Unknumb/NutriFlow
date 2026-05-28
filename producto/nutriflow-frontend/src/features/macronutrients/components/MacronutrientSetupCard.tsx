@@ -72,8 +72,8 @@ const MacroSliderCard = ({ title, themeKey, totals, pesoActivo, sliderProps }: M
                         // Estilos base y la inyección del color dinámico del Thumb
                         className={`w-full h-4 rounded-full appearance-none cursor-pointer outline-none focus:ring-2 focus:ring-offset-1 transition-all [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-none ${theme.thumbClasses}`}
                         style={{
-                            // La barra negra que crece matemáticamente
-                            background: `linear-gradient(to right, #111827 ${totals.pct}%, #f3f4f6 ${totals.pct}%)`
+                            // La barra negra que crece matemáticamente sincronizada con el thumb
+                            background: `linear-gradient(to right, #111827 ${(sliderProps.val / sliderProps.max) * 100}%, #f3f4f6 ${(sliderProps.val / sliderProps.max) * 100}%)`
                         }}
                     />
                 </div>

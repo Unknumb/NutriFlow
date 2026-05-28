@@ -1,5 +1,4 @@
 import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common';
-import { createClient } from '@supabase/supabase-js';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
@@ -12,29 +11,33 @@ export class JwtAuthGuard implements CanActivate {
     }
 
     const token = authHeader.split(' ')[1];
-    
-    // Instanciar cliente de supabase con variables de entorno
-    const supabase = createClient(
-      process.env.SUPABASE_URL as string,
-      process.env.SUPABASE_ANON_KEY as string
-    );
 
-    // getUser verifica el token asimétrico (ES256) directamente con los servidores de Supabase
-    // Esto garantiza que la firma es válida y la sesión no ha sido revocada.
-    const { data: { user }, error } = await supabase.auth.getUser(token);
+    try {
+      const response = await fetch(`${process.env.SUPABASE_URL}/auth/v1/user`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          apikey: process.env.SUPABASE_ANON_KEY as string,
+        },
+      });
 
-    if (error || !user) {
-      throw new UnauthorizedException('Token inválido, expirado o revocado');
+      if (!response.ok) {
+        throw new UnauthorizedException('Token inválido, expirado o revocado');
+      }
+
+      const user = await response.json();
+
+      request.user = {
+        userId: user.id,
+        email: user.email,
+        role: user.role || 'user',
+      };
+
+      return true;
+    } catch (e) {
+      if (e instanceof UnauthorizedException) {
+        throw e;
+      }
+      throw new UnauthorizedException('Error al validar el token');
     }
-
-    // Inyectamos el usuario validado en el request
-    // Usamos 'userId' para que coincida con lo que espera el decorador @CurrentUser()
-    request.user = {
-      userId: user.id,
-      email: user.email,
-      role: user.role
-    };
-
-    return true;
   }
 }

@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
+import { ModalNuevaPreparacion } from './ModalNuevaPreparacion';
+import { useAlimentos } from '../hooks/useAlimentos';
 
-// MOCK DATA: Exactamente los mismos datos e ingredientes de tu diseño en Figma
-const PREPARACIONES_FIGMA = [
+// MOCK DATA INICIAL: Exactamente los mismos datos e ingredientes de tu diseño en Figma
+const PREPARACIONES_INICIALES = [
   {
     id: 1,
     nombre: 'Avena con manzana y almendras',
@@ -77,6 +79,38 @@ const PREPARACIONES_FIGMA = [
 
 export const BibliotecaPreparaciones: React.FC = () => {
   const [busqueda, setBusqueda] = useState('');
+  const [preparaciones, setPreparaciones] = useState(PREPARACIONES_INICIALES);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  // Cargamos alimentos para el generador automático
+  const { alimentos } = useAlimentos();
+
+  const handleGuardarPreparacion = (nuevaPrep: any) => {
+    setPreparaciones([nuevaPrep, ...preparaciones]);
+  };
+
+  const generarMenuAutomatico = () => {
+    if (alimentos.length === 0) return alert('Esperando base de datos de alimentos...');
+    
+    // Tomamos 3 alimentos al azar de la DB
+    const shuffled = [...alimentos].sort(() => 0.5 - Math.random());
+    const seleccionados = shuffled.slice(0, 3);
+    
+    const caloriasTotales = seleccionados.reduce((acc, curr) => acc + curr.calorias_100g, 0);
+    
+    const prepAleatoria = {
+      id: Date.now(),
+      nombre: `Mix de ${seleccionados[0].nombre} y ${seleccionados[1].nombre}`,
+      tipo: ['Desayuno', 'Almuerzo', 'Cena', 'Colación'][Math.floor(Math.random() * 4)],
+      calorias: Math.round(caloriasTotales),
+      tags: seleccionados.map(a => ({
+        nombre: a.nombre,
+        color: 'bg-purple-100 text-purple-800'
+      }))
+    };
+    
+    setPreparaciones([prepAleatoria, ...preparaciones]);
+  };
 
   return (
     <div className="p-8 max-w-7xl mx-auto">
@@ -102,7 +136,10 @@ export const BibliotecaPreparaciones: React.FC = () => {
           />
         </div>
         
-        <button className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border bg-white text-gray-900 hover:bg-gray-100 h-9 px-4 py-2 gap-2 shadow-sm">
+        <button 
+          onClick={() => setIsModalOpen(true)}
+          className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border bg-white text-gray-900 hover:bg-gray-100 h-9 px-4 py-2 gap-2 shadow-sm"
+        >
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-plus w-4 h-4">
             <path d="M5 12h14"></path>
             <path d="M12 5v14"></path>
@@ -110,7 +147,10 @@ export const BibliotecaPreparaciones: React.FC = () => {
           Nueva Preparación
         </button>
         
-        <button className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors text-white h-9 px-4 py-2 gap-2 bg-teal-600 hover:bg-teal-700 shadow-sm">
+        <button 
+          onClick={generarMenuAutomatico}
+          className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors text-white h-9 px-4 py-2 gap-2 bg-teal-600 hover:bg-teal-700 shadow-sm"
+        >
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-sparkles w-4 h-4">
             <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"></path>
             <path d="M20 3v4"></path>
@@ -122,10 +162,10 @@ export const BibliotecaPreparaciones: React.FC = () => {
         </button>
       </div>
 
-      {/* Grid de Tarjetas (Figma Design Exacto) */}
+      {/* Grid de Tarjetas */}
       <div className="grid grid-cols-3 gap-6">
-        {PREPARACIONES_FIGMA.filter(p => p.nombre.toLowerCase().includes(busqueda.toLowerCase())).map((prep) => (
-          <div key={prep.id} className="bg-white text-gray-900 flex flex-col gap-6 rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
+        {preparaciones.filter(p => p.nombre.toLowerCase().includes(busqueda.toLowerCase())).map((prep) => (
+          <div key={prep.id} className="bg-white text-gray-900 flex flex-col gap-6 rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow cursor-pointer animate-in fade-in duration-300">
             
             {/* Imagen de la Preparación */}
             <div className="aspect-video bg-gray-100 relative overflow-hidden">
@@ -152,7 +192,7 @@ export const BibliotecaPreparaciones: React.FC = () => {
               
               {/* Etiquetas / Ingredientes */}
               <div className="flex flex-wrap gap-1.5">
-                {prep.tags.map((tag, idx) => (
+                {prep.tags.map((tag: any, idx: number) => (
                   <span 
                     key={idx} 
                     className={`inline-flex items-center justify-center rounded-md px-2 py-0.5 text-xs font-medium border-0 ${tag.color}`}
@@ -165,7 +205,18 @@ export const BibliotecaPreparaciones: React.FC = () => {
 
           </div>
         ))}
+        {preparaciones.filter(p => p.nombre.toLowerCase().includes(busqueda.toLowerCase())).length === 0 && (
+          <div className="col-span-3 text-center py-12 text-gray-500">
+            No se encontraron preparaciones
+          </div>
+        )}
       </div>
+
+      <ModalNuevaPreparacion 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSave={handleGuardarPreparacion}
+      />
     </div>
   );
 };

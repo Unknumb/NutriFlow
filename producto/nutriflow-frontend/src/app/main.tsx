@@ -4,6 +4,10 @@ import './styles/globals.css'
 import App from './App.tsx'
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { initAuthListener } from '../shared/utils/supabase'
+
+// 1. Inicializamos el listener de autenticación con Supabase
+initAuthListener();
 
 // 2. Creamos la instancia del cliente (El "Cerebro" de la caché)
 const queryClient = new QueryClient({

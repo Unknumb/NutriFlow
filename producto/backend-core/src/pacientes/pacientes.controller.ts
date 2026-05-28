@@ -22,27 +22,27 @@ export class PacientesController {
 
   @Get()
   @ApiOperation({ summary: 'Obtener todos los pacientes' })
-  findAll() {
-    return this.pacientesService.findAll();
+  findAll(@CurrentUser() user: any) {
+    return this.pacientesService.findAll(user.userId);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Obtener un paciente por ID' })
   @ApiResponse({ status: 200, description: 'Paciente encontrado.' })
   @ApiResponse({ status: 404, description: 'Paciente no encontrado.' })
-  findOne(@Param('id') id: string) {
-    return this.pacientesService.findOne(id);
+  findOne(@Param('id') id: string, @CurrentUser() user: any) {
+    return this.pacientesService.findOne(id, user.userId);
   }
 
   @Patch(':id')
   @ApiOperation({ summary: 'Actualizar un paciente existente' })
-  update(@Param('id') id: string, @Body() updatePacienteDto: UpdatePacienteDto) {
-    return this.pacientesService.update(id, updatePacienteDto);
+  update(@Param('id') id: string, @Body() updatePacienteDto: UpdatePacienteDto, @CurrentUser() user: any) {
+    return this.pacientesService.update(id, updatePacienteDto, user.userId);
   }
 
   @Delete(':id')
   @ApiOperation({ summary: 'Eliminar un paciente' })
-  remove(@Param('id') id: string) {
-    return this.pacientesService.remove(id);
+  remove(@Param('id') id: string, @CurrentUser() user: any) {
+    return this.pacientesService.remove(id, user.userId);
   }
 }

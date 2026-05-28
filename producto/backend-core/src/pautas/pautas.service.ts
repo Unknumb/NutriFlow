@@ -34,32 +34,16 @@ export class PautasService {
 
     const pesoKg = paciente.Evaluacion[0].peso_actual;
 
-    // 2. Comunicarse con backend-math (Cuadrador)
-    let cuadradorResult;
-    try {
-      const response = await firstValueFrom(
-        this.httpService.post('http://localhost:8000/api/calculadoras/cuadrador', {
-          estrategia_calculo: 'porcentajes',
-          peso_kg: pesoKg,
-          calorias_totales: createPautaDto.calorias_totales,
-          porcentaje_proteina: createPautaDto.porcentajes_macros.proteina,
-          porcentaje_grasa: createPautaDto.porcentajes_macros.grasa,
-          porcentaje_carbohidrato: createPautaDto.porcentajes_macros.carbohidratos
-        })
-      );
-      cuadradorResult = response.data;
-    } catch (error) {
-      console.error('Error al conectarse al cuadrador (backend-math):', error.message);
-      throw new InternalServerErrorException('Error al calcular la distribución de macronutrientes');
-    }
-
+    // 2. (Desactivado temporalmente) Comunicarse con backend-math (Cuadrador)
+    // El frontend ya nos envía los porcentajes calculados correctamente
+    
     // 3. Guardar la pauta en Prisma
     const pauta = await this.prisma.pauta.create({
       data: {
         paciente_id: createPautaDto.paciente_id,
         nutricionista_id,
         calorias_totales: createPautaDto.calorias_totales,
-        distribucion_macros: cuadradorResult.distribucion,
+        distribucion_macros: createPautaDto.porcentajes_macros as any,
         tiempos_comida: createPautaDto.tiempos_comida
       },
     });

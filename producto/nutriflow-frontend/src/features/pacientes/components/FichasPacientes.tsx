@@ -1,16 +1,69 @@
-// src/features/pacientes/components/FichasPacientes.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { usePacientes } from '../hooks/usePacientes';
+import { useClinicalStore } from '../../../shared/store/useClinicalStore';
+import { Loader2 } from 'lucide-react';
+import type { Paciente } from '../types/paciente.types';
+import { useEvaluacionesByPaciente, useCreateEvaluacion } from '../../evaluaciones/hooks/useEvaluaciones';
+import type { CreateEvaluacionPayload } from '../../evaluaciones/types/evaluacion.types';
+import { usePautas, useDeletePauta } from '../../pautas/hooks/usePautas';
+import { Trash2 } from 'lucide-react';
 
-// --- MOCK DATA ---
-const PACIENTES = [
-  { id: 1, iniciales: 'MG', nombre: 'María González', edad: 35, sexo: 'Femenino', peso: '72 kg', sintomas: 2, activo: true, telefono: '+56 9 8765 4321', email: 'maria.gonzalez@email.com', ultimaConsulta: '09-03-2026', proximaConsulta: '06-04-2026' },
-  { id: 2, iniciales: 'CM', nombre: 'Carlos Muñoz', edad: 42, sexo: 'Masculino', peso: '90 kg', sintomas: 1, activo: false, telefono: '+56 9 1234 5678', email: 'carlos.munoz@email.com', ultimaConsulta: '15-02-2026', proximaConsulta: 'Por agendar' },
-  { id: 3, iniciales: 'AR', nombre: 'Ana Rodríguez', edad: 28, sexo: 'Femenino', peso: '61 kg', sintomas: 1, activo: false, telefono: '+56 9 9876 5432', email: 'ana.rodriguez@email.com', ultimaConsulta: '01-03-2026', proximaConsulta: '10-04-2026' },
-];
+const calculateAge = (birthDateString: string) => {
+  const birthDate = new Date(birthDateString);
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const m = today.getMonth() - birthDate.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  return age;
+};
+
+const mapToPatientData = (p: Paciente) => ({
+  id: p.id,
+  nombre: `${p.nombre} ${p.apellido}`,
+  edad: calculateAge(p.fecha_nacimiento),
+  sexo: p.sexo_biologico || 'N/A',
+});
 
 export const FichasPacientes: React.FC = () => {
-  const [pacienteSeleccionado, setPacienteSeleccionado] = useState(PACIENTES[0]);
+  const { data: pacientes, isLoading, error } = usePacientes();
+  const { activePatient, setActivePatient, setPesoActivo, setTmbPromedio } = useClinicalStore();
   const [activeTab, setActiveTab] = useState('datos');
+
+  const { data: evaluaciones, isLoading: loadingEvals } = useEvaluacionesByPaciente(activePatient?.id);
+  const createEvaluacion = useCreateEvaluacion();
+  
+  const { data: pautasAll, isLoading: loadingPautas } = usePautas();
+  const pautasDelPaciente = pautasAll?.filter(p => p.paciente_id === activePatient?.id) || [];
+  const deletePauta = useDeletePauta(activePatient?.id || '');
+
+  // Seleccionar automáticamente el primer paciente si no hay ninguno seleccionado
+  useEffect(() => {
+    if (pacientes && pacientes.length > 0 && !activePatient) {
+      setActivePatient({...mapToPatientData(pacientes[0]), talla: 0, peso: 0});
+    }
+  }, [pacientes, activePatient, setActivePatient]);
+
+  // Actualizar store con los datos de la última evaluación
+  useEffect(() => {
+    if (evaluaciones && evaluaciones.length > 0) {
+      const latest = evaluaciones[0]; // Asumimos orden DESC
+      setPesoActivo(latest.peso_actual);
+      if (latest.tmb) setTmbPromedio(latest.tmb);
+    }
+  }, [evaluaciones, setPesoActivo, setTmbPromedio]);
+
+  const pacienteSeleccionado = pacientes?.find(p => p.id === activePatient?.id);
+
+  // Estado local para nueva evaluación
+  const [showNuevaEval, setShowNuevaEval] = useState(false);
+  const [nuevaEvalForm, setNuevaEvalForm] = useState<Omit<CreateEvaluacionPayload, 'paciente_id'>>({
+    peso_actual: 0,
+    talla_cm: 0,
+    nivel_actividad_fisica: 'sedentario',
+    objetivo: 'mantencion'
+  });
 
   return (
     <div className="flex flex-col h-full bg-gray-50 flex-1 overflow-hidden w-full">
@@ -33,12 +86,30 @@ export const FichasPacientes: React.FC = () => {
               </div>
               
               <div className="px-6 py-4 flex-1 overflow-y-auto space-y-3">
-                {PACIENTES.map((paciente) => (
+                {isLoading && (
+                  <div className="flex justify-center p-4">
+                    <Loader2 className="w-6 h-6 animate-spin text-teal-600" />
+                  </div>
+                )}
+                {error && (
+                  <div className="p-4 text-red-600 bg-red-50 rounded-lg text-sm">Error al cargar pacientes</div>
+                )}
+                {pacientes?.length === 0 && (
+                  <div className="p-4 text-gray-500 text-sm text-center">No hay pacientes registrados</div>
+                )}
+                {pacientes?.map((paciente) => {
+                  const iniciales = `${paciente.nombre[0]}${paciente.apellido[0]}`.toUpperCase();
+                  const edad = calculateAge(paciente.fecha_nacimiento);
+                  
+                  return (
                   <div 
                     key={paciente.id}
-                    onClick={() => setPacienteSeleccionado(paciente)}
+                    onClick={() => {
+                        setActivePatient({...mapToPatientData(paciente), talla: 0, peso: 0});
+                        setShowNuevaEval(false);
+                    }}
                     className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                      pacienteSeleccionado.id === paciente.id 
+                      activePatient?.id === paciente.id 
                         ? 'border-teal-500 bg-teal-50' 
                         : 'border-gray-200 hover:border-gray-300 bg-white'
                     }`}
@@ -46,24 +117,24 @@ export const FichasPacientes: React.FC = () => {
                     <div className="flex items-start gap-3">
                       <span className="relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full">
                         <span className="flex h-full w-full items-center justify-center rounded-full bg-teal-100 text-teal-700 font-medium">
-                          {paciente.iniciales}
+                          {iniciales}
                         </span>
                       </span>
                       <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-gray-900 truncate">{paciente.nombre}</p>
-                        <p className="text-sm text-gray-600">{paciente.edad} años · {paciente.sexo}</p>
+                        <p className="font-semibold text-gray-900 truncate">{paciente.nombre} {paciente.apellido}</p>
+                        <p className="text-sm text-gray-600">{edad} años · {paciente.sexo_biologico || 'N/A'}</p>
                         <div className="flex items-center gap-2 mt-2">
                           <span className="inline-flex items-center justify-center rounded-md border px-2 py-0.5 text-xs font-medium text-gray-700 bg-white shadow-sm">
-                            {paciente.peso}
+                            - kg
                           </span>
                           <span className="inline-flex items-center justify-center rounded-md px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-700">
-                            {paciente.sintomas} síntomas
+                            0 síntomas
                           </span>
                         </div>
                       </div>
                     </div>
                   </div>
-                ))}
+                )})}
               </div>
             </div>
           </div>
@@ -72,16 +143,22 @@ export const FichasPacientes: React.FC = () => {
           <div className="col-span-8 flex flex-col min-h-0">
             <div className="bg-white text-gray-900 flex flex-col rounded-xl border border-gray-200 h-full overflow-hidden shadow-sm">
               
+              {!pacienteSeleccionado ? (
+                <div className="flex items-center justify-center h-full text-gray-500">
+                  Selecciona un paciente para ver sus detalles
+                </div>
+              ) : (
+                <>
               <div className="px-6 pt-6">
                 <div className="flex items-start justify-between mb-6">
                   <div className="flex items-start gap-4">
                     <span className="relative flex h-16 w-16 shrink-0 overflow-hidden rounded-full">
                       <span className="flex h-full w-full items-center justify-center rounded-full bg-teal-100 text-teal-700 text-xl font-medium">
-                        {pacienteSeleccionado.iniciales}
+                        {`${pacienteSeleccionado.nombre[0]}${pacienteSeleccionado.apellido[0]}`.toUpperCase()}
                       </span>
                     </span>
                     <div>
-                      <h2 className="text-2xl font-semibold text-gray-900">{pacienteSeleccionado.nombre}</h2>
+                      <h2 className="text-2xl font-semibold text-gray-900">{pacienteSeleccionado.nombre} {pacienteSeleccionado.apellido}</h2>
                       <p className="text-gray-600">Nutricionista: Dr. Álvaro Uribe</p>
                     </div>
                   </div>
@@ -93,24 +170,24 @@ export const FichasPacientes: React.FC = () => {
                 <div className="grid grid-cols-2 gap-4 mb-6">
                   <div className="flex items-center gap-2 text-sm text-gray-600">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
-                    {pacienteSeleccionado.telefono}
+                    {pacienteSeleccionado.telefono || 'Sin teléfono'}
                   </div>
                   <div className="flex items-center gap-2 text-sm text-gray-600">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400"><rect width="20" height="16" x="2" y="4" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path></svg>
-                    {pacienteSeleccionado.email}
+                    {pacienteSeleccionado.email || 'Sin email'}
                   </div>
                   <div className="flex items-center gap-2 text-sm text-gray-600">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400"><path d="M8 2v4"></path><path d="M16 2v4"></path><rect width="18" height="18" x="3" y="4" rx="2"></rect><path d="M3 10h18"></path></svg>
-                    Última consulta: {pacienteSeleccionado.ultimaConsulta}
+                    Ingreso: {new Date(pacienteSeleccionado.fecha_creacion).toLocaleDateString()}
                   </div>
                   <div className="flex items-center gap-2 text-sm text-gray-600">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400"><path d="M8 2v4"></path><path d="M16 2v4"></path><rect width="18" height="18" x="3" y="4" rx="2"></rect><path d="M3 10h18"></path></svg>
-                    Próxima consulta: {pacienteSeleccionado.proximaConsulta}
+                    Nacimiento: {new Date(pacienteSeleccionado.fecha_nacimiento).toLocaleDateString()}
                   </div>
                 </div>
 
                 {/* MENÚ PESTAÑAS */}
-                <div className="bg-gray-100 p-1 rounded-xl grid grid-cols-3 gap-1 mb-4">
+                <div className="bg-gray-100 p-1 rounded-xl grid grid-cols-4 gap-1 mb-4">
                   <button 
                     onClick={() => setActiveTab('datos')}
                     className={`py-1.5 px-3 text-sm font-medium rounded-lg transition-all ${activeTab === 'datos' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
@@ -118,11 +195,17 @@ export const FichasPacientes: React.FC = () => {
                     Datos Clínicos
                   </button>
                   <button 
+                    onClick={() => setActiveTab('pautas')}
+                    className={`py-1.5 px-3 text-sm font-medium rounded-lg transition-all ${activeTab === 'pautas' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                  >
+                    Pautas Alimentarias
+                  </button>
+                  <button 
                     onClick={() => setActiveTab('sintomas')}
                     className={`py-1.5 px-3 text-sm font-medium rounded-lg transition-all flex items-center justify-center gap-2 ${activeTab === 'sintomas' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                   >
                     Síntomas Reportados
-                    <span className="bg-gray-200 text-gray-700 px-1.5 py-0.5 rounded-md text-[10px]">{pacienteSeleccionado.sintomas}</span>
+                    <span className="bg-gray-200 text-gray-700 px-1.5 py-0.5 rounded-md text-[10px]">0</span>
                   </button>
                   <button 
                     onClick={() => setActiveTab('progreso')}
@@ -138,39 +221,191 @@ export const FichasPacientes: React.FC = () => {
                 
                 {/* --- TAB 1: DATOS CLÍNICOS --- */}
                 {activeTab === 'datos' && (
-                  <div className="space-y-6 animate-in fade-in duration-300">
-                    <h4 className="font-semibold text-gray-900 mb-2 mt-2">Información Antropométrica</h4>
-                    
-                    <div className="grid grid-cols-3 gap-4 mb-4">
-                      <div className="p-4 bg-gray-50 rounded-lg border border-gray-100">
-                        <p className="text-sm text-gray-600 mb-1">Talla</p>
-                        <p className="text-2xl font-semibold text-gray-900">165 cm</p>
-                      </div>
-                      <div className="p-4 bg-gray-50 rounded-lg border border-gray-100">
-                        <p className="text-sm text-gray-600 mb-1">Peso Inicial</p>
-                        <p className="text-2xl font-semibold text-gray-900">78 kg</p>
-                      </div>
-                      <div className="p-4 bg-teal-50 rounded-lg border border-teal-200">
-                        <p className="text-sm text-teal-700 mb-1">Peso Actual</p>
-                        <p className="text-2xl font-semibold text-teal-800">{pacienteSeleccionado.peso}</p>
-                      </div>
+                  <div className="space-y-6 animate-in fade-in duration-300 mt-2">
+                    <div className="flex justify-between items-center mb-4">
+                      <h4 className="font-semibold text-gray-900">Historial de Evaluaciones</h4>
+                      <button 
+                        onClick={() => setShowNuevaEval(!showNuevaEval)}
+                        className="px-3 py-1.5 text-sm font-medium bg-teal-600 text-white rounded-md hover:bg-teal-700 transition-colors"
+                      >
+                        {showNuevaEval ? 'Cancelar' : '+ Nueva Evaluación'}
+                      </button>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="p-4 bg-gray-50 rounded-lg border border-gray-100">
-                        <p className="text-sm text-gray-600 mb-1">IMC Actual</p>
-                        <p className="text-xl font-semibold text-gray-900">26.4</p>
+                    {showNuevaEval && (
+                      <div className="p-5 border border-teal-200 bg-teal-50 rounded-xl mb-6 shadow-sm">
+                        <h5 className="font-semibold text-teal-900 mb-4">Registrar Nueva Evaluación</h5>
+                        <div className="grid grid-cols-2 gap-4 mb-4">
+                          <div>
+                            <label className="text-xs font-medium text-gray-700 mb-1 block">Peso Actual (kg)</label>
+                            <input 
+                              type="number" step="0.1"
+                              value={nuevaEvalForm.peso_actual || ''}
+                              onChange={e => setNuevaEvalForm({...nuevaEvalForm, peso_actual: parseFloat(e.target.value)})}
+                              className="w-full p-2 border border-gray-300 rounded-md text-sm outline-none focus:ring-2 focus:ring-teal-500" 
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs font-medium text-gray-700 mb-1 block">Talla (cm)</label>
+                            <input 
+                              type="number" step="0.1"
+                              value={nuevaEvalForm.talla_cm || ''}
+                              onChange={e => setNuevaEvalForm({...nuevaEvalForm, talla_cm: parseFloat(e.target.value)})}
+                              className="w-full p-2 border border-gray-300 rounded-md text-sm outline-none focus:ring-2 focus:ring-teal-500" 
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs font-medium text-gray-700 mb-1 block">Nivel de Actividad</label>
+                            <select 
+                              value={nuevaEvalForm.nivel_actividad_fisica}
+                              onChange={e => setNuevaEvalForm({...nuevaEvalForm, nivel_actividad_fisica: e.target.value})}
+                              className="w-full p-2 border border-gray-300 rounded-md text-sm outline-none focus:ring-2 focus:ring-teal-500"
+                            >
+                              <option value="sedentario">Sedentario</option>
+                              <option value="ligero">Ligero (1-3 días)</option>
+                              <option value="moderado">Moderado (3-5 días)</option>
+                              <option value="activo">Activo (6-7 días)</option>
+                              <option value="muy_activo">Muy Activo (2x día)</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="text-xs font-medium text-gray-700 mb-1 block">Objetivo</label>
+                            <select 
+                              value={nuevaEvalForm.objetivo}
+                              onChange={e => setNuevaEvalForm({...nuevaEvalForm, objetivo: e.target.value})}
+                              className="w-full p-2 border border-gray-300 rounded-md text-sm outline-none focus:ring-2 focus:ring-teal-500"
+                            >
+                              <option value="perdida_peso">Pérdida de Peso</option>
+                              <option value="mantencion">Mantención</option>
+                              <option value="ganancia_muscular">Ganancia Muscular</option>
+                            </select>
+                          </div>
+                        </div>
+                        <button 
+                          disabled={createEvaluacion.isPending}
+                          onClick={() => {
+                            if (pacienteSeleccionado?.id) {
+                              createEvaluacion.mutate({
+                                ...nuevaEvalForm,
+                                paciente_id: pacienteSeleccionado.id
+                              }, {
+                                onSuccess: () => {
+                                  setShowNuevaEval(false);
+                                }
+                              });
+                            }
+                          }}
+                          className="w-full py-2 bg-teal-600 hover:bg-teal-700 disabled:bg-teal-400 text-white font-medium rounded-md text-sm transition-colors"
+                        >
+                          {createEvaluacion.isPending ? 'Guardando...' : 'Guardar Evaluación'}
+                        </button>
                       </div>
-                      <div className="p-4 bg-gray-50 rounded-lg border border-gray-100">
-                        <p className="text-sm text-gray-600 mb-1">Cambio de Peso</p>
-                        <p className="text-xl font-semibold text-gray-900">-6.0 kg</p>
+                    )}
+
+                    {loadingEvals ? (
+                      <div className="flex justify-center p-8">
+                        <Loader2 className="w-8 h-8 animate-spin text-teal-600" />
                       </div>
+                    ) : evaluaciones?.length === 0 ? (
+                      <div className="text-center p-8 bg-gray-50 border border-dashed border-gray-300 rounded-xl">
+                        <p className="text-gray-500">No hay evaluaciones registradas para este paciente.</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {evaluaciones?.map(evaluacion => (
+                          <div key={evaluacion.id} className="p-4 border border-gray-200 bg-white rounded-xl shadow-sm">
+                            <div className="flex justify-between items-center mb-3 pb-3 border-b border-gray-100">
+                              <span className="font-medium text-gray-900">{new Date(evaluacion.fecha_evaluacion).toLocaleDateString()}</span>
+                              <span className="px-2 py-0.5 bg-blue-50 text-blue-700 text-xs font-medium border border-blue-100 rounded-md uppercase">
+                                {evaluacion.objetivo.replace('_', ' ')}
+                              </span>
+                            </div>
+                            
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                              <div>
+                                <p className="text-xs text-gray-500 mb-0.5">Peso</p>
+                                <p className="font-semibold text-gray-900">{evaluacion.peso_actual} kg</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-gray-500 mb-0.5">Talla</p>
+                                <p className="font-semibold text-gray-900">{evaluacion.talla_cm} cm</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-gray-500 mb-0.5">TMB Estimada</p>
+                                <p className="font-semibold text-teal-700">{evaluacion.tmb ? `${Math.round(evaluacion.tmb)} kcal` : 'N/A'}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-gray-500 mb-0.5">Gasto Total (GET)</p>
+                                <p className="font-semibold text-teal-700">{evaluacion.gasto_energetico_total ? `${Math.round(evaluacion.gasto_energetico_total)} kcal` : 'N/A'}</p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* --- TAB 1.5: PAUTAS ALIMENTARIAS --- */}
+                {activeTab === 'pautas' && (
+                  <div className="space-y-6 animate-in fade-in duration-300 mt-2">
+                    <div className="mb-4">
+                      <h4 className="font-semibold text-gray-900">Pautas Alimentarias</h4>
+                      <p className="text-sm text-gray-600">Historial de planes nutricionales asignados</p>
                     </div>
 
-                    <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                      <p className="text-sm font-medium text-blue-900 mb-1">Objetivo del Tratamiento</p>
-                      <p className="text-sm text-blue-800">Reducción de peso y mejora metabólica</p>
-                    </div>
+                    {loadingPautas ? (
+                      <div className="flex justify-center p-8">
+                        <Loader2 className="w-8 h-8 animate-spin text-teal-600" />
+                      </div>
+                    ) : pautasDelPaciente.length === 0 ? (
+                      <div className="text-center p-8 bg-gray-50 border border-dashed border-gray-300 rounded-xl">
+                        <p className="text-gray-500">No hay pautas guardadas para este paciente.</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {pautasDelPaciente.map((pauta: any) => (
+                          <div key={pauta.id} className="p-5 border border-gray-200 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow">
+                            <div className="flex justify-between items-center mb-4 pb-3 border-b border-gray-100">
+                              <div>
+                                <span className="font-semibold text-gray-900 text-lg">Pauta Nutricional</span>
+                                <p className="text-xs text-gray-500">Creada el {new Date(pauta.fecha_creacion).toLocaleDateString()}</p>
+                              </div>
+                              <span className="px-3 py-1 bg-teal-50 text-teal-700 text-xs font-bold border border-teal-100 rounded-full">
+                                {Math.round(pauta.calorias_totales)} kcal
+                              </span>
+                              <button 
+                                onClick={() => {
+                                  if (window.confirm('¿Estás seguro de que deseas eliminar esta pauta nutricional?')) {
+                                    deletePauta.mutate(pauta.id);
+                                  }
+                                }}
+                                disabled={deletePauta.isPending}
+                                className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors ml-2"
+                                title="Eliminar Pauta"
+                              >
+                                <Trash2 className="w-5 h-5" />
+                              </button>
+                            </div>
+                            
+                            <div className="grid grid-cols-3 gap-4 mb-4">
+                              <div className="bg-red-50 p-3 rounded-lg border border-red-100">
+                                <p className="text-xs font-medium text-red-800 mb-1">Proteínas</p>
+                                <p className="font-bold text-red-600">{Math.round(pauta.distribucion_macros?.proteina || 0)}%</p>
+                              </div>
+                              <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
+                                <p className="text-xs font-medium text-blue-800 mb-1">Carbohidratos</p>
+                                <p className="font-bold text-blue-600">{Math.round(pauta.distribucion_macros?.carbohidratos || 0)}%</p>
+                              </div>
+                              <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-100">
+                                <p className="text-xs font-medium text-yellow-800 mb-1">Grasas</p>
+                                <p className="font-bold text-yellow-600">{Math.round(pauta.distribucion_macros?.grasa || 0)}%</p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -275,7 +510,7 @@ export const FichasPacientes: React.FC = () => {
                         </div>
                         <div className="flex justify-between items-center pb-2 border-b border-gray-200">
                           <span className="text-sm text-gray-600">Síntomas reportados</span>
-                          <span className="text-sm font-semibold text-gray-900">{pacienteSeleccionado.sintomas}</span>
+                          <span className="text-sm font-semibold text-gray-900">0</span>
                         </div>
                         <div className="flex justify-between items-center pt-1">
                           <span className="text-sm text-gray-600">Estado del tratamiento</span>
@@ -287,6 +522,8 @@ export const FichasPacientes: React.FC = () => {
                 )}
 
               </div>
+              </>
+              )}
             </div>
           </div>
         </div>

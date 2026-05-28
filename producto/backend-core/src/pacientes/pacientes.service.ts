@@ -17,20 +17,25 @@ export class PacientesService {
     });
   }
 
-  findAll() {
-    return this.prisma.pacientes.findMany();
+  findAll(nutricionista_id: string) {
+    return this.prisma.pacientes.findMany({
+      where: { nutricionista_id },
+      orderBy: { fecha_creacion: 'desc' },
+    });
   }
 
-  async findOne(id: string) {
-    const paciente = await this.prisma.pacientes.findUnique({ where: { id } });
+  async findOne(id: string, nutricionista_id: string) {
+    const paciente = await this.prisma.pacientes.findFirst({ 
+      where: { id, nutricionista_id } 
+    });
     if (!paciente) {
-      throw new NotFoundException(`Paciente con ID ${id} no encontrado`);
+      throw new NotFoundException(`Paciente con ID ${id} no encontrado o no tienes permisos de acceso`);
     }
     return paciente;
   }
 
-  async update(id: string, updatePacienteDto: UpdatePacienteDto) {
-    await this.findOne(id); // Verificar existencia
+  async update(id: string, updatePacienteDto: UpdatePacienteDto, nutricionista_id: string) {
+    await this.findOne(id, nutricionista_id); // Verificar existencia y pertenencia
     const dataToUpdate: any = { ...updatePacienteDto };
     
     if (updatePacienteDto.fecha_nacimiento) {
@@ -43,8 +48,8 @@ export class PacientesService {
     });
   }
 
-  async remove(id: string) {
-    await this.findOne(id); // Verificar existencia
+  async remove(id: string, nutricionista_id: string) {
+    await this.findOne(id, nutricionista_id); // Verificar existencia y pertenencia
     return this.prisma.pacientes.delete({ where: { id } });
   }
 }

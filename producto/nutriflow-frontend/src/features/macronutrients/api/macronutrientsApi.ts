@@ -1,10 +1,9 @@
-// Simula la llamada al backend para guardar la distribución
+import { apiClient } from '../../../shared/api/apiClient';
+
 export const saveMacronutrients = async (macroData: any) => {
-    // Simulamos un retraso de red de 1 segundo
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            console.log('✅ Guardado en la Base de Datos:', macroData);
-            resolve({ success: true, data: macroData });
-        }, 1000);
-    });
+    // Aquí el backend actualmente procesa la distribución a través de /pautas
+    // Temporalmente lo conectaremos al dashboard o pautas dependiendo de la API existente
+    // Asumiendo que va al dashboard clinico:
+    const { data } = await apiClient.post('/dashboard-clinico/macronutrientes', macroData);
+    return { success: true, data };
 };

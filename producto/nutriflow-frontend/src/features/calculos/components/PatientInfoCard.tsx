@@ -34,13 +34,25 @@ export const PatientInfoCard = () => {
         }
     }, [activePatient]);
 
+    const calculateAge = (birthDateString: string | undefined | null) => {
+        if (!birthDateString) return 0;
+        const birthDate = new Date(birthDateString);
+        const today = new Date();
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const m = today.getMonth() - birthDate.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+        }
+        return age;
+    };
+
     const handlePatientChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const id = e.target.value;
         setSelectedId(id);
         const p = patients.find(p => p.id === id);
         if (p) {
             setNombre(p.nombre);
-            setEdad(p.edad || 0);
+            setEdad(calculateAge(p.fecha_nacimiento));
             setSexo(p.sexo_biologico || p.sexo || '');
             setTalla(p.talla_cm || p.altura || 0);
             setPeso(p.peso_kg || p.peso || 0);
@@ -82,7 +94,7 @@ export const PatientInfoCard = () => {
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Edad</label>
-                        <input type="number" className="w-full text-sm border-gray-300 rounded-md bg-white p-2 border focus:ring-teal-500 focus:border-teal-500" value={edad || ''} onChange={e => setEdad(Number(e.target.value))} />
+                        <input type="number" readOnly className="w-full text-sm border-gray-300 rounded-md bg-gray-100 text-gray-500 p-2 border cursor-not-allowed" value={edad || ''} />
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Sexo</label>

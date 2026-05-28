@@ -1,5 +1,8 @@
 import { Link } from '@tanstack/react-router';
 import { Calculator, PieChart, User, FileText, Grid3x3, BookOpen, Sparkles, Users, LogOut } from 'lucide-react'; // 🚨 Agregamos LogOut
+import { supabase } from '../../utils/supabase';
+import { useState } from 'react';
+import { createPortal } from 'react-dom';
 
 // 1. Catálogo centralizado de rutas
 const MENU_ITEMS = [
@@ -12,7 +15,16 @@ const MENU_ITEMS = [
     { path: '/pacientes', label: 'Fichas de Pacientes', icon: Users }
 ] as const;
 
+
+
 export const Sidebar = () => {
+    const [showLogoutModal, setShowLogoutModal] = useState(false);
+
+    const handleLogout = async () => {
+        await supabase.auth.signOut();
+        window.location.href = '/login';
+    };
+
     return (
         <aside className="w-64 bg-white border-r border-gray-200 flex flex-col shrink-0 h-screen sticky top-0">
             <div className="p-6 border-b border-gray-200">
@@ -60,11 +72,47 @@ export const Sidebar = () => {
                     </div>
                     
                     {/* Botón sutil de Cerrar Sesión que se pone rojo al pasar el mouse */}
-                    <button onClick={() => console.log('Cerrando sesión...')} className="p-1">
+                    <button 
+                        onClick={() => setShowLogoutModal(true)} 
+                        className="p-1"
+                        title="Cerrar sesión"
+                    >
                         <LogOut className="w-4 h-4 text-gray-400 group-hover:text-red-500 transition-colors" />
                     </button>
                 </div>
             </div>
+
+            {/* Modal de confirmación de cierre de sesión renderizado en un Portal para evitar bugs de z-index */}
+            {showLogoutModal && typeof document !== 'undefined' && createPortal(
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 animate-in zoom-in-95 duration-200">
+                        <div className="flex flex-col items-center text-center">
+                            <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mb-4 text-red-600">
+                                <LogOut className="w-6 h-6" />
+                            </div>
+                            <h3 className="text-lg font-bold text-gray-900 mb-2">¿Cerrar sesión?</h3>
+                            <p className="text-sm text-gray-500 mb-6">
+                                ¿Estás seguro de que deseas salir del sistema clínico? Tendrás que volver a ingresar tus credenciales.
+                            </p>
+                            <div className="flex gap-3 w-full">
+                                <button 
+                                    onClick={() => setShowLogoutModal(false)}
+                                    className="flex-1 py-2.5 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl transition-colors"
+                                >
+                                    No
+                                </button>
+                                <button 
+                                    onClick={handleLogout}
+                                    className="flex-1 py-2.5 px-4 bg-red-600 hover:bg-red-700 text-white font-medium rounded-xl transition-colors shadow-sm shadow-red-200"
+                                >
+                                    Sí
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
         </aside>
     );
 };

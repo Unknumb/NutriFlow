@@ -1,17 +1,33 @@
-import { useState, useMemo } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { useState, useMemo, useEffect } from 'react';
 import { useClinicalStore } from '../../../shared/store/useClinicalStore';
-import { saveMacronutrients } from '../api/macronutrientsApi';
+import { useCreatePauta } from '../../pautas/hooks/usePautas';
 
 export const useMacronutrientsSetup = () => {
     // 1. Estado Global (Zustand)
+    const activePatient = useClinicalStore((state) => state.activePatient);
     const pesoActivo = useClinicalStore((state) => state.pesoActivo);
     const tmbPromedio = useClinicalStore((state) => state.tmbPromedio);
 
-    // 2. Estado Local (Lo que el usuario edita antes de guardar)
-    const [protGkg, setProtGkg] = useState(2.0);
-    const [choPct, setChoPct] = useState(45);
-    const [fatPct, setFatPct] = useState(27);
+    // 2. Estado Local (Lo que el usuario edita antes de guardar) con Auto-guardado en LocalStorage
+    const [protGkg, setProtGkg] = useState(() => {
+        const saved = localStorage.getItem('nutriflow_macros_protGkg');
+        return saved ? parseFloat(saved) : 2.0;
+    });
+    const [choPct, setChoPct] = useState(() => {
+        const saved = localStorage.getItem('nutriflow_macros_choPct');
+        return saved ? parseFloat(saved) : 45;
+    });
+    const [fatPct, setFatPct] = useState(() => {
+        const saved = localStorage.getItem('nutriflow_macros_fatPct');
+        return saved ? parseFloat(saved) : 27;
+    });
+
+    // Efecto para auto-guardar en localStorage cada vez que el usuario mueve los sliders
+    useEffect(() => {
+        localStorage.setItem('nutriflow_macros_protGkg', protGkg.toString());
+        localStorage.setItem('nutriflow_macros_choPct', choPct.toString());
+        localStorage.setItem('nutriflow_macros_fatPct', fatPct.toString());
+    }, [protGkg, choPct, fatPct]);
 
     // 3. Motor de Cálculo Reactivo
     const totals = useMemo(() => {
@@ -29,24 +45,41 @@ export const useMacronutrientsSetup = () => {
         const fatG = fatKcal / 9;
 
         const totalGrams = protG + choG + fatG;
-        const totalPercent = Math.round(protPct) + choPct + fatPct;
+        const totalPercent = Math.round(protPct) + Math.round(choPct) + Math.round(fatPct);
 
         return {
             prot: { g: Math.round(protG), kcal: Math.round(protKcal), pct: Math.round(protPct) },
-            cho: { g: Math.round(choG), kcal: Math.round(choKcal), pct: choPct },
-            fat: { g: Math.round(fatG), kcal: Math.round(fatKcal), pct: fatPct },
+            cho: { g: Math.round(choG), kcal: Math.round(choKcal), pct: Math.round(choPct) },
+            fat: { g: Math.round(fatG), kcal: Math.round(fatKcal), pct: Math.round(fatPct) },
             summary: { grams: Math.round(totalGrams), percent: totalPercent }
         };
     }, [protGkg, choPct, fatPct, pesoActivo, tmbPromedio]);
 
-    // 4. Mutación de TanStack Query (Para Guardar)
-    const saveMutation = useMutation({
-        mutationFn: saveMacronutrients,
-        onSuccess: () => {
-            // Aquí podrías lanzar un Toast de éxito (ej. react-hot-toast)
-            alert("¡Distribución guardada con éxito!");
+    // 4. Mutación de TanStack Query (Para Guardar Pauta)
+    const createPauta = useCreatePauta();
+    const handleSave = () => {
+        if (!activePatient?.id) {
+            alert('Selecciona un paciente primero');
+            return;
         }
-    });
+        createPauta.mutate({
+            paciente_id: activePatient.id,
+            calorias_totales: totals.summary.percent === 100 ? totals.prot.kcal + totals.cho.kcal + totals.fat.kcal : tmbPromedio,
+            porcentajes_macros: {
+                proteina: totals.prot.pct,
+                grasa: totals.fat.pct,
+                carbohidratos: totals.cho.pct
+            },
+            tiempos_comida: {
+                // Mock temporal hasta que hagamos la vista de porciones por tiempo de comida
+                desayuno: { lacteos: 1, cereales: 1 }
+            }
+        }, {
+            onSuccess: () => {
+                alert("¡Pauta guardada con éxito!");
+            }
+        });
+    };
 
     const handleReset = () => {
         setProtGkg(1.5);
@@ -57,8 +90,8 @@ export const useMacronutrientsSetup = () => {
     return {
         context: { pesoActivo, tmbPromedio },
         inputs: { protGkg, choPct, fatPct },
-        actions: { setProtGkg, setChoPct, setFatPct, handleReset },
+        actions: { setProtGkg, setChoPct, setFatPct, handleReset, handleSave },
         totals,
-        saveMutation
+        isSaving: createPauta.isPending
     };
 };

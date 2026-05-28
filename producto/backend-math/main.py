@@ -32,11 +32,13 @@ app.add_middleware(
 # Manejador Global de Excepciones No Controladas (500)
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
+    # Logueamos el error internamente (solo visible en consola del servidor)
+    print(f"CRITICAL ERROR: {str(exc)}")
     return JSONResponse(
         status_code=500,
         content={
             "error": "Internal Server Error",
-            "detail": str(exc)
+            "message": "Se ha producido un error inesperado en el servidor."
         }
     )
 

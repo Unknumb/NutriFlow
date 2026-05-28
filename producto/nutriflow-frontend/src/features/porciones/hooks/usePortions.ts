@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { usePortionsStore } from '../store/usePortionsStore';
+import { useClinicalStore } from '../../../shared/store/useClinicalStore';
+import { usePaciente } from '../../pacientes/hooks/usePacientes';
 
 export const usePortions = () => {
     // 1. Estado de Navegación UI
@@ -8,8 +10,18 @@ export const usePortions = () => {
     // 2. Estado Global de Zustand
     const { targets, distributions, incrementPortion, decrementPortion } = usePortionsStore();
 
-    // 3. Datos del paciente (Pronto vendrá por TanStack Query)
-    const patientContext = { name: "Juan Pérez", age: 45, weight: 85, kcal: 1807 };
+    // 3. Datos del paciente conectado con backend
+    const { activePatient } = useClinicalStore();
+    const { data: pacienteData } = usePaciente(activePatient || '');
+
+    // Transformamos los datos del backend al formato que necesita la UI,
+    // o caemos en valores por defecto si no hay paciente seleccionado
+    const patientContext = { 
+        name: pacienteData?.nombre_completo || "Sin seleccionar", 
+        age: pacienteData?.edad || 0, 
+        weight: pacienteData?.peso_actual || 0, 
+        kcal: targets.kcal || 0 // Las kcal suelen venir del plan de dieta
+    };
 
     // 4. Cálculos Derivados (Totales y Balances)
     const getGroupTotal = (groupId: string) => {

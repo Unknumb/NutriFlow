@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useGenerarMenu } from '../../menus/hooks/useMenus';
+import { usePortionsStore } from '../../porciones/store/usePortionsStore';
 
 // --- NUEVO: Datos para la pestaña de Biblioteca ---
 const BIBLIOTECA_RECETAS = [
@@ -33,6 +35,18 @@ export const GeneradorPreparaciones: React.FC = () => {
   const [activeTab, setActiveTab] = useState('generador');
   const [alimentosRechazados, setAlimentosRechazados] = useState('');
   const [preferencias, setPreferencias] = useState('');
+
+  const { distributions } = usePortionsStore();
+  const { mutate, data: menusGenerados, isPending } = useGenerarMenu();
+
+  const handleGenerar = () => {
+    // Tomamos las porciones del almuerzo para generar (podría ser dinámico por tab)
+    const porcionesAlmuerzo = distributions.almuerzo || {};
+    mutate({
+      porciones_disponibles: porcionesAlmuerzo,
+      alimentos_rechazados: alimentosRechazados.split(',').map(s => s.trim()).filter(Boolean)
+    });
+  };
 
   const restricciones = ['Vegetariano', 'Vegano', 'Sin gluten', 'Sin lactosa', 'Sin mariscos', 'Sin frutos secos', 'Sin huevo', 'Sin cerdo', 'Bajo en sodio'];
 
@@ -186,37 +200,71 @@ export const GeneradorPreparaciones: React.FC = () => {
                 </div>
 
                 {/* Botón Generar */}
-                <button className="inline-flex items-center justify-center rounded-md text-sm font-medium text-white h-9 px-4 py-2 w-full bg-teal-600 hover:bg-teal-700 gap-2 shadow-sm transition-all">
+                <button 
+                  onClick={handleGenerar}
+                  disabled={isPending}
+                  className="inline-flex items-center justify-center rounded-md text-sm font-medium text-white h-9 px-4 py-2 w-full bg-teal-600 hover:bg-teal-700 disabled:opacity-50 gap-2 shadow-sm transition-all"
+                >
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"></path><path d="M20 3v4"></path><path d="M22 5h-4"></path><path d="M4 17v2"></path><path d="M5 18H3"></path></svg>
-                  Generar Sugerencias
+                  {isPending ? 'Generando...' : 'Generar Sugerencias'}
                 </button>
               </div>
             </div>
 
             {/* Panel Derecho (Empty State / Resultados) */}
             <div className="flex-1 overflow-y-auto p-6 bg-white">
-              <div className="flex flex-col items-center justify-center h-full text-center py-20">
-                <div className="w-20 h-20 rounded-2xl bg-teal-50 flex items-center justify-center mb-4">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-teal-400"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"></path><path d="M20 3v4"></path><path d="M22 5h-4"></path><path d="M4 17v2"></path><path d="M5 18H3"></path></svg>
+              {isPending ? (
+                <div className="flex items-center justify-center h-full text-teal-600 font-medium">
+                  Analizando y generando sugerencias con el motor matemático...
                 </div>
-                <h3 className="text-lg font-semibold text-gray-700 mb-2">Configura la distribución del plan</h3>
-                <p className="text-sm text-gray-500 max-w-sm">Ingresa las porciones por grupo de alimento para cada tiempo de comida y el sistema sugerirá preparaciones compatibles automáticamente.</p>
-                
-                <div className="mt-8 grid grid-cols-3 gap-4 text-left max-w-lg">
-                  <div className="bg-gray-50 rounded-xl p-4 text-center border border-gray-100">
-                    <div className="text-2xl mb-2">1️⃣</div>
-                    <p className="text-xs text-gray-600 font-medium">Define porciones por tiempo de comida</p>
+              ) : menusGenerados ? (
+                <div>
+                  <h3 className="text-lg font-semibold mb-4 text-teal-900">Sugerencias Exactas</h3>
+                  {menusGenerados.matches_exactos.length === 0 && <p className="text-gray-500 text-sm mb-4">No se encontraron combinaciones exactas.</p>}
+                  <div className="space-y-3 mb-8">
+                    {menusGenerados.matches_exactos.map(m => (
+                       <div key={m.id} className="border p-4 rounded-xl bg-teal-50 border-teal-100 shadow-sm">
+                          <h4 className="font-bold text-teal-900">{m.nombre}</h4>
+                          <p className="text-xs text-teal-700 mt-1">Ingredientes: {m.ingredientes.join(', ')}</p>
+                       </div>
+                    ))}
                   </div>
-                  <div className="bg-gray-50 rounded-xl p-4 text-center border border-gray-100">
-                    <div className="text-2xl mb-2">2️⃣</div>
-                    <p className="text-xs text-gray-600 font-medium">Agrega preferencias del paciente</p>
-                  </div>
-                  <div className="bg-gray-50 rounded-xl p-4 text-center border border-gray-100">
-                    <div className="text-2xl mb-2">3️⃣</div>
-                    <p className="text-xs text-gray-600 font-medium">Genera sugerencias automáticamente</p>
+
+                  <h3 className="text-lg font-semibold mb-4 text-amber-900">Sugerencias Parciales</h3>
+                  {menusGenerados.matches_parciales.length === 0 && <p className="text-gray-500 text-sm">No se encontraron combinaciones parciales.</p>}
+                  <div className="space-y-3">
+                    {menusGenerados.matches_parciales.map(m => (
+                       <div key={m.id} className="border p-4 rounded-xl bg-amber-50 border-amber-100 shadow-sm">
+                          <h4 className="font-bold text-amber-900">{m.nombre}</h4>
+                          <p className="text-xs text-amber-700 mt-1">Ingredientes: {m.ingredientes.join(', ')}</p>
+                       </div>
+                    ))}
                   </div>
                 </div>
-              </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full text-center py-20">
+                  <div className="w-20 h-20 rounded-2xl bg-teal-50 flex items-center justify-center mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-teal-400"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"></path><path d="M20 3v4"></path><path d="M22 5h-4"></path><path d="M4 17v2"></path><path d="M5 18H3"></path></svg>
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-700 mb-2">Configura la distribución del plan</h3>
+                  <p className="text-sm text-gray-500 max-w-sm">Ingresa las porciones por grupo de alimento para cada tiempo de comida y el sistema sugerirá preparaciones compatibles automáticamente usando la API.</p>
+                  
+                  <div className="mt-8 grid grid-cols-3 gap-4 text-left max-w-lg">
+                    <div className="bg-gray-50 rounded-xl p-4 text-center border border-gray-100">
+                      <div className="text-2xl mb-2">1️⃣</div>
+                      <p className="text-xs text-gray-600 font-medium">Define porciones por tiempo de comida</p>
+                    </div>
+                    <div className="bg-gray-50 rounded-xl p-4 text-center border border-gray-100">
+                      <div className="text-2xl mb-2">2️⃣</div>
+                      <p className="text-xs text-gray-600 font-medium">Agrega preferencias del paciente</p>
+                    </div>
+                    <div className="bg-gray-50 rounded-xl p-4 text-center border border-gray-100">
+                      <div className="text-2xl mb-2">3️⃣</div>
+                      <p className="text-xs text-gray-600 font-medium">Genera sugerencias dinámicamente</p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}

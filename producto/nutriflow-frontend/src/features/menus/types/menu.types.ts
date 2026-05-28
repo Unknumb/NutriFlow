@@ -3,14 +3,14 @@ export interface GenerarMenuPayload {
   alimentos_rechazados?: string[];
 }
 
+export interface RecetaOut {
+  id: number;
+  nombre: string;
+  ingredientes: string[];
+  porciones_requeridas: Record<string, number>;
+}
+
 export interface GenerarMenuResponse {
-  menus: Array<{
-    tipo_menu: string;
-    alimentos: Array<{
-      alimento: string;
-      porciones_usadas: number;
-      porcion_casera_sugerida: string;
-      grupo: string;
-    }>;
-  }>;
+  matches_exactos: RecetaOut[];
+  matches_parciales: RecetaOut[];
 }

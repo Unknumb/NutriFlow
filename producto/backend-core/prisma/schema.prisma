@@ -529,7 +529,7 @@ model consultas {
   notas_evolucion String?
   antropometria   antropometria[]
   pacientes       pacientes       @relation(fields: [paciente_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  pautas          pautas[]
+  pautas          Pauta[]
 
   @@index([paciente_id], map: "idx_consultas_paciente")
   @@schema("public")
@@ -543,7 +543,7 @@ model detalle_pauta {
   cantidad_g  Decimal   @db.Decimal(6, 2)
   momento_dia String?
   alimentos   alimentos @relation(fields: [alimento_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  pautas      pautas    @relation(fields: [pauta_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  pauta       Pauta     @relation(fields: [pauta_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([pauta_id], map: "idx_detalle_pauta_pauta")
   @@schema("public")
@@ -570,20 +570,6 @@ model pacientes {
   @@schema("public")
 }
 
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
-model pautas {
-  id                   String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  consulta_id          String          @db.Uuid
-  objetivo_calorico    Int?
-  descripcion_general  String?
-  estructura_grid_json Json?           @default("{}")
-  fecha_creacion       DateTime?       @default(now()) @db.Timestamptz(6)
-  detalle_pauta        detalle_pauta[]
-  consultas            consultas       @relation(fields: [consulta_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-
-  @@index([consulta_id], map: "idx_pautas_consulta")
-  @@schema("public")
-}
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model perfiles_nutricionistas {
@@ -670,17 +656,24 @@ enum one_time_token_type {
 }
 
 model Pauta {
-  id                  String    @id @default(uuid()) @db.Uuid
-  paciente_id         String    @db.Uuid
-  nutricionista_id    String    @db.Uuid
-  fecha_creacion      DateTime  @default(now()) @db.Timestamptz(6)
-  calorias_totales    Float
-  distribucion_macros Json
-  tiempos_comida      Json
+  id                   String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  paciente_id          String          @db.Uuid
+  nutricionista_id     String          @db.Uuid
+  consulta_id          String?         @db.Uuid
+  calorias_totales     Float
+  distribucion_macros  Json
+  tiempos_comida       Json
+  descripcion_general  String?
+  estructura_grid_json Json?           @default("{}")
+  fecha_creacion       DateTime?       @default(now()) @db.Timestamptz(6)
 
-  // Relación con el paciente
-  paciente            pacientes @relation(fields: [paciente_id], references: [id], onDelete: Cascade)
+  // Relaciones
+  paciente             pacientes       @relation(fields: [paciente_id], references: [id], onDelete: Cascade)
+  consulta             consultas?      @relation(fields: [consulta_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  detalle_pauta        detalle_pauta[]
 
+  @@index([consulta_id], map: "idx_pautas_consulta")
+  @@map("pautas")
   @@schema("public")
 }
 

@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@n
 import { PautasService } from './pautas.service';
 import { CreatePautaDto } from './dto/create-pauta.dto';
 import { UpdatePautaDto } from './dto/update-pauta.dto';
+import { GuardarDistribucionDto } from './dto/guardar-distribucion.dto';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -37,8 +38,12 @@ export class PautasController {
 
   @Post('guardar-distribucion')
   @ApiOperation({ summary: 'Guardar la distribución de porciones' })
-  guardarDistribucion(@Body() payload: any) {
-    return { success: true, message: 'Distribución guardada correctamente' };
+  async guardarDistribucion(
+    @Body() payload: GuardarDistribucionDto,
+    @CurrentUser() user: any
+  ) {
+    const pauta = await this.pautasService.guardarDistribucion(payload, user.userId);
+    return { success: true, message: 'Distribución guardada correctamente', pautaId: pauta.id };
   }
 
   @Get()

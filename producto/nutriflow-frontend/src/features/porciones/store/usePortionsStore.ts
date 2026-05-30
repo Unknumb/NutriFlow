@@ -1,51 +1,54 @@
 import { create } from 'zustand';
-import { MEALS, NUTRITION_GROUPS } from '../constants';
+import { devtools } from 'zustand/middleware';
 
 export interface PortionsState {
     targets: Record<string, number>;
     distributions: Record<string, Record<string, number>>;
     activeMeals: string[];
     activeGroups: string[];
+}
+
+interface PortionsStore extends PortionsState {
     incrementPortion: (mealId: string, groupId: string) => void;
     decrementPortion: (mealId: string, groupId: string) => void;
-    setInitialPortions: (data: { targets?: Record<string, number>, distributions?: Record<string, Record<string, number>>, activeMeals?: string[], activeGroups?: string[] }) => void;
+    setInitialPortions: (data: Partial<PortionsState>) => void;
     toggleMeal: (mealId: string) => void;
     toggleGroup: (groupId: string) => void;
     resetDistributions: () => void;
-    hideEmpty: boolean;
-    toggleHideEmpty: () => void;
 }
 
-export const usePortionsStore = create<PortionsState>((set) => ({
-    targets: {},
-    distributions: {},
-    activeMeals: [],
-    activeGroups: [],
-    hideEmpty: false,
+export const usePortionsStore = create<PortionsStore>()(
+    devtools(
+        (set) => ({
+            targets: {},
+            distributions: {},
+            activeMeals: [],
+            activeGroups: [],
     
-    setInitialPortions: (data) => set({
-        targets: data.targets || {},
-        distributions: data.distributions || {},
-        // Si no vienen grupos activos, usamos los valores por defecto
-        activeMeals: data.activeMeals?.length ? data.activeMeals : MEALS.map(m => m.id),
-        activeGroups: data.activeGroups?.length ? data.activeGroups : NUTRITION_GROUPS.map(g => g.id)
-    }),
+            setInitialPortions: (data) => set({
+                targets: data.targets || {},
+                distributions: data.distributions || {},
+                activeMeals: data.activeMeals || [],
+                activeGroups: data.activeGroups || []
+            }),
 
-    toggleMeal: (mealId) => set((state) => ({
-        activeMeals: state.activeMeals.includes(mealId) 
-            ? state.activeMeals.filter(id => id !== mealId)
-            : [...state.activeMeals, mealId]
-    })),
+            toggleMeal: (mealId) => set((state) => ({
+                activeMeals: state.activeMeals.includes(mealId) 
+                    ? state.activeMeals.filter(id => id !== mealId)
+                    : [...state.activeMeals, mealId]
+            })),
 
-    toggleGroup: (groupId) => set((state) => ({
-        activeGroups: state.activeGroups.includes(groupId)
-            ? state.activeGroups.filter(id => id !== groupId)
-            : [...state.activeGroups, groupId]
-    })),
+            toggleGroup: (groupId) => set((state) => ({
+                activeGroups: state.activeGroups.includes(groupId)
+                    ? state.activeGroups.filter(id => id !== groupId)
+                    : [...state.activeGroups, groupId]
+            })),
 
-    toggleHideEmpty: () => set((state) => ({ hideEmpty: !state.hideEmpty })),
-
-    resetDistributions: () => set({ distributions: {} }),
+            resetDistributions: () => set({ 
+                distributions: {},
+                activeMeals: [],
+                activeGroups: []
+            }),
 
     incrementPortion: (mealId, groupId) => set((state) => ({
         distributions: {
@@ -71,4 +74,5 @@ export const usePortionsStore = create<PortionsState>((set) => ({
             }
         };
     })
-}));
+    }), { name: 'portions-store' })
+);

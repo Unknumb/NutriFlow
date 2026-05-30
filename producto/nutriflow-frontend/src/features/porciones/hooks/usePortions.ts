@@ -10,7 +10,7 @@ export const usePortions = () => {
     const [activeTab, setActiveTab] = useState<'tabla' | 'pauta' | 'opciones' | 'pdf'>('tabla');
 
     // 2. Estado Global de Zustand
-    const { targets, distributions, activeMeals, activeGroups, incrementPortion, decrementPortion, setInitialPortions, hideEmpty, toggleMeal, toggleGroup, resetDistributions, toggleHideEmpty } = usePortionsStore();
+    const { targets, distributions, activeMeals, activeGroups, incrementPortion, decrementPortion, setInitialPortions, toggleMeal, toggleGroup, resetDistributions } = usePortionsStore();
 
     // 3. Datos del paciente conectado con backend
     const { activePatient } = useClinicalStore();
@@ -41,7 +41,9 @@ export const usePortions = () => {
         if (armadorData) {
             setInitialPortions({
                 targets: armadorData.targets,
-                distributions: armadorData.distributions
+                distributions: armadorData.distributions,
+                activeMeals: armadorData.activeMeals,
+                activeGroups: armadorData.activeGroups
             });
         }
     }, [armadorData, setInitialPortions]);
@@ -53,7 +55,9 @@ export const usePortions = () => {
             const payload = {
                 paciente_id: activePatient.id,
                 distributions,
-                targets
+                targets,
+                activeMeals,
+                activeGroups
             };
             // POST/PUT a NestJS para guardar el JSON en base de datos
             const { data } = await apiClient.post('/pautas/guardar-distribucion', payload);
@@ -75,7 +79,7 @@ export const usePortions = () => {
     };
 
     return {
-        state: { activeTab, patientContext, targets, distributions, activeMeals, activeGroups, hideEmpty, isLoadingArmador, isSaving: savePortionsMutation.isPending },
+        state: { activeTab, patientContext, targets, distributions, activeMeals, activeGroups, isLoadingArmador, isSaving: savePortionsMutation.isPending },
         actions: { 
             setActiveTab, 
             incrementPortion, 
@@ -83,7 +87,6 @@ export const usePortions = () => {
             toggleMeal,
             toggleGroup,
             resetDistributions,
-            toggleHideEmpty,
             savePortions: () => savePortionsMutation.mutate()
         },
         computed: { getGroupTotal, getGroupBalance }

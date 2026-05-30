@@ -9,26 +9,18 @@ import { NUTRITION_GROUPS, MEALS } from '../constants';
 
 export const PortionsTable = () => {
     const { state, actions, computed } = usePortions();
-    const { targets, distributions, activeMeals, activeGroups, hideEmpty } = state;
+    const { targets, distributions, activeMeals, activeGroups } = state;
     const { incrementPortion, decrementPortion } = actions;
     const { getGroupTotal, getGroupBalance } = computed;
 
     const [activeDragGroupId, setActiveDragGroupId] = useState<string | null>(null);
 
-    // Filtrar Grupos: Solo activos + Si hideEmpty es true, ocultar los que tienen total 0 y no están siendo arrastrados
-    const baseVisibleGroups = NUTRITION_GROUPS.filter(g => activeGroups.includes(g.id));
-    const visibleGroups = hideEmpty 
-        ? baseVisibleGroups.filter(g => getGroupTotal(g.id) > 0 || g.id === activeDragGroupId)
-        : baseVisibleGroups;
+    // Filtrar Grupos: Solo activos
+    const visibleGroups = NUTRITION_GROUPS.filter(g => activeGroups.includes(g.id));
 
-    // Filtrar Comidas: Solo activas + Si hideEmpty es true, ocultar las que no tienen ninguna porción asignada
+    // Filtrar Comidas: Solo activas
     const visibleMeals = activeMeals
-        .map(mealId => MEALS.find(m => m.id === mealId) || { id: mealId, time: '--:--', name: mealId.charAt(0).toUpperCase() + mealId.slice(1).replace('_', ' ') })
-        .filter(meal => {
-            if (!hideEmpty) return true;
-            const hasPortions = visibleGroups.some(g => (distributions[meal.id]?.[g.id] || 0) > 0);
-            return hasPortions;
-        });
+        .map(mealId => MEALS.find(m => m.id === mealId) || { id: mealId, time: '--:--', name: mealId.charAt(0).toUpperCase() + mealId.slice(1).replace('_', ' ') });
 
     const sensors = useSensors(
         useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),

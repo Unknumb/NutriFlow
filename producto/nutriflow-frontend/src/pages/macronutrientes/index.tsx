@@ -26,7 +26,7 @@ export const MacronutrientesPage = () => {
                     disabled={setup.isSaving}
                     className="px-6 py-2.5 bg-teal-600 hover:bg-teal-700 disabled:bg-teal-400 text-white font-medium rounded-lg shadow-sm transition-colors"
                 >
-                    {setup.isSaving ? 'Guardando...' : 'Guardar Pauta'}
+                    {setup.isSaving ? 'Guardando...' : 'Guardar Planificación'}
                 </button>
             </div>
 

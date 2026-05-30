@@ -24,16 +24,8 @@ export class PautasController {
 
   @Get('armador/:id')
   @ApiOperation({ summary: 'Obtener distribución calculada por el motor matemático' })
-  getArmadorMock(@Param('id') id: string) {
-    return {
-      targets: { cereales: 5, frutas: 4, carnes: 6, lacteos: 2, arg: 2, galleton: 1 },
-      distributions: {
-        desayuno: { lacteos: 1, cereales: 1 },
-        almuerzo: { carnes: 2, cereales: 2, arg: 1 },
-        once: { lacteos: 1, cereales: 2, carnes: 1 },
-        cena: { carnes: 3, frutas: 2, arg: 1 },
-      }
-    };
+  async getArmadorMock(@Param('id') id: string, @CurrentUser() user: any) {
+    return this.pautasService.obtenerDistribucionPorPaciente(id, user.userId);
   }
 
   @Post('guardar-distribucion')

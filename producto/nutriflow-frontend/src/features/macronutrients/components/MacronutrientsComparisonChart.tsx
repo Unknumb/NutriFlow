@@ -11,7 +11,7 @@ export const MacronutrientsComparisonChart = ({ barData }: { barData: any[] }) =
                 </h4>
             </div>
             <div className="px-6 pb-6">
-                <div className="w-full min-h-[300px]">
+                <div className="w-full h-[300px]">
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={barData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
                             <XAxis

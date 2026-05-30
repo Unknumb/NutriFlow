@@ -84,6 +84,30 @@ export class PautasService {
     }
   }
 
+  async obtenerDistribucionPorPaciente(paciente_id: string, nutricionista_id: string) {
+    const pauta = await this.prisma.pauta.findFirst({
+      where: { paciente_id, nutricionista_id },
+      orderBy: { fecha_creacion: 'desc' },
+    });
+
+    if (pauta && pauta.estructura_grid_json && Object.keys(pauta.estructura_grid_json).length > 0) {
+      return pauta.estructura_grid_json;
+    }
+
+    // Default mock si no hay guardado
+    return {
+      targets: { cereales: 5, frutas: 4, carnes: 6, lacteos: 2, arg: 2, galleton: 1 },
+      distributions: {
+        desayuno: { lacteos: 1, cereales: 1 },
+        almuerzo: { carnes: 2, cereales: 2, arg: 1 },
+        once: { lacteos: 1, cereales: 2, carnes: 1 },
+        cena: { carnes: 3, frutas: 2, arg: 1 },
+      },
+      activeMeals: ['desayuno', 'almuerzo', 'once', 'cena'],
+      activeGroups: ['cereales', 'frutas', 'carnes', 'lacteos', 'arg', 'galleton']
+    };
+  }
+
   findAllByNutricionista(nutricionista_id: string) {
     return this.prisma.pauta.findMany({
       where: { nutricionista_id },

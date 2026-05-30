@@ -6,7 +6,7 @@ import { Loader2, Star } from 'lucide-react';
 import type { Paciente } from '../types/paciente.types';
 import { useEvaluacionesByPaciente, useCreateEvaluacion } from '../../evaluaciones/hooks/useEvaluaciones';
 import type { CreateEvaluacionPayload } from '../../evaluaciones/types/evaluacion.types';
-import { usePautas, useDeletePauta } from '../../pautas/hooks/usePautas';
+import { usePlanificaciones, useDeletePlanificacion } from '../../planificaciones/hooks/usePlanificaciones';
 import { Trash2 } from 'lucide-react';
 
 const calculateAge = (birthDateString: string) => {
@@ -37,9 +37,9 @@ export const FichasPacientes: React.FC = () => {
   const { data: evaluaciones, isLoading: loadingEvals } = useEvaluacionesByPaciente(selectedPatientId || '');
   const createEvaluacion = useCreateEvaluacion();
   
-  const { data: pautasAll, isLoading: loadingPautas } = usePautas();
-  const pautasDelPaciente = pautasAll?.filter(p => p.paciente_id === selectedPatientId) || [];
-  const deletePauta = useDeletePauta(selectedPatientId || '');
+  const { data: planificacionesAll, isLoading: loadingPlanificaciones } = usePlanificaciones();
+  const planificacionesDelPaciente = planificacionesAll?.filter((p: any) => p.paciente_id === selectedPatientId) || [];
+  const deletePlanificacion = useDeletePlanificacion();
 
   // Seleccionar localmente el primer paciente o el activo si existe
   useEffect(() => {
@@ -217,10 +217,10 @@ export const FichasPacientes: React.FC = () => {
                     Datos Clínicos
                   </button>
                   <button 
-                    onClick={() => setActiveTab('pautas')}
-                    className={`py-1.5 px-3 text-sm font-medium rounded-lg transition-all ${activeTab === 'pautas' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                    onClick={() => setActiveTab('planificaciones')}
+                    className={`py-1.5 px-3 text-sm font-medium rounded-lg transition-all ${activeTab === 'planificaciones' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                   >
-                    Pautas Alimentarias
+                    Planificaciones
                   </button>
                   <button 
                     onClick={() => setActiveTab('sintomas')}
@@ -368,43 +368,43 @@ export const FichasPacientes: React.FC = () => {
                   </div>
                 )}
 
-                {/* --- TAB 1.5: PAUTAS ALIMENTARIAS --- */}
-                {activeTab === 'pautas' && (
+                {/* --- TAB 1.5: PLANIFICACIONES --- */}
+                {activeTab === 'planificaciones' && (
                   <div className="space-y-6 animate-in fade-in duration-300 mt-2">
                     <div className="mb-4">
-                      <h4 className="font-semibold text-gray-900">Pautas Alimentarias</h4>
-                      <p className="text-sm text-gray-600">Historial de planes nutricionales asignados</p>
+                      <h4 className="font-semibold text-gray-900">Planificaciones</h4>
+                      <p className="text-sm text-gray-600">Historial de planificaciones asignadas</p>
                     </div>
 
-                    {loadingPautas ? (
+                    {loadingPlanificaciones ? (
                       <div className="flex justify-center p-8">
                         <Loader2 className="w-8 h-8 animate-spin text-teal-600" />
                       </div>
-                    ) : pautasDelPaciente.length === 0 ? (
+                    ) : planificacionesDelPaciente.length === 0 ? (
                       <div className="text-center p-8 bg-gray-50 border border-dashed border-gray-300 rounded-xl">
-                        <p className="text-gray-500">No hay pautas guardadas para este paciente.</p>
+                        <p className="text-gray-500">No hay planificaciones guardadas para este paciente.</p>
                       </div>
                     ) : (
                       <div className="space-y-4">
-                        {pautasDelPaciente.map((pauta: any) => (
-                          <div key={pauta.id} className="p-5 border border-gray-200 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow">
+                        {planificacionesDelPaciente.map((planificacion: any) => (
+                          <div key={planificacion.id} className="p-5 border border-gray-200 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow">
                             <div className="flex justify-between items-center mb-4 pb-3 border-b border-gray-100">
                               <div>
-                                <span className="font-semibold text-gray-900 text-lg">Pauta Nutricional</span>
-                                <p className="text-xs text-gray-500">Creada el {new Date(pauta.fecha_creacion).toLocaleDateString()}</p>
+                                <span className="font-semibold text-gray-900 text-lg">Planificación Nutricional</span>
+                                <p className="text-xs text-gray-500">Creada el {new Date(planificacion.fecha_creacion).toLocaleDateString()}</p>
                               </div>
                               <span className="px-3 py-1 bg-teal-50 text-teal-700 text-xs font-bold border border-teal-100 rounded-full">
-                                {Math.round(pauta.calorias_totales)} kcal
+                                {Math.round(planificacion.calorias_totales)} kcal
                               </span>
                               <button 
                                 onClick={() => {
-                                  if (window.confirm('¿Estás seguro de que deseas eliminar esta pauta nutricional?')) {
-                                    deletePauta.mutate(pauta.id);
+                                  if (window.confirm('¿Estás seguro de que deseas eliminar esta planificación nutricional?')) {
+                                    deletePlanificacion.mutate(planificacion.id);
                                   }
                                 }}
-                                disabled={deletePauta.isPending}
+                                disabled={deletePlanificacion.isPending}
                                 className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors ml-2"
-                                title="Eliminar Pauta"
+                                title="Eliminar Planificación"
                               >
                                 <Trash2 className="w-5 h-5" />
                               </button>
@@ -413,15 +413,15 @@ export const FichasPacientes: React.FC = () => {
                             <div className="grid grid-cols-3 gap-4 mb-4">
                               <div className="bg-red-50 p-3 rounded-lg border border-red-100">
                                 <p className="text-xs font-medium text-red-800 mb-1">Proteínas</p>
-                                <p className="font-bold text-red-600">{Math.round(pauta.distribucion_macros?.proteina || 0)}%</p>
+                                <p className="font-bold text-red-600">{Math.round(planificacion.distribucion_macros?.proteina || 0)}%</p>
                               </div>
                               <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
                                 <p className="text-xs font-medium text-blue-800 mb-1">Carbohidratos</p>
-                                <p className="font-bold text-blue-600">{Math.round(pauta.distribucion_macros?.carbohidratos || 0)}%</p>
+                                <p className="font-bold text-blue-600">{Math.round(planificacion.distribucion_macros?.carbohidratos || 0)}%</p>
                               </div>
                               <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-100">
                                 <p className="text-xs font-medium text-yellow-800 mb-1">Grasas</p>
-                                <p className="font-bold text-yellow-600">{Math.round(pauta.distribucion_macros?.grasa || 0)}%</p>
+                                <p className="font-bold text-yellow-600">{Math.round(planificacion.distribucion_macros?.grasa || 0)}%</p>
                               </div>
                             </div>
                           </div>

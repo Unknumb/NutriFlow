@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../../shared/api/apiClient';
 import { usePortionsStore } from '../store/usePortionsStore';
 import { useClinicalStore } from '../../../shared/store/useClinicalStore';
@@ -48,6 +48,8 @@ export const usePortions = () => {
         }
     }, [armadorData, setInitialPortions]);
 
+    const queryClient = useQueryClient();
+
     // 6. Mutación para guardar la pizarra actual
     const savePortionsMutation = useMutation({
         mutationFn: async () => {
@@ -62,6 +64,9 @@ export const usePortions = () => {
             // POST/PUT a NestJS para guardar el JSON en base de datos
             const { data } = await apiClient.post('/pautas/guardar-distribucion', payload);
             return data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['portions-armador', activePatient?.id] });
         }
     });
 

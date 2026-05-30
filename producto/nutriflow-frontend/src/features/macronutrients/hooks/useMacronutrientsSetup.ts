@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useClinicalStore } from '../../../shared/store/useClinicalStore';
-import { useCreatePauta } from '../../pautas/hooks/usePautas';
+import { useCreatePlanificacion } from '../../planificaciones/hooks/usePlanificaciones';
 
 export const useMacronutrientsSetup = () => {
     // 1. Estado Global (Zustand)
@@ -55,28 +55,24 @@ export const useMacronutrientsSetup = () => {
         };
     }, [protGkg, choPct, fatPct, pesoActivo, tmbPromedio]);
 
-    // 4. Mutación de TanStack Query (Para Guardar Pauta)
-    const createPauta = useCreatePauta();
+    // 4. Mutación de TanStack Query (Para Guardar Planificacion)
+    const createPlanificacion = useCreatePlanificacion();
     const handleSave = () => {
         if (!activePatient?.id) {
             alert('Selecciona un paciente primero');
             return;
         }
-        createPauta.mutate({
+        createPlanificacion.mutate({
             paciente_id: activePatient.id,
             calorias_totales: totals.summary.percent === 100 ? totals.prot.kcal + totals.cho.kcal + totals.fat.kcal : tmbPromedio,
             porcentajes_macros: {
                 proteina: totals.prot.pct,
                 grasa: totals.fat.pct,
                 carbohidratos: totals.cho.pct
-            },
-            tiempos_comida: {
-                // Mock temporal hasta que hagamos la vista de porciones por tiempo de comida
-                desayuno: { lacteos: 1, cereales: 1 }
             }
         }, {
             onSuccess: () => {
-                alert("¡Pauta guardada con éxito!");
+                alert("¡Planificación guardada con éxito!");
             }
         });
     };
@@ -92,6 +88,6 @@ export const useMacronutrientsSetup = () => {
         inputs: { protGkg, choPct, fatPct },
         actions: { setProtGkg, setChoPct, setFatPct, handleReset, handleSave },
         totals,
-        isSaving: createPauta.isPending
+        isSaving: createPlanificacion.isPending
     };
 };

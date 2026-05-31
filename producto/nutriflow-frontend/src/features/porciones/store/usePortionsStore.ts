@@ -1,25 +1,36 @@
 import { create } from 'zustand';
+import { FoodGroupDef } from '../../diet-plan/constants/foodGroups';
+
+export interface CustomFoodDef extends FoodGroupDef {
+    emoji: string;
+    label: string;
+    headerBg: string;
+    targetBg: string;
+    cellBg: string;
+    textBtn: string;
+}
 
 interface PortionsState {
     targets: Record<string, number>;
     distributions: Record<string, Record<string, number>>;
+    customFoods: CustomFoodDef[];
     incrementPortion: (mealId: string, groupId: string) => void;
     decrementPortion: (mealId: string, groupId: string) => void;
+    incrementTarget: (groupId: string) => void;
+    decrementTarget: (groupId: string) => void;
+    resetPlan: () => void;
+    setTargets: (targets: Record<string, number>) => void;
+    addCustomFood: (food: CustomFoodDef) => void;
+    removeCustomFood: (id: string) => void;
 }
 
 export const usePortionsStore = create<PortionsState>((set) => ({
-    // Las metas diarias según la evaluación
-    targets: {
-        cereales: 4, frutas: 5, carnes: 7, lacteos: 3, arg: 2, galleton: 2
-    },
+    // Las metas diarias calculadas en el armador de pautas
+    targets: {},
     // El estado actual de porciones por comida
-    distributions: {
-        desayuno: { frutas: 1, lacteos: 1 },
-        colacion_am: { frutas: 2, arg: 1, galleton: 1 },
-        almuerzo: { cereales: 2, carnes: 4 },
-        colacion_pm: { frutas: 2, lacteos: 1, galleton: 1 },
-        once: { cereales: 2, carnes: 3, lacteos: 1, arg: 1 },
-    },
+    distributions: {},
+    // Alimentos personalizados añadidos
+    customFoods: [],
     
     incrementPortion: (mealId, groupId) => set((state) => ({
         distributions: {
@@ -36,7 +47,6 @@ export const usePortionsStore = create<PortionsState>((set) => ({
         if (current <= 0) return state; // Evita valores negativos
         
         return {
-            // 🚨 CORRECCIÓN: Faltaba esta llave "distributions:" envolviendo el retorno
             distributions: {
                 ...state.distributions,
                 [mealId]: {
@@ -44,6 +54,42 @@ export const usePortionsStore = create<PortionsState>((set) => ({
                     [groupId]: current - 1
                 }
             }
+        };
+    }),
+    
+    incrementTarget: (groupId) => set((state) => ({
+        targets: {
+            ...state.targets,
+            [groupId]: (state.targets[groupId] || 0) + 0.5
+        }
+    })),
+    
+    decrementTarget: (groupId) => set((state) => {
+        const current = state.targets[groupId] || 0;
+        if (current <= 0) return state;
+        return {
+            targets: {
+                ...state.targets,
+                [groupId]: current - 0.5
+            }
+        };
+    }),
+
+    resetPlan: () => set({ targets: {} }),
+    setTargets: (newTargets) => set({ targets: newTargets }),
+    addCustomFood: (food) => set((state) => ({ customFoods: [...state.customFoods, food] })),
+    removeCustomFood: (id) => set((state) => {
+        // Also remove its portion distributions and targets
+        const newTargets = { ...state.targets };
+        delete newTargets[id];
+        const newDistributions = { ...state.distributions };
+        Object.keys(newDistributions).forEach(mealId => {
+            delete newDistributions[mealId][id];
+        });
+        return {
+            customFoods: state.customFoods.filter(f => f.id !== id),
+            targets: newTargets,
+            distributions: newDistributions
         };
     })
 }));

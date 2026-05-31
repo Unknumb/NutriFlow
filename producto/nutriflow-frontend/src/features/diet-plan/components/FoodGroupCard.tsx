@@ -1,4 +1,4 @@
-import { Minus, Plus, Leaf } from 'lucide-react';
+import { Minus, Plus, Leaf, Trash2 } from 'lucide-react';
 import type { FoodGroupDef } from '../constants/foodGroups';
 
 interface FoodGroupProps {
@@ -6,9 +6,10 @@ interface FoodGroupProps {
     portions: number;
     onIncrement: () => void;
     onDecrement: () => void;
+    onDelete?: () => void;
 }
 
-export const FoodGroupCard = ({ group, portions, onIncrement, onDecrement }: FoodGroupProps) => {
+export const FoodGroupCard = ({ group, portions, onIncrement, onDecrement, onDelete }: FoodGroupProps) => {
     if (group.isFree) {
         return (
             <div className={`rounded-xl border-2 ${group.theme.bgMain} ${group.theme.border} p-3 flex flex-col justify-between h-full`}>
@@ -27,9 +28,24 @@ export const FoodGroupCard = ({ group, portions, onIncrement, onDecrement }: Foo
     }
 
     return (
-        <div className={`rounded-xl border-2 ${group.theme.bgMain} ${group.theme.border} overflow-hidden flex flex-col`}>
-            <div className={`${group.theme.bgHeader} px-3 py-2 flex items-center justify-between`}>
-                <span className="text-xs font-bold text-white leading-tight drop-shadow-sm">{group.title}</span>
+        <div 
+            className={`rounded-xl border-2 ${group.theme.bgMain} ${group.theme.border} overflow-hidden flex flex-col`}
+            style={group.customColor ? { borderColor: group.customColor, backgroundColor: group.customColor + '1A' } : undefined}
+        >
+            <div 
+                className={`${group.theme.bgHeader} px-3 py-2 flex items-center justify-between`}
+                style={group.customColor ? { backgroundColor: group.customColor } : undefined}
+            >
+                <span className="text-xs font-bold text-white leading-tight drop-shadow-sm flex-1">{group.title}</span>
+                {onDelete && (
+                    <button 
+                        onClick={onDelete}
+                        className="text-white/80 hover:text-white transition-colors"
+                        title="Eliminar alimento"
+                    >
+                        <Trash2 className="w-4 h-4" />
+                    </button>
+                )}
             </div>
             
             <div className="p-3 flex-1 flex flex-col justify-between bg-white/40">

@@ -12,7 +12,7 @@ export const usePortions = () => {
 
     // 3. Datos del paciente conectado con backend
     const { activePatient } = useClinicalStore();
-    const { data: pacienteData } = usePaciente(activePatient || '');
+    const { data: pacienteData } = usePaciente(activePatient?.id || '');
 
     // Transformamos los datos del backend al formato que necesita la UI,
     // o caemos en valores por defecto si no hay paciente seleccionado

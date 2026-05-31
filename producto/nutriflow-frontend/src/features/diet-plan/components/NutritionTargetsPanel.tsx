@@ -3,9 +3,11 @@ import { Target, RefreshCw } from 'lucide-react';
 interface TargetsProps {
     targets: { kcal: number; prot: number; cho: number; fat: number };
     current: { kcal: number; prot: number; cho: number; fat: number };
+    onSuggest?: () => void;
+    onReset?: () => void;
 }
 
-export const NutritionTargetsPanel = ({ targets, current }: TargetsProps) => {
+export const NutritionTargetsPanel = ({ targets, current, onSuggest, onReset }: TargetsProps) => {
     // Calculamos porcentajes para las barras
     const getPct = (curr: number, max: number) => Math.min(Math.round((curr / max) * 100) || 0, 100);
     
@@ -31,10 +33,10 @@ export const NutritionTargetsPanel = ({ targets, current }: TargetsProps) => {
                     
                     <div className="h-px w-full bg-gray-200 my-2"></div>
                     
-                    <button className="w-full bg-teal-600 hover:bg-teal-700 text-white flex items-center justify-center gap-2 h-8 text-xs font-medium rounded-md transition-colors shadow-sm">
+                    <button onClick={onSuggest} className="w-full bg-teal-600 hover:bg-teal-700 text-white flex items-center justify-center gap-2 h-8 text-xs font-medium rounded-md transition-colors shadow-sm">
                         <RefreshCw className="w-3 h-3" /> Sugerir Distribución
                     </button>
-                    <button className="w-full bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 flex items-center justify-center gap-2 h-8 text-xs font-medium rounded-md transition-colors">
+                    <button onClick={onReset} className="w-full bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 flex items-center justify-center gap-2 h-8 text-xs font-medium rounded-md transition-colors">
                         Resetear
                     </button>
                 </div>

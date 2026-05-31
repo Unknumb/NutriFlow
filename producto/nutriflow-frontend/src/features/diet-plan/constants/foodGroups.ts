@@ -5,6 +5,7 @@ export interface FoodGroupDef {
     macros: { p: number; c: number; g: number };
     theme: { bgMain: string; bgHeader: string; border: string; text: string };
     isFree?: boolean;
+    customColor?: string;
 }
 
 export const FOOD_GROUPS: FoodGroupDef[] = [

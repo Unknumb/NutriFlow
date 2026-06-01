@@ -51,6 +51,54 @@ export class PautasService {
     return pauta;
   }
 
+  async guardarDistribucion(dto: any, nutricionista_id: string) {
+    const pautaExistente = await this.prisma.pauta.findFirst({
+      where: { paciente_id: dto.paciente_id, nutricionista_id },
+      orderBy: { fecha_creacion: 'desc' },
+    });
+
+    const estructuraGrid = {
+      distributions: dto.distributions,
+      targets: dto.targets,
+      activeMeals: dto.activeMeals || [],
+      activeGroups: dto.activeGroups || []
+    };
+
+    if (pautaExistente) {
+      return this.prisma.pauta.update({
+        where: { id: pautaExistente.id },
+        data: { estructura_grid_json: estructuraGrid as any },
+      });
+    } else {
+      const calorias_totales = dto.targets?.kcal || 2000;
+      return this.prisma.pauta.create({
+        data: {
+          paciente_id: dto.paciente_id,
+          nutricionista_id,
+          calorias_totales,
+          distribucion_macros: {},
+          tiempos_comida: dto.activeMeals || [],
+          estructura_grid_json: estructuraGrid as any,
+        },
+      });
+    }
+  }
+
+  async obtenerDistribucionPorPaciente(paciente_id: string, nutricionista_id: string) {
+    const pauta = await this.prisma.pauta.findFirst({
+      where: { paciente_id, nutricionista_id },
+      orderBy: { fecha_creacion: 'desc' },
+    });
+
+    if (pauta && pauta.estructura_grid_json && Object.keys(pauta.estructura_grid_json).length > 0) {
+      return pauta.estructura_grid_json;
+    }
+
+    // Si no hay guardado, devolvemos null en vez de un mock
+    // para no sobreescribir el estado del frontend con basura.
+    return null;
+  }
+
   findAllByNutricionista(nutricionista_id: string) {
     return this.prisma.pauta.findMany({
       where: { nutricionista_id },

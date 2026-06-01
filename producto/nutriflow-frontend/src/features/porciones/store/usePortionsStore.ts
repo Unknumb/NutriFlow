@@ -10,9 +10,11 @@ export interface CustomFoodDef extends FoodGroupDef {
     textBtn: string;
 }
 
-interface PortionsState {
+export interface PortionsState {
     targets: Record<string, number>;
     distributions: Record<string, Record<string, number>>;
+    activeMeals: string[];
+    activeGroups: string[];
     customFoods: CustomFoodDef[];
     incrementPortion: (mealId: string, groupId: string) => void;
     decrementPortion: (mealId: string, groupId: string) => void;
@@ -20,8 +22,12 @@ interface PortionsState {
     decrementTarget: (groupId: string) => void;
     resetPlan: () => void;
     setTargets: (targets: Record<string, number>) => void;
+    setInitialPortions: (data: { targets: Record<string, number>, distributions: Record<string, Record<string, number>>, activeMeals: string[], activeGroups: string[] }) => void;
     addCustomFood: (food: CustomFoodDef) => void;
     removeCustomFood: (id: string) => void;
+    toggleMeal: (mealId: string) => void;
+    toggleGroup: (groupId: string) => void;
+    removeTargetGroup: (groupId: string) => void;
 }
 
 export const usePortionsStore = create<PortionsState>((set) => ({
@@ -29,14 +35,51 @@ export const usePortionsStore = create<PortionsState>((set) => ({
     targets: {},
     // El estado actual de porciones por comida
     distributions: {},
+    // Grupos y comidas activas
+    activeMeals: ['desayuno', 'colacion_am', 'almuerzo', 'colacion_pm', 'once', 'cena'],
+    activeGroups: ['cer', 'veg', 'fru', 'cbg', 'lmg', 'ace'],
     // Alimentos personalizados añadidos
     customFoods: [],
     
+    setInitialPortions: (data) => set({
+        targets: data.targets,
+        distributions: data.distributions,
+        activeMeals: data.activeMeals || [],
+        activeGroups: data.activeGroups || []
+    }),
+
+    toggleMeal: (mealId) => set((state) => ({
+        activeMeals: state.activeMeals.includes(mealId)
+            ? state.activeMeals.filter(id => id !== mealId)
+            : [...state.activeMeals, mealId]
+    })),
+
+    toggleGroup: (groupId) => set((state) => ({
+        activeGroups: state.activeGroups.includes(groupId)
+            ? state.activeGroups.filter(id => id !== groupId)
+            : [...state.activeGroups, groupId]
+    })),
+
+    removeTargetGroup: (groupId) => set((state) => {
+        const newTargets = { ...state.targets };
+        delete newTargets[groupId];
+        const newDistributions = { ...state.distributions };
+        Object.keys(newDistributions).forEach(mealId => {
+            if (newDistributions[mealId]) {
+                delete newDistributions[mealId][groupId];
+            }
+        });
+        return {
+            targets: newTargets,
+            distributions: newDistributions
+        };
+    }),
+
     incrementPortion: (mealId, groupId) => set((state) => ({
         distributions: {
             ...state.distributions,
             [mealId]: {
-                ...state.distributions[mealId],
+                ...(state.distributions[mealId] || {}),
                 [groupId]: (state.distributions[mealId]?.[groupId] || 0) + 1
             }
         }

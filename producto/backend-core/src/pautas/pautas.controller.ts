@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@n
 import { PautasService } from './pautas.service';
 import { CreatePautaDto } from './dto/create-pauta.dto';
 import { UpdatePautaDto } from './dto/update-pauta.dto';
+import { GuardarDistribucionDto } from './dto/guardar-distribucion.dto';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -19,6 +20,22 @@ export class PautasController {
   create(@Body() createPautaDto: CreatePautaDto, @CurrentUser() user: any) {
     // 🛡️ Inyectamos automáticamente el nutricionista_id del token
     return this.pautasService.create(createPautaDto, user.userId);
+  }
+
+  @Get('armador/:id')
+  @ApiOperation({ summary: 'Obtener distribución calculada por el motor matemático' })
+  async getArmadorMock(@Param('id') id: string, @CurrentUser() user: any) {
+    return this.pautasService.obtenerDistribucionPorPaciente(id, user.userId);
+  }
+
+  @Post('guardar-distribucion')
+  @ApiOperation({ summary: 'Guardar la distribución de porciones' })
+  async guardarDistribucion(
+    @Body() payload: GuardarDistribucionDto,
+    @CurrentUser() user: any
+  ) {
+    const pauta = await this.pautasService.guardarDistribucion(payload, user.userId);
+    return { success: true, message: 'Distribución guardada correctamente', pautaId: pauta.id };
   }
 
   @Get()

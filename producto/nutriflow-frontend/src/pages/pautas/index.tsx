@@ -1,4 +1,5 @@
 import { Plus, Save, Loader2, X } from 'lucide-react';
+import { apiClient } from '../../shared/api/apiClient';
 import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import { NutritionTargetsPanel } from '../../features/diet-plan/components/NutritionTargetsPanel';
@@ -46,7 +47,7 @@ export const PautasPage = () => {
     const { context, totals } = useMacronutrientsSetup();
     const { activePatient } = useClinicalStore();
     const createPauta = useCreatePauta();
-    const { distributions, customFoods, addCustomFood, removeCustomFood } = usePortionsStore();
+    const { distributions, customFoods, addCustomFood, removeCustomFood, activeMeals, activeGroups } = usePortionsStore();
     const navigate = useNavigate();
 
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -82,8 +83,20 @@ export const PautasPage = () => {
             },
             tiempos_comida: distributions
         }, {
-            onSuccess: () => {
-                alert('¡Pauta guardada con éxito!');
+            onSuccess: async () => {
+                try {
+                    await apiClient.post('/pautas/guardar-distribucion', {
+                        paciente_id: activePatient.id,
+                        distributions,
+                        targets,
+                        activeMeals,
+                        activeGroups
+                    });
+                    alert('¡Pauta guardada con éxito!');
+                } catch (error) {
+                    console.error('Error guardando distribución:', error);
+                    alert('La pauta se creó pero falló al guardar las cantidades.');
+                }
             },
             onError: (error: any) => {
                 const errorMsg = error.response?.data?.message || error.message || 'Hubo un error al guardar la pauta';

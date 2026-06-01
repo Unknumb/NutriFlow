@@ -1,4 +1,5 @@
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
+import { useState } from 'react';
 
 export interface FoodGroupOption {
     id: string;
@@ -12,17 +13,20 @@ export interface FoodGroupOption {
     items: string[];
     moreCount: number;
     fixedTargetLabel?: string; 
+    extraItems?: string[];
 }
 
 interface GroupOptionCardProps {
     group: FoodGroupOption;
     targetValue: number; 
-    currentValue: number; // 🚨 NUEVO: Valor actual ingresado
+    currentValue: number;
 }
 
 export const GroupOptionCard = ({ group, targetValue, currentValue }: GroupOptionCardProps) => {
-    // Si tiene etiqueta fija (Libre consumo) la mostramos. Si no, mostramos la relación (Ej: 4/5)
+    const [isExpanded, setIsExpanded] = useState(false);
     const displayTarget = group.fixedTargetLabel || `${currentValue}/${targetValue} Asignado`;
+
+    const extraMocks = Array(group.moreCount).fill('Opción equivalente (Ref. Nutricional)');
 
     return (
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
@@ -45,9 +49,22 @@ export const GroupOptionCard = ({ group, targetValue, currentValue }: GroupOptio
                             {item}
                         </li>
                     ))}
+                    {isExpanded && (group.extraItems || extraMocks).map((item, idx) => (
+                        <li key={`extra-${idx}`} className="flex items-start gap-2 text-sm text-gray-700">
+                            <span className="mt-1 w-2 h-2 rounded-full bg-teal-300 shrink-0"></span>
+                            {item}
+                        </li>
+                    ))}
                 </ul>
-                <button className="mt-3 flex items-center gap-1 text-xs text-teal-600 hover:text-teal-700 font-medium">
-                    <ChevronDown className="w-3.5 h-3.5" /> Ver {group.moreCount} opciones más
+                <button 
+                    onClick={() => setIsExpanded(!isExpanded)}
+                    className="mt-3 flex items-center gap-1 text-xs text-teal-600 hover:text-teal-700 font-medium"
+                >
+                    {isExpanded ? (
+                        <><ChevronUp className="w-3.5 h-3.5" /> Ocultar opciones</>
+                    ) : (
+                        <><ChevronDown className="w-3.5 h-3.5" /> Ver {group.moreCount} opciones más</>
+                    )}
                 </button>
             </div>
         </div>

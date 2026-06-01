@@ -51,6 +51,63 @@ export class PautasService {
     return pauta;
   }
 
+  async guardarDistribucion(dto: any, nutricionista_id: string) {
+    const pautaExistente = await this.prisma.pauta.findFirst({
+      where: { paciente_id: dto.paciente_id, nutricionista_id },
+      orderBy: { fecha_creacion: 'desc' },
+    });
+
+    const estructuraGrid = {
+      distributions: dto.distributions,
+      targets: dto.targets,
+      activeMeals: dto.activeMeals || [],
+      activeGroups: dto.activeGroups || []
+    };
+
+    if (pautaExistente) {
+      return this.prisma.pauta.update({
+        where: { id: pautaExistente.id },
+        data: { estructura_grid_json: estructuraGrid as any },
+      });
+    } else {
+      const calorias_totales = dto.targets?.kcal || 2000;
+      return this.prisma.pauta.create({
+        data: {
+          paciente_id: dto.paciente_id,
+          nutricionista_id,
+          calorias_totales,
+          distribucion_macros: {},
+          tiempos_comida: dto.activeMeals || [],
+          estructura_grid_json: estructuraGrid as any,
+        },
+      });
+    }
+  }
+
+  async obtenerDistribucionPorPaciente(paciente_id: string, nutricionista_id: string) {
+    const pauta = await this.prisma.pauta.findFirst({
+      where: { paciente_id, nutricionista_id },
+      orderBy: { fecha_creacion: 'desc' },
+    });
+
+    if (pauta && pauta.estructura_grid_json && Object.keys(pauta.estructura_grid_json).length > 0) {
+      return pauta.estructura_grid_json;
+    }
+
+    // Default mock si no hay guardado
+    return {
+      targets: { cereales: 5, frutas: 4, carnes: 6, lacteos: 2, arg: 2, galleton: 1 },
+      distributions: {
+        desayuno: { lacteos: 1, cereales: 1 },
+        almuerzo: { carnes: 2, cereales: 2, arg: 1 },
+        once: { lacteos: 1, cereales: 2, carnes: 1 },
+        cena: { carnes: 3, frutas: 2, arg: 1 },
+      },
+      activeMeals: ['desayuno', 'almuerzo', 'once', 'cena'],
+      activeGroups: ['cereales', 'frutas', 'carnes', 'lacteos', 'arg', 'galleton']
+    };
+  }
+
   findAllByNutricionista(nutricionista_id: string) {
     return this.prisma.pauta.findMany({
       where: { nutricionista_id },

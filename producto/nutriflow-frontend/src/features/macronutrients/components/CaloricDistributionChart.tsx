@@ -13,7 +13,7 @@ export const CaloricDistributionChart = ({ pieData }: { pieData: any[] }) => {
                 </h4>
             </div>
             <div className="px-6 pb-6">
-                <div style={{ width: '100%', height: '240px' }}>
+                <div className="w-full h-[300px]">
                     <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                             <Pie

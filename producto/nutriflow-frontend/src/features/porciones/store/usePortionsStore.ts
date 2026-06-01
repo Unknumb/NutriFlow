@@ -1,31 +1,60 @@
 import { create } from 'zustand';
+import { devtools } from 'zustand/middleware';
 
-interface PortionsState {
+export interface PortionsState {
     targets: Record<string, number>;
     distributions: Record<string, Record<string, number>>;
-    incrementPortion: (mealId: string, groupId: string) => void;
-    decrementPortion: (mealId: string, groupId: string) => void;
+    activeMeals: string[];
+    activeGroups: string[];
 }
 
-export const usePortionsStore = create<PortionsState>((set) => ({
-    // Las metas diarias según la evaluación
-    targets: {
-        cereales: 4, frutas: 5, carnes: 7, lacteos: 3, arg: 2, galleton: 2
-    },
-    // El estado actual de porciones por comida
-    distributions: {
-        desayuno: { frutas: 1, lacteos: 1 },
-        colacion_am: { frutas: 2, arg: 1, galleton: 1 },
-        almuerzo: { cereales: 2, carnes: 4 },
-        colacion_pm: { frutas: 2, lacteos: 1, galleton: 1 },
-        once: { cereales: 2, carnes: 3, lacteos: 1, arg: 1 },
-    },
+interface PortionsStore extends PortionsState {
+    incrementPortion: (mealId: string, groupId: string) => void;
+    decrementPortion: (mealId: string, groupId: string) => void;
+    setInitialPortions: (data: Partial<PortionsState>) => void;
+    toggleMeal: (mealId: string) => void;
+    toggleGroup: (groupId: string) => void;
+    resetDistributions: () => void;
+}
+
+export const usePortionsStore = create<PortionsStore>()(
+    devtools(
+        (set) => ({
+            targets: {},
+            distributions: {},
+            activeMeals: [],
+            activeGroups: [],
     
+            setInitialPortions: (data) => set({
+                targets: data.targets || {},
+                distributions: data.distributions || {},
+                activeMeals: data.activeMeals || [],
+                activeGroups: data.activeGroups || []
+            }),
+
+            toggleMeal: (mealId) => set((state) => ({
+                activeMeals: state.activeMeals.includes(mealId) 
+                    ? state.activeMeals.filter(id => id !== mealId)
+                    : [...state.activeMeals, mealId]
+            })),
+
+            toggleGroup: (groupId) => set((state) => ({
+                activeGroups: state.activeGroups.includes(groupId)
+                    ? state.activeGroups.filter(id => id !== groupId)
+                    : [...state.activeGroups, groupId]
+            })),
+
+            resetDistributions: () => set({ 
+                distributions: {},
+                activeMeals: [],
+                activeGroups: []
+            }),
+
     incrementPortion: (mealId, groupId) => set((state) => ({
         distributions: {
             ...state.distributions,
             [mealId]: {
-                ...state.distributions[mealId],
+                ...(state.distributions[mealId] || {}),
                 [groupId]: (state.distributions[mealId]?.[groupId] || 0) + 1
             }
         }
@@ -36,7 +65,6 @@ export const usePortionsStore = create<PortionsState>((set) => ({
         if (current <= 0) return state; // Evita valores negativos
         
         return {
-            // 🚨 CORRECCIÓN: Faltaba esta llave "distributions:" envolviendo el retorno
             distributions: {
                 ...state.distributions,
                 [mealId]: {
@@ -46,4 +74,5 @@ export const usePortionsStore = create<PortionsState>((set) => ({
             }
         };
     })
-}));
+    }), { name: 'portions-store' })
+);

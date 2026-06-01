@@ -5,19 +5,123 @@ import { usePortionsStore } from "../store/usePortionsStore";
 
 // 🚨 MAPEO EXPLÍCITO: Así Tailwind no borra las clases
 const ALL_GROUPS = [
-  { id: "cer", label: "Cereales", emoji: "🌾", headerBg: "bg-amber-500", targetBg: "bg-amber-500 border-amber-600", cellBg: "bg-amber-100", textBtn: "text-amber-900" },
-  { id: "fru", label: "Frutas", emoji: "🍎", headerBg: "bg-orange-500", targetBg: "bg-orange-500 border-orange-600", cellBg: "bg-orange-100", textBtn: "text-orange-900" },
-  { id: "veg", label: "Verduras Gral.", emoji: "🥦", headerBg: "bg-green-600", targetBg: "bg-green-600 border-green-700", cellBg: "bg-green-100", textBtn: "text-green-900" },
-  { id: "vlb", label: "Verd. Libre", emoji: "🥗", headerBg: "bg-emerald-500", targetBg: "bg-emerald-500 border-emerald-600", cellBg: "bg-emerald-100", textBtn: "text-emerald-900" },
-  { id: "cag", label: "Carnes Altas", emoji: "🥓", headerBg: "bg-red-700", targetBg: "bg-red-700 border-red-800", cellBg: "bg-red-100", textBtn: "text-red-900" },
-  { id: "cbg", label: "Carnes Bajas", emoji: "🍗", headerBg: "bg-red-500", targetBg: "bg-red-500 border-red-600", cellBg: "bg-red-100", textBtn: "text-red-900" },
-  { id: "leg", label: "Leguminosas", emoji: "🫘", headerBg: "bg-yellow-600", targetBg: "bg-yellow-600 border-yellow-700", cellBg: "bg-yellow-100", textBtn: "text-yellow-900" },
-  { id: "lag", label: "Lác. Altos", emoji: "🧀", headerBg: "bg-purple-700", targetBg: "bg-purple-700 border-purple-800", cellBg: "bg-purple-100", textBtn: "text-purple-900" },
-  { id: "lmg", label: "Lác. Medios", emoji: "🥛", headerBg: "bg-teal-500", targetBg: "bg-teal-500 border-teal-600", cellBg: "bg-teal-100", textBtn: "text-teal-900" },
-  { id: "lbg", label: "Lác. Bajos", emoji: "🥛", headerBg: "bg-blue-500", targetBg: "bg-blue-500 border-blue-600", cellBg: "bg-blue-100", textBtn: "text-blue-900" },
-  { id: "ace", label: "Aceites", emoji: "🫒", headerBg: "bg-yellow-400", targetBg: "bg-yellow-400 border-yellow-500", cellBg: "bg-yellow-100", textBtn: "text-yellow-900" },
-  { id: "arg", label: "ARG", emoji: "🥑", headerBg: "bg-lime-600", targetBg: "bg-lime-600 border-lime-700", cellBg: "bg-lime-100", textBtn: "text-lime-900" },
-  { id: "azu", label: "Azúcar", emoji: "🍯", headerBg: "bg-pink-500", targetBg: "bg-pink-500 border-pink-600", cellBg: "bg-pink-100", textBtn: "text-pink-900" }
+  {
+    id: "cer",
+    label: "Cereales",
+    emoji: "🌾",
+    headerBg: "bg-amber-500",
+    targetBg: "bg-amber-500 border-amber-600",
+    cellBg: "bg-amber-100",
+    textBtn: "text-amber-900",
+  },
+  {
+    id: "fru",
+    label: "Frutas",
+    emoji: "🍎",
+    headerBg: "bg-orange-500",
+    targetBg: "bg-orange-500 border-orange-600",
+    cellBg: "bg-orange-100",
+    textBtn: "text-orange-900",
+  },
+  {
+    id: "veg",
+    label: "Verduras Gral.",
+    emoji: "🥦",
+    headerBg: "bg-green-600",
+    targetBg: "bg-green-600 border-green-700",
+    cellBg: "bg-green-100",
+    textBtn: "text-green-900",
+  },
+  {
+    id: "vlb",
+    label: "Verd. Libre",
+    emoji: "🥗",
+    headerBg: "bg-emerald-500",
+    targetBg: "bg-emerald-500 border-emerald-600",
+    cellBg: "bg-emerald-100",
+    textBtn: "text-emerald-900",
+  },
+  {
+    id: "cag",
+    label: "Carnes Altas",
+    emoji: "🥓",
+    headerBg: "bg-red-700",
+    targetBg: "bg-red-700 border-red-800",
+    cellBg: "bg-red-100",
+    textBtn: "text-red-900",
+  },
+  {
+    id: "cbg",
+    label: "Carnes Bajas",
+    emoji: "🍗",
+    headerBg: "bg-red-500",
+    targetBg: "bg-red-500 border-red-600",
+    cellBg: "bg-red-100",
+    textBtn: "text-red-900",
+  },
+  {
+    id: "leg",
+    label: "Leguminosas",
+    emoji: "🫘",
+    headerBg: "bg-yellow-600",
+    targetBg: "bg-yellow-600 border-yellow-700",
+    cellBg: "bg-yellow-100",
+    textBtn: "text-yellow-900",
+  },
+  {
+    id: "lag",
+    label: "Lác. Altos",
+    emoji: "🧀",
+    headerBg: "bg-purple-700",
+    targetBg: "bg-purple-700 border-purple-800",
+    cellBg: "bg-purple-100",
+    textBtn: "text-purple-900",
+  },
+  {
+    id: "lmg",
+    label: "Lác. Medios",
+    emoji: "🥛",
+    headerBg: "bg-teal-500",
+    targetBg: "bg-teal-500 border-teal-600",
+    cellBg: "bg-teal-100",
+    textBtn: "text-teal-900",
+  },
+  {
+    id: "lbg",
+    label: "Lác. Bajos",
+    emoji: "🥛",
+    headerBg: "bg-blue-500",
+    targetBg: "bg-blue-500 border-blue-600",
+    cellBg: "bg-blue-100",
+    textBtn: "text-blue-900",
+  },
+  {
+    id: "ace",
+    label: "Aceites",
+    emoji: "🫒",
+    headerBg: "bg-yellow-400",
+    targetBg: "bg-yellow-400 border-yellow-500",
+    cellBg: "bg-yellow-100",
+    textBtn: "text-yellow-900",
+  },
+  {
+    id: "arg",
+    label: "ARG",
+    emoji: "🥑",
+    headerBg: "bg-lime-600",
+    targetBg: "bg-lime-600 border-lime-700",
+    cellBg: "bg-lime-100",
+    textBtn: "text-lime-900",
+  },
+  {
+    id: "azu",
+    label: "Azúcar",
+    emoji: "🍯",
+    headerBg: "bg-pink-500",
+    targetBg: "bg-pink-500 border-pink-600",
+    cellBg: "bg-pink-100",
+    textBtn: "text-pink-900",
+  },
 ];
 
 const MEALS = [
@@ -37,12 +141,16 @@ export const PortionsTable = () => {
 
   const COMBINED_GROUPS = [...ALL_GROUPS, ...customFoods];
 
-  const visibleGroups = COMBINED_GROUPS.filter((g) => targets[g.id] && targets[g.id] > 0);
+  const visibleGroups = COMBINED_GROUPS.filter(
+    (g) => targets[g.id] && targets[g.id] > 0,
+  );
 
   if (visibleGroups.length === 0) {
     return (
       <div className="animate-in fade-in duration-300 p-8 text-center bg-gray-50 border border-dashed border-gray-300 rounded-xl">
-        <p className="text-gray-500">Aún no has asignado porciones en el Armador de Pautas.</p>
+        <p className="text-gray-500">
+          Aún no has asignado porciones en el Armador de Pautas.
+        </p>
       </div>
     );
   }
@@ -78,9 +186,16 @@ export const PortionsTable = () => {
                 <th
                   key={g.id}
                   className={`${g.headerBg} text-white border border-gray-200 text-center px-2 py-2 w-20`}
-                  style={(g as any).customColor ? { backgroundColor: (g as any).customColor, borderColor: (g as any).customColor } : undefined}
+                  style={
+                    (g as any).customColor
+                      ? {
+                          backgroundColor: (g as any).customColor,
+                          borderColor: (g as any).customColor,
+                        }
+                      : undefined
+                  }
                 >
-                  <div 
+                  <div
                     className="text-lg mb-1 leading-none cursor-grab active:cursor-grabbing transition-transform hover:scale-125"
                     draggable
                     onDragStart={(e) => {
@@ -102,7 +217,14 @@ export const PortionsTable = () => {
                 <td
                   key={`target-${g.id}`}
                   className={`${g.targetBg} border text-center py-1`}
-                  style={(g as any).customColor ? { backgroundColor: (g as any).customColor, borderColor: (g as any).customColor } : undefined}
+                  style={
+                    (g as any).customColor
+                      ? {
+                          backgroundColor: (g as any).customColor,
+                          borderColor: (g as any).customColor,
+                        }
+                      : undefined
+                  }
                 >
                   <button className="font-bold text-sm text-white">
                     {targets[g.id] || 0}
@@ -145,14 +267,15 @@ export const PortionsTable = () => {
                   return (
                     <td
                       key={`${meal.id}-${g.id}`}
-                      className={`border border-gray-200 text-center p-1 transition-colors ${val === 0 ? 'hover:bg-gray-100' : ''}`}
+                      className={`border border-gray-200 text-center p-1 transition-colors ${val === 0 ? "hover:bg-gray-100" : ""}`}
                       onDragOver={(e) => {
                         e.preventDefault();
                         e.dataTransfer.dropEffect = "copy";
                       }}
                       onDrop={(e) => {
                         e.preventDefault();
-                        const droppedGroupId = e.dataTransfer.getData("groupId");
+                        const droppedGroupId =
+                          e.dataTransfer.getData("groupId");
                         if (droppedGroupId) {
                           incrementPortion(meal.id, droppedGroupId);
                         }
@@ -177,10 +300,10 @@ export const PortionsTable = () => {
               {visibleGroups.map((g) => {
                 const total = getGroupTotal(g.id);
                 const target = targets[g.id] || 0;
-                let balance = 'exact';
-                if (total > target) balance = 'over';
-                if (total < target) balance = 'under';
-                
+                let balance = "exact";
+                if (total > target) balance = "over";
+                if (total < target) balance = "under";
+
                 const colorClass =
                   balance === "exact"
                     ? "text-emerald-700"
@@ -206,10 +329,10 @@ export const PortionsTable = () => {
               {visibleGroups.map((g) => {
                 const total = getGroupTotal(g.id);
                 const target = targets[g.id] || 0;
-                let balance = 'exact';
-                if (total > target) balance = 'over';
-                if (total < target) balance = 'under';
-                
+                let balance = "exact";
+                if (total > target) balance = "over";
+                if (total < target) balance = "under";
+
                 return (
                   <td
                     key={`balance-${g.id}`}
@@ -256,6 +379,16 @@ export const PortionsTable = () => {
         <span className="text-gray-400 ml-auto">
           · Haz click en horas o metas para editarlas
         </span>
+      </div>
+
+      <div className="mt-6 flex justify-end">
+        <button 
+          onClick={actions.handleSavePauta}
+          disabled={state.isSaving}
+          className="bg-teal-600 hover:bg-teal-700 text-white font-medium px-6 py-2.5 rounded-lg transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+        >
+          {state.isSaving ? 'Guardando...' : 'Guardar Pauta'}
+        </button>
       </div>
     </div>
   );

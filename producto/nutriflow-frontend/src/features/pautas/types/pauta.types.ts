@@ -12,6 +12,7 @@ export interface Pauta {
   calorias_totales: number;
   distribucion_macros: Record<string, any>;
   tiempos_comida: Record<string, any>;
+  estructura_grid_json?: Record<string, any>;
 }
 
 export interface CreatePautaPayload {

@@ -163,16 +163,6 @@ export const PortionsTable = () => {
                 {visibleGroups.map((g) => (
                   <DraggableGroupHeader key={g.id} group={g} />
                 ))}
-                <th className="bg-green-800 text-white border border-gray-200 text-center px-2 py-2 w-20">
-                  <div className="text-lg mb-1 leading-none">🥦</div>
-                  <div className="text-xs font-bold leading-tight">
-                    Verduras
-                  </div>
-                </th>
-                <th className="bg-yellow-400 text-gray-900 border border-gray-200 text-center px-2 py-2 w-20">
-                  <div className="text-lg mb-1 leading-none">🫒</div>
-                  <div className="text-xs font-bold leading-tight">Aceites</div>
-                </th>
               </tr>
               <tr>
                 {visibleGroups.map((g) => (
@@ -185,12 +175,6 @@ export const PortionsTable = () => {
                     </button>
                   </td>
                 ))}
-                <td className="bg-green-800 border border-green-900 text-center py-1">
-                  <span className="text-xs font-bold text-white">x</span>
-                </td>
-                <td className="bg-yellow-400 border border-yellow-500 text-center py-1">
-                  <span className="text-xs font-bold text-gray-900">½</span>
-                </td>
               </tr>
               <tr className="bg-gray-100">
                 <td className="border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-600 text-center">
@@ -206,16 +190,6 @@ export const PortionsTable = () => {
                     </span>
                   </td>
                 ))}
-                <td className="border border-gray-200 text-center">
-                  <span className="text-xs text-green-700 font-semibold">
-                    Libre
-                  </span>
-                </td>
-                <td className="border border-gray-200 text-center">
-                  <span className="text-xs text-yellow-800 font-semibold">
-                    10ml
-                  </span>
-                </td>
               </tr>
             </thead>
             <tbody>
@@ -245,24 +219,6 @@ export const PortionsTable = () => {
                       />
                     </td>
                   ))}
-                  <td className="border border-gray-200 text-center pointer-events-none select-none">
-                    {meal.id === "desayuno" ? (
-                      <span className="text-xs text-green-700 font-semibold px-2 py-1 bg-green-50 rounded-full">
-                        Libre!
-                      </span>
-                    ) : (
-                      ""
-                    )}
-                  </td>
-                  <td className="border border-gray-200 text-center pointer-events-none select-none">
-                    {meal.id === "desayuno" ? (
-                      <span className="text-xs text-yellow-800 font-semibold px-2 py-1 bg-yellow-50 rounded-full">
-                        10ml
-                      </span>
-                    ) : (
-                      ""
-                    )}
-                  </td>
                 </DroppableMealRow>
               ))}
               <tr className="bg-gray-100 border-t-2 border-gray-300">
@@ -289,12 +245,6 @@ export const PortionsTable = () => {
                     </td>
                   );
                 })}
-                <td className="border border-gray-200 text-center py-2">
-                  <span className="text-gray-400">—</span>
-                </td>
-                <td className="border border-gray-200 text-center py-2">
-                  <span className="text-gray-400">—</span>
-                </td>
               </tr>
               <tr className="bg-white">
                 <td className="border border-gray-200 p-2 text-xs font-bold text-gray-700 text-right uppercase tracking-wide">
@@ -323,10 +273,6 @@ export const PortionsTable = () => {
                     </td>
                   );
                 })}
-                <td className="border border-gray-200 text-center py-2">
-                  <span className="text-sm text-green-600 font-bold">✓</span>
-                </td>
-                <td className="border border-gray-200 text-center py-2"></td>
               </tr>
             </tbody>
           </table>

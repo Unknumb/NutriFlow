@@ -21,6 +21,7 @@ export interface PortionsState {
     incrementTarget: (groupId: string) => void;
     decrementTarget: (groupId: string) => void;
     resetPlan: () => void;
+    resetDistributions: () => void;
     setTargets: (targets: Record<string, number>) => void;
     setInitialPortions: (data: { targets: Record<string, number>, distributions: Record<string, Record<string, number>>, activeMeals: string[], activeGroups: string[] }) => void;
     addCustomFood: (food: CustomFoodDef) => void;
@@ -28,6 +29,8 @@ export interface PortionsState {
     toggleMeal: (mealId: string) => void;
     toggleGroup: (groupId: string) => void;
     removeTargetGroup: (groupId: string) => void;
+    loadedPatientId: string | null;
+    setLoadedPatientId: (id: string | null) => void;
 }
 
 export const usePortionsStore = create<PortionsState>((set) => ({
@@ -40,6 +43,8 @@ export const usePortionsStore = create<PortionsState>((set) => ({
     activeGroups: ['cer', 'veg', 'fru', 'cbg', 'lmg', 'ace'],
     // Alimentos personalizados añadidos
     customFoods: [],
+    loadedPatientId: null,
+    setLoadedPatientId: (id) => set({ loadedPatientId: id }),
     
     setInitialPortions: (data) => set({
         targets: data.targets,
@@ -119,6 +124,7 @@ export const usePortionsStore = create<PortionsState>((set) => ({
     }),
 
     resetPlan: () => set({ targets: {} }),
+    resetDistributions: () => set({ distributions: {} }),
     setTargets: (newTargets) => set({ targets: newTargets }),
     addCustomFood: (food) => set((state) => ({ customFoods: [...state.customFoods, food] })),
     removeCustomFood: (id) => set((state) => {

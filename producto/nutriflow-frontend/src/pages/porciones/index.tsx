@@ -27,13 +27,6 @@ export const PorcionesPage = () => {
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs transition-colors bg-white border-gray-200 text-gray-600 hover:bg-gray-50 font-medium">
                             <RefreshCw className="w-3.5 h-3.5" /> Restablecer
                         </button>
-                        <button
-                            onClick={actions.savePortions}
-                            disabled={state.isSaving}
-                            className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg border border-transparent text-xs font-bold text-white bg-teal-600 hover:bg-teal-700 shadow-sm transition-colors ml-2"
-                        >
-                            {state.isSaving ? 'Guardando...' : 'Guardar'}
-                        </button>
                         <PortionsConfigPanel />
                     </div>
                 </div>

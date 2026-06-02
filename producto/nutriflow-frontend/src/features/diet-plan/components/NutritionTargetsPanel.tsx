@@ -49,22 +49,22 @@ export const NutritionTargetsPanel = ({ targets, current, onSuggest, onReset }: 
                 </div>
                 <div className="px-6 pb-6 space-y-4">
                     <div>
-                        <div className="flex justify-between mb-1"><span className="text-xs text-gray-600">Calorías</span><span className="text-xs font-bold text-gray-800">{current.kcal}/{targets.kcal}</span></div>
+                        <div className="flex justify-between mb-1"><span className="text-xs text-gray-600">Calorías</span><span className="text-xs font-bold text-gray-800">{Math.round(Math.min(current.kcal, targets.kcal))}/{Math.round(targets.kcal)}</span></div>
                         <div className="h-1.5 bg-gray-100 rounded-full"><div className="h-full bg-teal-500 rounded-full transition-all" style={{ width: `${pctKcal}%` }}></div></div>
                         <p className="text-[10px] text-gray-400 text-right mt-1">{pctKcal}%</p>
                     </div>
                     <div>
-                        <div className="flex justify-between mb-1"><span className="text-xs text-gray-600">Proteínas</span><span className="text-xs font-bold text-gray-800">{current.prot}/{targets.prot}g</span></div>
+                        <div className="flex justify-between mb-1"><span className="text-xs text-gray-600">Proteínas</span><span className="text-xs font-bold text-gray-800">{Math.round(Math.min(current.prot, targets.prot))}/{Math.round(targets.prot)}g</span></div>
                         <div className="h-1.5 bg-gray-100 rounded-full"><div className="h-full bg-red-400 rounded-full transition-all" style={{ width: `${pctProt}%` }}></div></div>
                         <p className="text-[10px] text-gray-400 text-right mt-1">{pctProt}%</p>
                     </div>
                     <div>
-                        <div className="flex justify-between mb-1"><span className="text-xs text-gray-600">Carbos</span><span className="text-xs font-bold text-gray-800">{current.cho}/{targets.cho}g</span></div>
+                        <div className="flex justify-between mb-1"><span className="text-xs text-gray-600">Carbos</span><span className="text-xs font-bold text-gray-800">{Math.round(Math.min(current.cho, targets.cho))}/{Math.round(targets.cho)}g</span></div>
                         <div className="h-1.5 bg-gray-100 rounded-full"><div className="h-full bg-blue-400 rounded-full transition-all" style={{ width: `${pctCho}%` }}></div></div>
                         <p className="text-[10px] text-gray-400 text-right mt-1">{pctCho}%</p>
                     </div>
                     <div>
-                        <div className="flex justify-between mb-1"><span className="text-xs text-gray-600">Grasas</span><span className="text-xs font-bold text-gray-800">{current.fat}/{targets.fat}g</span></div>
+                        <div className="flex justify-between mb-1"><span className="text-xs text-gray-600">Grasas</span><span className="text-xs font-bold text-gray-800">{Math.round(Math.min(current.fat, targets.fat))}/{Math.round(targets.fat)}g</span></div>
                         <div className="h-1.5 bg-gray-100 rounded-full"><div className="h-full bg-amber-400 rounded-full transition-all" style={{ width: `${pctFat}%` }}></div></div>
                         <p className="text-[10px] text-gray-400 text-right mt-1">{pctFat}%</p>
                     </div>

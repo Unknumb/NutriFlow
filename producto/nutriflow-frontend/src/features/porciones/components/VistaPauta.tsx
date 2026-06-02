@@ -77,17 +77,6 @@ export const VistaPauta = () => {
                     </table>
                 </div>
 
-                {/* Extras y Resumen Dinámico */}
-                <div className="mt-4 grid grid-cols-2 gap-3">
-                    <div className="bg-green-50 border border-green-200 rounded-xl p-3 flex items-start gap-2">
-                        <span className="text-lg">🥦</span>
-                        <div><p className="text-sm font-bold text-green-800">Verduras — Libre consumo</p></div>
-                    </div>
-                    <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-3 flex items-start gap-2">
-                        <span className="text-lg">🫒</span>
-                        <div><p className="text-sm font-bold text-yellow-800">Aceite de oliva — 10ml/día</p></div>
-                    </div>
-                </div>
 
                 <div className="mt-4 bg-gray-50 border border-gray-200 rounded-xl p-4">
                     <p className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-3">Resumen porciones diarias</p>

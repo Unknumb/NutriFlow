@@ -11,7 +11,7 @@ export const usePortions = () => {
     const [activeTab, setActiveTab] = useState<'tabla' | 'pauta' | 'opciones' | 'pdf'>('tabla');
 
     // 2. Estado Global de Zustand
-    const { targets, distributions, activeMeals, activeGroups, customFoods, incrementPortion, decrementPortion, removeTargetGroup, setInitialPortions, toggleMeal, toggleGroup } = usePortionsStore();
+    const { targets, distributions, activeMeals, activeGroups, customFoods, incrementPortion, decrementPortion, removeTargetGroup, setInitialPortions, toggleMeal, toggleGroup, resetDistributions } = usePortionsStore();
 
     // 3. Datos del paciente conectado con backend
     const { activePatient } = useClinicalStore();
@@ -38,16 +38,18 @@ export const usePortions = () => {
     });
 
     // 5. Sincronizar la data que llega del backend con el store de Zustand
+    const { loadedPatientId, setLoadedPatientId } = usePortionsStore();
     useEffect(() => {
-        if (armadorData && armadorData.targets) {
+        if (armadorData && armadorData.targets && activePatient?.id && loadedPatientId !== activePatient.id) {
             setInitialPortions({
                 targets: armadorData.targets,
                 distributions: armadorData.distributions || {},
                 activeMeals: armadorData.activeMeals || [],
                 activeGroups: armadorData.activeGroups || []
             });
+            setLoadedPatientId(activePatient.id);
         }
-    }, [armadorData, setInitialPortions]);
+    }, [armadorData, activePatient?.id, loadedPatientId, setInitialPortions, setLoadedPatientId]);
 
     const queryClient = useQueryClient();
 
@@ -129,7 +131,7 @@ export const usePortions = () => {
 
     return {
         state: { activeTab, patientContext, targets, distributions, activeMeals, activeGroups, customFoods, isSaving: createPauta.isPending },
-        actions: { setActiveTab, incrementPortion, decrementPortion, handleSavePauta, removeTargetGroup, toggleMeal, toggleGroup },
+        actions: { setActiveTab, incrementPortion, decrementPortion, handleSavePauta, removeTargetGroup, toggleMeal, toggleGroup, resetDistributions },
         computed: { getGroupTotal, getGroupBalance }
     };
 };

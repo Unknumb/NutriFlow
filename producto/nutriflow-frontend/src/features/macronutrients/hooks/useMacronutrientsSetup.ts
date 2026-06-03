@@ -57,6 +57,8 @@ export const useMacronutrientsSetup = () => {
 
     // 4. Mutación de TanStack Query (Para Guardar Planificacion)
     const createPlanificacion = useCreatePlanificacion();
+    const setActivePlanificacionId = useClinicalStore((state) => state.setActivePlanificacionId);
+
     const handleSave = () => {
         if (!activePatient?.id) {
             alert('Selecciona un paciente primero');
@@ -65,13 +67,17 @@ export const useMacronutrientsSetup = () => {
         createPlanificacion.mutate({
             paciente_id: activePatient.id,
             calorias_totales: totals.summary.percent === 100 ? totals.prot.kcal + totals.cho.kcal + totals.fat.kcal : tmbPromedio,
-            porcentajes_macros: {
+            distribucion_macros: {
                 proteina: totals.prot.pct,
                 grasa: totals.fat.pct,
                 carbohidratos: totals.cho.pct
             }
         }, {
-            onSuccess: () => {
+            onSuccess: (data: any) => {
+                // Asumiendo que el backend retorna el objeto creado en `data` con su `id`
+                if (data && data.id) {
+                    setActivePlanificacionId(data.id);
+                }
                 alert("¡Planificación guardada con éxito!");
             }
         });

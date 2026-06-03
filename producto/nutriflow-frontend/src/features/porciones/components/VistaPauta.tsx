@@ -66,7 +66,7 @@ export const VistaPauta = () => {
                                                             <span className="text-sm font-semibold text-gray-800">{group.label}</span>
                                                         </div>
                                                     </td>
-                                                    <td className="border border-gray-200 px-4 py-2.5 align-middle text-sm text-gray-600">{group.options}</td>
+                                                    <td className="border border-gray-200 px-4 py-2.5 align-middle text-sm text-gray-600">{(group as any).options}</td>
                                                 </tr>
                                             ))
                                         )}

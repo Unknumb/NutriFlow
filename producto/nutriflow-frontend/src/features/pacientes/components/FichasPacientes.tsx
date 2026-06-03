@@ -6,7 +6,8 @@ import { Loader2, Star } from 'lucide-react';
 import type { Paciente } from '../types/paciente.types';
 import { useEvaluacionesByPaciente, useCreateEvaluacion } from '../../evaluaciones/hooks/useEvaluaciones';
 import type { CreateEvaluacionPayload } from '../../evaluaciones/types/evaluacion.types';
-import { usePautas, useDeletePauta } from '../../pautas/hooks/usePautas';
+import { useDeletePauta } from '../../pautas/hooks/usePautas';
+import { usePlanificaciones, useDeletePlanificacion } from '../../planificaciones/hooks/usePlanificaciones';
 import { NUTRITION_GROUPS, MEALS } from '../../porciones/constants';
 import { Trash2 } from 'lucide-react';
 
@@ -37,10 +38,11 @@ export const FichasPacientes: React.FC = () => {
 
   const { data: evaluaciones, isLoading: loadingEvals } = useEvaluacionesByPaciente(selectedPatientId || '');
   const createEvaluacion = useCreateEvaluacion();
-  
-  const { data: pautasAll, isLoading: loadingPautas } = usePautas();
-  const pautasDelPaciente = pautasAll?.filter((p: any) => p.paciente_id === selectedPatientId) || [];
   const deletePauta = useDeletePauta(selectedPatientId || '');
+
+  const { data: planificacionesAll, isLoading: loadingPlanificaciones } = usePlanificaciones();
+  const planificacionesDelPaciente = planificacionesAll?.filter((p: any) => p.paciente_id === selectedPatientId) || [];
+  const deletePlanificacion = useDeletePlanificacion();
 
   // Seleccionar localmente el primer paciente o el activo si existe
   useEffect(() => {
@@ -377,88 +379,129 @@ export const FichasPacientes: React.FC = () => {
                       <p className="text-sm text-gray-600">Historial de pautas con distribución de porciones</p>
                     </div>
 
-                    {loadingPautas ? (
+                    {loadingPlanificaciones ? (
                       <div className="flex justify-center p-8">
                         <Loader2 className="w-8 h-8 animate-spin text-teal-600" />
                       </div>
-                    ) : pautasDelPaciente.length === 0 ? (
+                    ) : planificacionesDelPaciente.length === 0 ? (
                       <div className="text-center p-8 bg-gray-50 border border-dashed border-gray-300 rounded-xl">
-                        <p className="text-gray-500">No hay pautas guardadas para este paciente.</p>
+                        <p className="text-gray-500">No hay planificaciones ni pautas guardadas para este paciente.</p>
                       </div>
                     ) : (
-                      <div className="space-y-4">
-                        {pautasDelPaciente.map((pauta: any) => (
-                          <div key={pauta.id} className="p-5 border border-gray-200 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow">
-                            <div className="flex justify-between items-center mb-4 pb-3 border-b border-gray-100">
+                      <div className="space-y-6">
+                        {planificacionesDelPaciente.map((planificacion: any) => (
+                          <div key={planificacion.id} className="p-6 border border-gray-200 bg-white rounded-xl shadow-md transition-shadow">
+                            <div className="flex justify-between items-center mb-5 pb-4 border-b border-gray-200">
                               <div>
-                                <span className="font-semibold text-gray-900 text-lg">Pauta Nutricional</span>
-                                <p className="text-xs text-gray-500">Creada el {new Date(pauta.fecha_creacion).toLocaleDateString()}</p>
+                                <span className="font-semibold text-gray-900 text-xl">Planificación Base</span>
+                                <p className="text-sm text-gray-500 mt-1">Creada el {new Date(planificacion.fecha_creacion).toLocaleDateString()}</p>
                               </div>
-                              <span className="px-3 py-1 bg-teal-50 text-teal-700 text-xs font-bold border border-teal-100 rounded-full">
-                                {Math.round(pauta.calorias_totales)} kcal
-                              </span>
-                              <button 
-                                onClick={() => {
-                                  if (window.confirm('¿Estás seguro de que deseas eliminar esta pauta nutricional?')) {
-                                    deletePauta.mutate(pauta.id);
-                                  }
-                                }}
-                                disabled={deletePauta.isPending}
-                                className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors ml-2"
-                                title="Eliminar Pauta"
-                              >
-                                <Trash2 className="w-5 h-5" />
-                              </button>
+                              <div className="flex items-center gap-3">
+                                <span className="px-4 py-1.5 bg-teal-50 text-teal-800 text-sm font-bold border border-teal-200 rounded-full">
+                                  {Math.round(planificacion.calorias_totales)} kcal
+                                </span>
+                                <button 
+                                  onClick={() => {
+                                    if (window.confirm('¿Estás seguro de que deseas eliminar esta planificación y TODAS sus pautas asociadas? Esta acción no se puede deshacer.')) {
+                                      deletePlanificacion.mutate(planificacion.id);
+                                    }
+                                  }}
+                                  disabled={deletePlanificacion.isPending}
+                                  className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-200"
+                                  title="Eliminar Planificación Completa"
+                                >
+                                  <Trash2 className="w-5 h-5" />
+                                </button>
+                              </div>
                             </div>
                             
-                            <div className="grid grid-cols-3 gap-4 mb-4">
-                              <div className="bg-red-50 p-3 rounded-lg border border-red-100">
-                                <p className="text-xs font-medium text-red-800 mb-1">Proteínas</p>
-                                <p className="font-bold text-red-600">{Math.round(pauta.distribucion_macros?.proteina || 0)}%</p>
+                            <div className="grid grid-cols-3 gap-4 mb-6">
+                              <div className="bg-red-50 p-4 rounded-xl border border-red-100 flex flex-col items-center justify-center">
+                                <p className="text-sm font-medium text-red-800 mb-1">Proteínas</p>
+                                <p className="text-2xl font-bold text-red-600">{Math.round(planificacion.distribucion_macros?.proteina || 0)}%</p>
                               </div>
-                              <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
-                                <p className="text-xs font-medium text-blue-800 mb-1">Carbohidratos</p>
-                                <p className="font-bold text-blue-600">{Math.round(pauta.distribucion_macros?.carbohidratos || 0)}%</p>
+                              <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 flex flex-col items-center justify-center">
+                                <p className="text-sm font-medium text-blue-800 mb-1">Carbohidratos</p>
+                                <p className="text-2xl font-bold text-blue-600">{Math.round(planificacion.distribucion_macros?.carbohidratos || 0)}%</p>
                               </div>
-                              <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-100">
-                                <p className="text-xs font-medium text-yellow-800 mb-1">Grasas</p>
-                                <p className="font-bold text-yellow-600">{Math.round(pauta.distribucion_macros?.grasa || 0)}%</p>
+                              <div className="bg-yellow-50 p-4 rounded-xl border border-yellow-100 flex flex-col items-center justify-center">
+                                <p className="text-sm font-medium text-yellow-800 mb-1">Grasas</p>
+                                <p className="text-2xl font-bold text-yellow-600">{Math.round(planificacion.distribucion_macros?.grasa || 0)}%</p>
                               </div>
                             </div>
 
-                            {pauta.tiempos_comida && Object.keys(pauta.tiempos_comida).length > 0 && (
-                              <div className="mt-4 border-t border-gray-100 pt-4">
-                                <p className="text-sm font-semibold text-gray-900 mb-3">Distribución por Tiempos de Comida</p>
-                                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                                  {MEALS.map((meal) => {
-                                    const mealDist = pauta.tiempos_comida[meal.id];
-                                    if (!mealDist || Object.keys(mealDist).length === 0) return null;
-                                    
-                                    const portions = Object.entries(mealDist)
-                                      .filter(([_, qty]) => (qty as number) > 0)
-                                      .map(([groupId, qty]) => {
-                                        const groupInfo = NUTRITION_GROUPS.find(g => g.id === groupId) || 
-                                                          pauta.estructura_grid_json?.customFoods?.find((g: any) => g.id === groupId);
-                                        return { label: groupInfo ? `${groupInfo.emoji} ${groupInfo.label}` : groupId, qty };
-                                      });
-
-                                    if (portions.length === 0) return null;
-
-                                    return (
-                                      <div key={meal.id} className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                                        <p className="text-xs font-bold text-gray-800 mb-2 border-b border-gray-200 pb-1">{meal.name}</p>
-                                        <ul className="space-y-1">
-                                          {portions.map((p, idx) => (
-                                            <li key={idx} className="text-xs text-gray-600 flex justify-between">
-                                              <span>{p.label}</span>
-                                              <span className="font-medium text-gray-900">{String(p.qty)}</span>
-                                            </li>
-                                          ))}
-                                        </ul>
+                            {/* Pautas Anidadas */}
+                            {planificacion.pautas && planificacion.pautas.length > 0 ? (
+                              <div className="mt-6">
+                                <h5 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-500"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                                  Pautas Asociadas ({planificacion.pautas.length})
+                                </h5>
+                                <div className="space-y-4 pl-2 border-l-2 border-teal-100">
+                                  {planificacion.pautas.map((pauta: any) => (
+                                    <div key={pauta.id} className="p-4 border border-gray-100 bg-gray-50 rounded-lg shadow-sm">
+                                      <div className="flex justify-between items-center mb-3">
+                                        <div>
+                                          <span className="font-medium text-teal-900 text-md">
+                                            {pauta.descripcion_general || 'Pauta Regular'}
+                                          </span>
+                                          <span className="text-xs text-gray-500 ml-2 block sm:inline">
+                                            (Añadida el {new Date(pauta.fecha_creacion).toLocaleDateString()})
+                                          </span>
+                                        </div>
+                                        <button 
+                                          onClick={() => {
+                                            if (window.confirm(`¿Eliminar pauta "${pauta.descripcion_general || 'Regular'}"?`)) {
+                                              deletePauta.mutate(pauta.id);
+                                            }
+                                          }}
+                                          disabled={deletePauta.isPending}
+                                          className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                                          title="Eliminar Pauta"
+                                        >
+                                          <Trash2 className="w-4 h-4" />
+                                        </button>
                                       </div>
-                                    );
-                                  })}
+
+                                      {pauta.tiempos_comida && Object.keys(pauta.tiempos_comida).length > 0 && (
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-3">
+                                          {MEALS.map((meal) => {
+                                            const mealDist = pauta.tiempos_comida[meal.id];
+                                            if (!mealDist || Object.keys(mealDist).length === 0) return null;
+                                            
+                                            const portions = Object.entries(mealDist)
+                                              .filter(([_, qty]) => (qty as number) > 0)
+                                              .map(([groupId, qty]) => {
+                                                const groupInfo = NUTRITION_GROUPS.find(g => g.id === groupId) || 
+                                                                  pauta.estructura_grid_json?.customFoods?.find((g: any) => g.id === groupId);
+                                                return { label: groupInfo ? `${groupInfo.emoji} ${groupInfo.label}` : groupId, qty };
+                                              });
+
+                                            if (portions.length === 0) return null;
+
+                                            return (
+                                              <div key={meal.id} className="bg-white p-2.5 rounded-md border border-gray-200">
+                                                <p className="text-[11px] font-bold text-gray-700 uppercase mb-1.5 border-b border-gray-100 pb-1 truncate">{meal.name}</p>
+                                                <ul className="space-y-0.5">
+                                                  {portions.map((p, idx) => (
+                                                    <li key={idx} className="text-xs text-gray-600 flex justify-between items-center">
+                                                      <span className="truncate mr-2">{p.label}</span>
+                                                      <span className="font-semibold text-teal-700 bg-teal-50 px-1.5 rounded">{String(p.qty)}</span>
+                                                    </li>
+                                                  ))}
+                                                </ul>
+                                              </div>
+                                            );
+                                          })}
+                                        </div>
+                                      )}
+                                    </div>
+                                  ))}
                                 </div>
+                              </div>
+                            ) : (
+                              <div className="mt-4 p-4 text-center bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                                <p className="text-sm text-gray-500">Esta planificación aún no tiene pautas asignadas.</p>
                               </div>
                             )}
                           </div>

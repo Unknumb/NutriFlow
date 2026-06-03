@@ -3,13 +3,15 @@ import { PlanificacionesService } from './planificaciones.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
+import { CreatePlanificacionDto } from './dto/create-planificacion.dto';
+
 @Controller('planificaciones')
 @UseGuards(JwtAuthGuard)
 export class PlanificacionesController {
   constructor(private readonly planificacionesService: PlanificacionesService) {}
 
   @Post()
-  create(@Body() createPlanificacionDto: any, @CurrentUser() user: any) {
+  create(@Body() createPlanificacionDto: CreatePlanificacionDto, @CurrentUser() user: any) {
     return this.planificacionesService.create(createPlanificacionDto, user.userId);
   }
 

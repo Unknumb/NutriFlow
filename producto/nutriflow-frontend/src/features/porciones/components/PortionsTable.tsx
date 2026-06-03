@@ -17,7 +17,7 @@ import { NUTRITION_GROUPS, MEALS } from "../constants";
 
 export const PortionsTable = () => {
   const { state, actions, computed } = usePortions();
-  const { targets, distributions, activeMeals, activeGroups, customFoods } = state;
+  const { targets, distributions, activeMeals, customFoods } = state;
   const { incrementPortion, decrementPortion } = actions;
   const { getGroupTotal, getGroupBalance } = computed;
 

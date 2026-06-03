@@ -42,8 +42,8 @@ export class PautasService {
       data: {
         paciente_id: createPautaDto.paciente_id,
         nutricionista_id,
-        calorias_totales: createPautaDto.calorias_totales,
-        distribucion_macros: createPautaDto.porcentajes_macros as any,
+        planificacion_id: createPautaDto.planificacion_id,
+        descripcion_general: createPautaDto.descripcion_general,
         tiempos_comida: createPautaDto.tiempos_comida
       },
     });
@@ -75,8 +75,6 @@ export class PautasService {
         data: {
           paciente_id: dto.paciente_id,
           nutricionista_id,
-          calorias_totales,
-          distribucion_macros: {},
           tiempos_comida: dto.activeMeals || [],
           estructura_grid_json: estructuraGrid as any,
         },

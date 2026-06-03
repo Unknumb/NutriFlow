@@ -1,6 +1,6 @@
 import { Plus, Save, Loader2, X } from 'lucide-react';
 import { apiClient } from '../../shared/api/apiClient';
-import { useNavigate } from '@tanstack/react-router';
+
 import { useState } from 'react';
 import { NutritionTargetsPanel } from '../../features/diet-plan/components/NutritionTargetsPanel';
 import { FoodGroupCard } from '../../features/diet-plan/components/FoodGroupCard';
@@ -11,36 +11,7 @@ import { useClinicalStore } from '../../shared/store/useClinicalStore';
 import { useCreatePauta } from '../../features/pautas/hooks/usePautas';
 import { usePortionsStore } from '../../features/porciones/store/usePortionsStore';
 
-const THEMES = {
-    slate: {
-        bgMain: 'bg-slate-50', bgHeader: 'bg-slate-600', border: 'border-slate-400',
-        headerBg: 'bg-slate-600', targetBg: 'bg-slate-600 border-slate-700', cellBg: 'bg-slate-100', textBtn: 'text-slate-900'
-    },
-    blue: {
-        bgMain: 'bg-blue-50', bgHeader: 'bg-blue-600', border: 'border-blue-400',
-        headerBg: 'bg-blue-600', targetBg: 'bg-blue-600 border-blue-700', cellBg: 'bg-blue-100', textBtn: 'text-blue-900'
-    },
-    red: {
-        bgMain: 'bg-red-50', bgHeader: 'bg-red-600', border: 'border-red-400',
-        headerBg: 'bg-red-600', targetBg: 'bg-red-600 border-red-700', cellBg: 'bg-red-100', textBtn: 'text-red-900'
-    },
-    green: {
-        bgMain: 'bg-green-50', bgHeader: 'bg-green-600', border: 'border-green-400',
-        headerBg: 'bg-green-600', targetBg: 'bg-green-600 border-green-700', cellBg: 'bg-green-100', textBtn: 'text-green-900'
-    },
-    orange: {
-        bgMain: 'bg-orange-50', bgHeader: 'bg-orange-600', border: 'border-orange-400',
-        headerBg: 'bg-orange-600', targetBg: 'bg-orange-600 border-orange-700', cellBg: 'bg-orange-100', textBtn: 'text-orange-900'
-    },
-    purple: {
-        bgMain: 'bg-purple-50', bgHeader: 'bg-purple-600', border: 'border-purple-400',
-        headerBg: 'bg-purple-600', targetBg: 'bg-purple-600 border-purple-700', cellBg: 'bg-purple-100', textBtn: 'text-purple-900'
-    },
-    pink: {
-        bgMain: 'bg-pink-50', bgHeader: 'bg-pink-600', border: 'border-pink-400',
-        headerBg: 'bg-pink-600', targetBg: 'bg-pink-600 border-pink-700', cellBg: 'bg-pink-100', textBtn: 'text-pink-900'
-    }
-};
+// THEMES removed
 
 export const PautasPage = () => {
     // Obtenemos los valores desde el setup de macronutrientes (y context global del paciente)
@@ -48,7 +19,6 @@ export const PautasPage = () => {
     const { activePatient } = useClinicalStore();
     const createPauta = useCreatePauta();
     const { distributions, customFoods, addCustomFood, removeCustomFood, activeMeals, activeGroups } = usePortionsStore();
-    const navigate = useNavigate();
 
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
@@ -75,12 +45,7 @@ export const PautasPage = () => {
 
         createPauta.mutate({
             paciente_id: activePatient.id,
-            calorias_totales: totals.summary.percent === 100 ? totals.prot.kcal + totals.cho.kcal + totals.fat.kcal : context.tmbPromedio,
-            porcentajes_macros: {
-                proteina: totals.prot.pct,
-                grasa: totals.fat.pct,
-                carbohidratos: totals.cho.pct
-            },
+            planificacion_id: '', // Pauta shouldn't be created here without a planificacion. It's likely deprecated file but fixing payload.
             tiempos_comida: distributions
         }, {
             onSuccess: async () => {

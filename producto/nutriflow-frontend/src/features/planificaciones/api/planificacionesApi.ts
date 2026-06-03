@@ -3,11 +3,17 @@ import { apiClient } from '../../../shared/api/apiClient';
 export interface PlanificacionData {
     paciente_id: string;
     calorias_totales: number;
-    porcentajes_macros: {
-        proteina: number;
-        grasa: number;
-        carbohidratos: number;
-    };
+    distribucion_macros: Record<string, any>;
+}
+
+export interface Planificacion {
+    id: string;
+    paciente_id: string;
+    nutricionista_id: string;
+    fecha_creacion: string;
+    calorias_totales: number;
+    distribucion_macros: Record<string, any>;
+    pautas?: any[]; // Array of Pauta
 }
 
 export const planificacionesApi = {
@@ -16,7 +22,7 @@ export const planificacionesApi = {
         return response.data;
     },
 
-    getPlanificaciones: async () => {
+    getPlanificaciones: async (): Promise<Planificacion[]> => {
         const response = await apiClient.get('/planificaciones');
         return response.data;
     },

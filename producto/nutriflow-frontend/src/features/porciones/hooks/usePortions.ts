@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '../../../shared/api/apiClient';
 import { usePortionsStore } from '../store/usePortionsStore';
 import { useClinicalStore } from '../../../shared/store/useClinicalStore';
@@ -14,8 +14,8 @@ export const usePortions = () => {
     const { targets, distributions, activeMeals, activeGroups, customFoods, incrementPortion, decrementPortion, removeTargetGroup, setInitialPortions, toggleMeal, toggleGroup, resetDistributions } = usePortionsStore();
 
     // 3. Datos del paciente conectado con backend
-    const { activePatient } = useClinicalStore();
-    const { data: pacienteData } = usePaciente(activePatient?.id || '');
+    const { activePatient, activePlanificacionId } = useClinicalStore();
+    usePaciente(activePatient?.id || '');
 
     // Transformamos los datos del backend al formato que necesita la UI
     const patientContext = { 
@@ -26,7 +26,7 @@ export const usePortions = () => {
     };
 
     // 4. Consulta a la API para traer las porciones calculadas (Armador de Pautas)
-    const { data: armadorData, isLoading: isLoadingArmador } = useQuery({
+    const { data: armadorData } = useQuery({
         queryKey: ['portions-armador', activePatient?.id],
         queryFn: async () => {
             if (!activePatient?.id) return null;
@@ -51,27 +51,9 @@ export const usePortions = () => {
         }
     }, [armadorData, activePatient?.id, loadedPatientId, setInitialPortions, setLoadedPatientId]);
 
-    const queryClient = useQueryClient();
 
-    // 6. Mutación para guardar la pizarra actual
-    const savePortionsMutation = useMutation({
-        mutationFn: async () => {
-            if (!activePatient?.id) throw new Error('No hay paciente activo');
-            const payload = {
-                paciente_id: activePatient.id,
-                distributions,
-                targets,
-                activeMeals,
-                activeGroups
-            };
-            // POST/PUT a NestJS para guardar el JSON en base de datos
-            const { data } = await apiClient.post('/pautas/guardar-distribucion', payload);
-            return data;
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['portions-armador', activePatient?.id] });
-        }
-    });
+
+    // 6. Mutación para guardar la pizarra actual (removida por no ser leída)
 
     // 7. Cálculos Derivados (Totales y Balances)
     const getGroupTotal = (groupId: string) => {
@@ -93,18 +75,21 @@ export const usePortions = () => {
             return;
         }
 
-        const savedChoPct = parseFloat(localStorage.getItem('nutriflow_macros_choPct') || '45');
-        const savedFatPct = parseFloat(localStorage.getItem('nutriflow_macros_fatPct') || '27');
-        const savedProtPct = 100 - savedChoPct - savedFatPct; 
+        if (!activePlanificacionId) {
+            alert('Primero debes crear y guardar una Planificación (Metas de Macronutrientes).');
+            return;
+        }
+
+        const descripcion = window.prompt("Ingresa un nombre para esta Pauta (ej: Día de entrenamiento, Día de descanso):", "Pauta Regular");
+        if (descripcion === null) {
+            // Usuario canceló el prompt
+            return;
+        }
 
         createPauta.mutate({
             paciente_id: activePatient.id,
-            calorias_totales: targets.kcal || 0,
-            porcentajes_macros: {
-                proteina: savedProtPct,
-                grasa: savedFatPct,
-                carbohidratos: savedChoPct
-            },
+            planificacion_id: activePlanificacionId,
+            descripcion_general: descripcion,
             tiempos_comida: distributions,
         }, {
             onSuccess: async () => {

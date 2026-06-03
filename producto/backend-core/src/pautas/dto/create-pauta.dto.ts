@@ -1,5 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNumber, IsObject, IsNotEmpty, IsUUID } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsString, IsNumber, IsObject, IsNotEmpty, IsUUID, IsOptional } from 'class-validator';
 
 export class PorcentajesMacrosDto {
   @ApiProperty({ example: 20 })
@@ -21,18 +21,15 @@ export class CreatePautaDto {
   @IsNotEmpty()
   paciente_id: string;
 
-  @ApiProperty({ description: 'Calorías totales de la pauta objetivo', example: 2000 })
-  @IsNumber()
+  @ApiProperty({ description: 'ID de la planificación de origen', example: 'uuid-de-planificacion' })
+  @IsUUID()
   @IsNotEmpty()
-  calorias_totales: number;
+  planificacion_id: string;
 
-  @ApiProperty({ 
-    description: 'Porcentajes para el cálculo de macronutrientes',
-    example: { proteina: 20, grasa: 30, carbohidratos: 50 } 
-  })
-  @IsObject()
-  @IsNotEmpty()
-  porcentajes_macros: PorcentajesMacrosDto;
+  @ApiPropertyOptional({ description: 'Nombre o descripción de la pauta', example: 'Día de entrenamiento' })
+  @IsString()
+  @IsOptional()
+  descripcion_general?: string;
 
   @ApiProperty({ 
     description: 'Tiempos de comida y porciones distribuidas',

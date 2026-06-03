@@ -1,20 +1,22 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
+import { CreatePlanificacionDto } from './dto/create-planificacion.dto';
+
 @Injectable()
 export class PlanificacionesService {
   constructor(
     private readonly prisma: PrismaService,
   ) {}
 
-  async create(createPlanificacionDto: any, userId: string) {
+  async create(createPlanificacionDto: CreatePlanificacionDto, userId: string) {
     try {
       const planificacion = await this.prisma.planificacion.create({
         data: {
           paciente_id: createPlanificacionDto.paciente_id,
           nutricionista_id: userId,
           calorias_totales: createPlanificacionDto.calorias_totales,
-          distribucion_macros: createPlanificacionDto.porcentajes_macros,
+          distribucion_macros: createPlanificacionDto.distribucion_macros as any,
         },
       });
 
@@ -33,6 +35,13 @@ export class PlanificacionesService {
         },
         orderBy: {
           fecha_creacion: 'desc',
+        },
+        include: {
+          pautas: {
+            orderBy: {
+              fecha_creacion: 'desc',
+            },
+          },
         },
       });
     } catch (error) {

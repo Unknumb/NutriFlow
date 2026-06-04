@@ -18,6 +18,7 @@ export interface PortionsState {
     customFoods: CustomFoodDef[];
     incrementPortion: (mealId: string, groupId: string) => void;
     decrementPortion: (mealId: string, groupId: string) => void;
+    setPortion: (mealId: string, groupId: string, value: number) => void;
     incrementTarget: (groupId: string) => void;
     decrementTarget: (groupId: string) => void;
     resetPlan: () => void;
@@ -85,7 +86,7 @@ export const usePortionsStore = create<PortionsState>((set) => ({
             ...state.distributions,
             [mealId]: {
                 ...(state.distributions[mealId] || {}),
-                [groupId]: (state.distributions[mealId]?.[groupId] || 0) + 1
+                [groupId]: (state.distributions[mealId]?.[groupId] || 0) + 0.5
             }
         }
     })),
@@ -99,11 +100,21 @@ export const usePortionsStore = create<PortionsState>((set) => ({
                 ...state.distributions,
                 [mealId]: {
                     ...state.distributions[mealId],
-                    [groupId]: current - 1
+                    [groupId]: Math.max(0, current - 0.5)
                 }
             }
         };
     }),
+
+    setPortion: (mealId, groupId, value) => set((state) => ({
+        distributions: {
+            ...state.distributions,
+            [mealId]: {
+                ...(state.distributions[mealId] || {}),
+                [groupId]: Math.max(0, value)
+            }
+        }
+    })),
     
     incrementTarget: (groupId) => set((state) => ({
         targets: {

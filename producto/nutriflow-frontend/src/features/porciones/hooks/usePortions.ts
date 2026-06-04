@@ -11,7 +11,7 @@ export const usePortions = () => {
     const [activeTab, setActiveTab] = useState<'tabla' | 'pauta' | 'opciones' | 'pdf'>('tabla');
 
     // 2. Estado Global de Zustand
-    const { targets, distributions, activeMeals, activeGroups, customFoods, incrementPortion, decrementPortion, removeTargetGroup, setInitialPortions, toggleMeal, toggleGroup, resetDistributions } = usePortionsStore();
+    const { targets, distributions, activeMeals, activeGroups, customFoods, incrementPortion, decrementPortion, setPortion, removeTargetGroup, setInitialPortions, toggleMeal, toggleGroup, resetDistributions } = usePortionsStore();
 
     // 3. Datos del paciente conectado con backend
     const { activePatient, activePlanificacionId } = useClinicalStore();
@@ -116,7 +116,7 @@ export const usePortions = () => {
 
     return {
         state: { activeTab, patientContext, targets, distributions, activeMeals, activeGroups, customFoods, isSaving: createPauta.isPending },
-        actions: { setActiveTab, incrementPortion, decrementPortion, handleSavePauta, removeTargetGroup, toggleMeal, toggleGroup, resetDistributions },
+        actions: { setActiveTab, incrementPortion, decrementPortion, setPortion, handleSavePauta, removeTargetGroup, toggleMeal, toggleGroup, resetDistributions },
         computed: { getGroupTotal, getGroupBalance }
     };
 };

@@ -1,5 +1,4 @@
-import { Plus, Save, Loader2, X } from 'lucide-react';
-import { apiClient } from '../../shared/api/apiClient';
+import { Plus, X } from 'lucide-react';
 
 import { useState } from 'react';
 import { NutritionTargetsPanel } from '../../features/diet-plan/components/NutritionTargetsPanel';
@@ -8,7 +7,6 @@ import { useDietPlanBuilder } from '../../features/diet-plan/hooks/useDietPlanBu
 import { FOOD_GROUPS } from '../../features/diet-plan/constants/foodGroups';
 import { useMacronutrientsSetup } from '../../features/macronutrients/hooks/useMacronutrientsSetup';
 import { useClinicalStore } from '../../shared/store/useClinicalStore';
-import { useCreatePauta } from '../../features/pautas/hooks/usePautas';
 import { usePortionsStore } from '../../features/porciones/store/usePortionsStore';
 
 // THEMES removed
@@ -16,9 +14,8 @@ import { usePortionsStore } from '../../features/porciones/store/usePortionsStor
 export const PautasPage = () => {
     // Obtenemos los valores desde el setup de macronutrientes (y context global del paciente)
     const { context, totals } = useMacronutrientsSetup();
-    const { activePatient } = useClinicalStore();
-    const createPauta = useCreatePauta();
-    const { distributions, customFoods, addCustomFood, removeCustomFood, activeMeals, activeGroups } = usePortionsStore();
+    useClinicalStore();
+    const { customFoods, addCustomFood, removeCustomFood } = usePortionsStore();
 
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
@@ -37,39 +34,6 @@ export const PautasPage = () => {
         fat: totals.fat.g 
     });
 
-    const handleSave = () => {
-        if (!activePatient) {
-            alert('Debe tener un paciente activo para guardar la pauta');
-            return;
-        }
-
-        createPauta.mutate({
-            paciente_id: activePatient.id,
-            planificacion_id: '', // Pauta shouldn't be created here without a planificacion. It's likely deprecated file but fixing payload.
-            tiempos_comida: distributions
-        }, {
-            onSuccess: async () => {
-                try {
-                    await apiClient.post('/pautas/guardar-distribucion', {
-                        paciente_id: activePatient.id,
-                        distributions,
-                        targets,
-                        activeMeals,
-                        activeGroups
-                    });
-                    alert('¡Pauta guardada con éxito!');
-                } catch (error) {
-                    console.error('Error guardando distribución:', error);
-                    alert('La pauta se creó pero falló al guardar las cantidades.');
-                }
-            },
-            onError: (error: any) => {
-                const errorMsg = error.response?.data?.message || error.message || 'Hubo un error al guardar la pauta';
-                alert(`Error: ${Array.isArray(errorMsg) ? errorMsg.join(', ') : errorMsg}`);
-                console.error('Save Pauta Error:', error);
-            }
-        });
-    };
 
     const handleAddCustomFood = (e: React.FormEvent) => {
         e.preventDefault();
@@ -113,14 +77,6 @@ export const PautasPage = () => {
                         className="inline-flex items-center gap-2 bg-white border-2 border-teal-600 text-teal-700 hover:bg-teal-50 px-5 py-2.5 rounded-xl text-sm font-bold transition-colors shadow-sm"
                     >
                         <Plus className="w-4 h-4" /> Añadir alimento
-                    </button>
-                    <button 
-                        onClick={handleSave}
-                        disabled={createPauta.isPending}
-                        className="inline-flex items-center gap-2 bg-teal-600 border-2 border-teal-600 text-white hover:bg-teal-700 px-5 py-2.5 rounded-xl text-sm font-bold transition-colors shadow-sm disabled:opacity-70"
-                    >
-                        {createPauta.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                        Guardar Pauta
                     </button>
                 </div>
             </div>

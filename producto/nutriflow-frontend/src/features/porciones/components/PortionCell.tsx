@@ -1,6 +1,17 @@
 import { useDraggable } from '@dnd-kit/core';
 import { GripHorizontal } from 'lucide-react';
 
+const HIDE_ARROWS_CSS = `
+  .hide-arrows::-webkit-outer-spin-button,
+  .hide-arrows::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  .hide-arrows {
+    -moz-appearance: textfield;
+  }
+`;
+
 interface PortionCellProps {
     value: number;
     cellBg: string;   // ej: 'bg-amber-100'
@@ -9,9 +20,10 @@ interface PortionCellProps {
     groupId: string;
     onIncrement?: () => void;
     onDecrement?: () => void;
+    onSetPortion?: (val: number) => void;
 }
 
-export const PortionCell = ({ value, cellBg, textBtn, mealId, groupId, onIncrement, onDecrement }: PortionCellProps) => {
+export const PortionCell = ({ value, cellBg, textBtn, mealId, groupId, onIncrement, onDecrement, onSetPortion }: PortionCellProps) => {
     const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
         id: `drag-portion-${mealId}-${groupId}`,
         data: { mealId, groupId, type: 'portion' },
@@ -31,6 +43,8 @@ export const PortionCell = ({ value, cellBg, textBtn, mealId, groupId, onIncreme
     }
 
     return (
+        <>
+        <style>{HIDE_ARROWS_CSS}</style>
         <div 
             ref={setNodeRef}
             {...listeners}
@@ -39,11 +53,21 @@ export const PortionCell = ({ value, cellBg, textBtn, mealId, groupId, onIncreme
             title="Arrastra hacia arriba para restar"
         >
             <button onClick={onIncrement} className={`text-[10px] ${textBtn} opacity-60 hover:opacity-100 w-full font-bold`} onPointerDown={(e) => e.stopPropagation()}>▲</button>
-            <div className="flex items-center gap-0.5">
-                <span className={`font-bold text-base ${textBtn}`}>{value}</span>
+            <div className="flex items-center justify-center w-full">
+                <input 
+                    type="number"
+                    step="0.5"
+                    min="0"
+                    value={value}
+                    onChange={(e) => onSetPortion?.(parseFloat(e.target.value) || 0)}
+                    onPointerDown={(e) => e.stopPropagation()} // Evita que se inicie el drag al hacer clic
+                    className={`font-bold text-base ${textBtn} w-full text-center bg-transparent focus:outline-none focus:ring-1 focus:ring-teal-400 rounded hide-arrows p-0 m-0`}
+                    style={{ WebkitAppearance: 'none', MozAppearance: 'textfield' }}
+                />
             </div>
             <button onClick={onDecrement} className={`text-[10px] ${textBtn} opacity-60 hover:opacity-100 w-full font-bold`} onPointerDown={(e) => e.stopPropagation()}>▼</button>
             <GripHorizontal className={`w-3 h-3 ${textBtn} opacity-40 mt-0.5`} />
         </div>
+        </>
     );
 };

@@ -2,14 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { usePacientes } from '../hooks/usePacientes';
 import { useClinicalStore } from '../../../shared/store/useClinicalStore';
 import { useAuthStore } from '../../../shared/store/useAuthStore';
-import { Loader2, Star } from 'lucide-react';
+import { Loader2, Star, Trash2, Printer } from 'lucide-react';
 import type { Paciente } from '../types/paciente.types';
 import { useEvaluacionesByPaciente, useCreateEvaluacion } from '../../evaluaciones/hooks/useEvaluaciones';
 import type { CreateEvaluacionPayload } from '../../evaluaciones/types/evaluacion.types';
 import { useDeletePauta } from '../../pautas/hooks/usePautas';
 import { usePlanificaciones, useDeletePlanificacion } from '../../planificaciones/hooks/usePlanificaciones';
 import { NUTRITION_GROUPS, MEALS } from '../../porciones/constants';
-import { Trash2 } from 'lucide-react';
+import { PDFDownloadLink } from "@react-pdf/renderer";
+import { PautaDocumentPDF } from '../../porciones/components/PautaDocumentPDF';
 
 const calculateAge = (birthDateString: string) => {
   const birthDate = new Date(birthDateString);
@@ -34,7 +35,7 @@ export const FichasPacientes: React.FC = () => {
   const { activePatient, setActivePatient, setPesoActivo, setTmbPromedio } = useClinicalStore();
   const { user } = useAuthStore();
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState('datos');
+  const [activeTab, setActiveTab] = useState<'datos' | 'pautas' | 'sintomas' | 'progreso'>('datos');
 
   const { data: evaluaciones, isLoading: loadingEvals } = useEvaluacionesByPaciente(selectedPatientId || '');
   const createEvaluacion = useCreateEvaluacion();
@@ -449,18 +450,43 @@ export const FichasPacientes: React.FC = () => {
                                             (Añadida el {new Date(pauta.fecha_creacion).toLocaleDateString()})
                                           </span>
                                         </div>
-                                        <button 
-                                          onClick={() => {
-                                            if (window.confirm(`¿Eliminar pauta "${pauta.descripcion_general || 'Regular'}"?`)) {
-                                              deletePauta.mutate(pauta.id);
-                                            }
-                                          }}
-                                          disabled={deletePauta.isPending}
-                                          className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
-                                          title="Eliminar Pauta"
-                                        >
-                                          <Trash2 className="w-4 h-4" />
-                                        </button>
+                                        <div className="flex items-center gap-1">
+                                          <PDFDownloadLink
+                                            document={<PautaDocumentPDF data={{
+                                              patientContext: { name: `${pacienteSeleccionado?.nombre} ${pacienteSeleccionado?.apellido}` },
+                                              currentDate: new Intl.DateTimeFormat("es-CL", { day: "2-digit", month: "long", year: "numeric" }).format(new Date(pauta.fecha_creacion || new Date())),
+                                              distributions: pauta.tiempos_comida || {},
+                                              targets: pauta.estructura_grid_json?.targets || {},
+                                              totals: NUTRITION_GROUPS.reduce((acc, g) => {
+                                                acc[g.id] = Object.values(pauta.tiempos_comida || {}).reduce((sum: number, meal: any) => sum + (meal[g.id] || 0), 0);
+                                                return acc;
+                                              }, {} as Record<string, number>),
+                                            }} />}
+                                            fileName={`Pauta_${pacienteSeleccionado?.nombre?.replace(/\s+/g, "_")}_${pacienteSeleccionado?.apellido?.replace(/\s+/g, "_")}.pdf`}
+                                          >
+                                            {({ loading }) => (
+                                              <button 
+                                                disabled={loading}
+                                                className={`p-1.5 rounded-md transition-colors ${loading ? 'text-gray-300 cursor-not-allowed' : 'text-gray-400 hover:text-teal-600 hover:bg-teal-50'}`}
+                                                title="Exportar a PDF"
+                                              >
+                                                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Printer className="w-4 h-4" />}
+                                              </button>
+                                            )}
+                                          </PDFDownloadLink>
+                                          <button 
+                                            onClick={() => {
+                                              if (window.confirm(`¿Eliminar pauta "${pauta.descripcion_general || 'Regular'}"?`)) {
+                                                deletePauta.mutate(pauta.id);
+                                              }
+                                            }}
+                                            disabled={deletePauta.isPending}
+                                            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                                            title="Eliminar Pauta"
+                                          >
+                                            <Trash2 className="w-4 h-4" />
+                                          </button>
+                                        </div>
                                       </div>
 
                                       {pauta.tiempos_comida && Object.keys(pauta.tiempos_comida).length > 0 && (

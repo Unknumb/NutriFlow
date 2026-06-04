@@ -18,12 +18,11 @@ import { NUTRITION_GROUPS, MEALS } from "../constants";
 export const PortionsTable = () => {
   const { state, actions, computed } = usePortions();
   const { targets, distributions, activeMeals, customFoods } = state;
-  const { incrementPortion, decrementPortion } = actions;
+  const { incrementPortion, decrementPortion, setPortion } = actions;
   const { getGroupTotal, getGroupBalance } = computed;
 
-  const [activeDragGroupId, setActiveDragGroupId] = useState<string | null>(
-    null,
-  );
+  const [activeDragGroupId, setActiveDragGroupId] = useState<string | null>(null);
+  const [activeDragPortion, setActiveDragPortion] = useState<{ mealId: string, groupId: string, value: number } | null>(null);
 
   const COMBINED_GROUPS = [...NUTRITION_GROUPS, ...(customFoods || [])];
 
@@ -55,11 +54,14 @@ export const PortionsTable = () => {
     const activeData = String(active.id).split("-");
     if (activeData[0] === "drag" && activeData[1] === "group") {
       setActiveDragGroupId(activeData[2]);
+    } else if (activeData[0] === "drag" && activeData[1] === "portion") {
+      setActiveDragPortion({ mealId: activeData[2], groupId: activeData[3], value: distributions[activeData[2]]?.[activeData[3]] || 0 });
     }
   };
 
   const handleDragEnd = (event: any) => {
     setActiveDragGroupId(null);
+    setActiveDragPortion(null);
     const { active, over } = event;
     if (!over) {
       // Drop fuera de todo (zona nula) -> Si es una porción, la restamos
@@ -99,10 +101,32 @@ export const PortionsTable = () => {
       const groupId = activeData[3];
       decrementPortion(mealId, groupId);
     }
+    
+    // active: drag-portion-[sourceMealId]-[groupId]
+    // over: drop-meal-[targetMealId]
+    if (
+      activeData[0] === "drag" &&
+      activeData[1] === "portion" &&
+      overData[0] === "drop" &&
+      overData[1] === "meal"
+    ) {
+      const sourceMealId = activeData[2];
+      const groupId = activeData[3];
+      const targetMealId = overData[2];
+      
+      if (sourceMealId !== targetMealId) {
+        decrementPortion(sourceMealId, groupId);
+        incrementPortion(targetMealId, groupId);
+      }
+    }
   };
 
   const activeDragGroup = activeDragGroupId
     ? COMBINED_GROUPS.find((g) => g.id === activeDragGroupId)
+    : null;
+    
+  const activeDragPortionGroup = activeDragPortion
+    ? COMBINED_GROUPS.find((g) => g.id === activeDragPortion.groupId)
     : null;
 
   // Zona de droppable para la paleta superior
@@ -216,6 +240,7 @@ export const PortionsTable = () => {
                         groupId={g.id}
                         onIncrement={() => incrementPortion(meal.id, g.id)}
                         onDecrement={() => decrementPortion(meal.id, g.id)}
+                        onSetPortion={(val) => setPortion(meal.id, g.id, val)}
                       />
                     </td>
                   ))}
@@ -285,6 +310,14 @@ export const PortionsTable = () => {
             >
               <span className="text-2xl">{activeDragGroup.emoji}</span>
               <span className="font-bold text-sm">{activeDragGroup.label}</span>
+            </div>
+          ) : activeDragPortion && activeDragPortionGroup ? (
+            <div
+              className={`${activeDragPortionGroup.cellBg} rounded-lg px-2 py-0.5 flex flex-col items-center shadow-xl scale-110 rotate-3 opacity-90`}
+            >
+                <div className="flex items-center gap-0.5 py-1">
+                    <span className={`font-bold text-base ${activeDragPortionGroup.textBtn}`}>{activeDragPortion.value}</span>
+                </div>
             </div>
           ) : null}
         </DragOverlay>

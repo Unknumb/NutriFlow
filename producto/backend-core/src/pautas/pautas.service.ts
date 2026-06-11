@@ -4,12 +4,14 @@ import { UpdatePautaDto } from './dto/update-pauta.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
+import { RedisService } from 'src/redis/redis.service';
 
 @Injectable()
 export class PautasService {
   constructor(
     private prisma: PrismaService,
-    private httpService: HttpService
+    private httpService: HttpService,
+    private redisService: RedisService
   ) {}
 
   async create(createPautaDto: CreatePautaDto, nutricionista_id: string) {
@@ -65,13 +67,15 @@ export class PautasService {
     };
 
     if (pautaExistente) {
-      return this.prisma.pauta.update({
+      const updated = await this.prisma.pauta.update({
         where: { id: pautaExistente.id },
         data: { estructura_grid_json: estructuraGrid as any },
       });
+      await this.redisService.client.del(`distribucion:${dto.paciente_id}:${nutricionista_id}`);
+      return updated;
     } else {
       const calorias_totales = dto.targets?.kcal || 2000;
-      return this.prisma.pauta.create({
+      const created = await this.prisma.pauta.create({
         data: {
           paciente_id: dto.paciente_id,
           nutricionista_id,
@@ -79,16 +83,23 @@ export class PautasService {
           estructura_grid_json: estructuraGrid as any,
         },
       });
+      await this.redisService.client.del(`distribucion:${dto.paciente_id}:${nutricionista_id}`);
+      return created;
     }
   }
 
   async obtenerDistribucionPorPaciente(paciente_id: string, nutricionista_id: string) {
+    const cacheKey = `distribucion:${paciente_id}:${nutricionista_id}`;
+    const cached = await this.redisService.client.get(cacheKey);
+    if (cached) return cached;
+
     const pauta = await this.prisma.pauta.findFirst({
       where: { paciente_id, nutricionista_id },
       orderBy: { fecha_creacion: 'desc' },
     });
 
     if (pauta && pauta.estructura_grid_json && Object.keys(pauta.estructura_grid_json).length > 0) {
+      await this.redisService.client.set(cacheKey, pauta.estructura_grid_json, { ex: 3600 });
       return pauta.estructura_grid_json;
     }
 

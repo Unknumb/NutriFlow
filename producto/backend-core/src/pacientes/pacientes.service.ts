@@ -2,15 +2,19 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreatePacienteDto } from './dto/create-paciente.dto';
 import { UpdatePacienteDto } from './dto/update-paciente.dto';
 import { PrismaService } from '../prisma/prisma.service';
+import { RedisService } from 'src/redis/redis.service';
 
 @Injectable()
 export class PacientesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private redisService: RedisService,
+  ) {}
 
   async create(createPacienteDto: CreatePacienteDto, nutricionista_id: string) {
     const { talla_cm, peso_kg, ...pacienteData } = createPacienteDto;
     
-    return this.prisma.$transaction(async (prisma) => {
+    const result = await this.prisma.$transaction(async (prisma) => {
       const paciente = await prisma.pacientes.create({
         data: {
           ...pacienteData,
@@ -38,24 +42,50 @@ export class PacientesService {
         include: { Evaluacion: { orderBy: { fecha_evaluacion: 'desc' }, take: 1 } },
       });
     });
+
+    await this.redisService.client.del(`pacientes:${nutricionista_id}`);
+    
+    return result;
   }
 
-  findAll(nutricionista_id: string) {
-    return this.prisma.pacientes.findMany({
+  async findAll(nutricionista_id: string) {
+    const cacheKey = `pacientes:${nutricionista_id}`;
+    
+    const cachedPacientes = await this.redisService.client.get(cacheKey);
+    if (cachedPacientes) {
+      return cachedPacientes;
+    }
+
+    const pacientes = await this.prisma.pacientes.findMany({
       where: { nutricionista_id },
       orderBy: { fecha_creacion: 'desc' },
       include: { Evaluacion: { orderBy: { fecha_evaluacion: 'desc' }, take: 1 } },
     });
+
+    await this.redisService.client.set(cacheKey, pacientes, { ex: 3600 });
+
+    return pacientes;
   }
 
   async findOne(id: string, nutricionista_id: string) {
+    const cacheKey = `paciente:${id}:${nutricionista_id}`;
+
+    const cachedPaciente = await this.redisService.client.get(cacheKey);
+    if (cachedPaciente) {
+      return cachedPaciente;
+    }
+
     const paciente = await this.prisma.pacientes.findFirst({ 
       where: { id, nutricionista_id },
       include: { Evaluacion: { orderBy: { fecha_evaluacion: 'desc' }, take: 1 } },
     });
+    
     if (!paciente) {
       throw new NotFoundException(`Paciente con ID ${id} no encontrado o no tienes permisos de acceso`);
     }
+
+    await this.redisService.client.set(cacheKey, paciente, { ex: 3600 });
+
     return paciente;
   }
 
@@ -67,15 +97,28 @@ export class PacientesService {
       dataToUpdate.fecha_nacimiento = new Date(updatePacienteDto.fecha_nacimiento);
     }
 
-    return this.prisma.pacientes.update({
+    const updatedPaciente = await this.prisma.pacientes.update({
       where: { id },
       data: dataToUpdate,
     });
+
+    await Promise.all([
+      this.redisService.client.del(`paciente:${id}:${nutricionista_id}`),
+      this.redisService.client.del(`pacientes:${nutricionista_id}`)
+    ]);
+
+    return updatedPaciente;
   }
 
   async remove(id: string, nutricionista_id: string) {
     await this.findOne(id, nutricionista_id); // Verificar existencia y pertenencia
-    return this.prisma.pacientes.delete({ where: { id } });
+    const deletedPaciente = await this.prisma.pacientes.delete({ where: { id } });
+
+    await Promise.all([
+      this.redisService.client.del(`paciente:${id}:${nutricionista_id}`),
+      this.redisService.client.del(`pacientes:${nutricionista_id}`)
+    ]);
+
+    return deletedPaciente;
   }
 }
-

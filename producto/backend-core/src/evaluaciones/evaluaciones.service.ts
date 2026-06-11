@@ -4,12 +4,14 @@ import { UpdateEvaluacionDto } from './dto/update-evaluacion.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
+import { RedisService } from 'src/redis/redis.service';
 
 @Injectable()
 export class EvaluacionesService {
   constructor(
     private prisma: PrismaService,
-    private httpService: HttpService
+    private httpService: HttpService,
+    private redisService: RedisService
   ) {}
 
   private calculateAge(fechaNacimiento: Date): number {
@@ -50,16 +52,24 @@ export class EvaluacionesService {
 
     let calculosTmb;
     try {
-      // 3. Petición HTTP al motor matemático (usamos el prefijo /api/calculadoras definido en FastAPI)
-      const response = await firstValueFrom(
-        this.httpService.post('http://localhost:8000/api/calculadoras/tmb', {
-          sexo: sexoStr,
-          edad: edad,
-          talla_cm: createEvaluacionDto.talla_cm,
-          peso_kg: createEvaluacionDto.peso_actual
-        })
-      );
-      calculosTmb = response.data;
+      const cacheKey = `tmb:${sexoStr}:${edad}:${createEvaluacionDto.talla_cm}:${createEvaluacionDto.peso_actual}`;
+      const cachedTmb = await this.redisService.client.get(cacheKey);
+
+      if (cachedTmb) {
+        calculosTmb = cachedTmb;
+      } else {
+        // 3. Petición HTTP al motor matemático (usamos el prefijo /api/calculadoras definido en FastAPI)
+        const response = await firstValueFrom(
+          this.httpService.post('http://localhost:8000/api/calculadoras/tmb', {
+            sexo: sexoStr,
+            edad: edad,
+            talla_cm: createEvaluacionDto.talla_cm,
+            peso_kg: createEvaluacionDto.peso_actual
+          })
+        );
+        calculosTmb = response.data;
+        await this.redisService.client.set(cacheKey, calculosTmb, { ex: 86400 }); // Caché de 24h
+      }
     } catch (error) {
       console.error('Error al conectarse a backend-math:', error.message);
       throw new InternalServerErrorException('Error al calcular TMB en el motor matemático');
@@ -76,6 +86,9 @@ export class EvaluacionesService {
       },
     });
 
+    // Invalida la caché de la lista de evaluaciones del paciente
+    await this.redisService.client.del(`evaluaciones:${createEvaluacionDto.paciente_id}:${nutricionistaId}`);
+
     return {
       evaluacion,
       calculos: {
@@ -86,14 +99,24 @@ export class EvaluacionesService {
   }
 
   async findAllByPaciente(pacienteId: string, nutricionistaId: string) {
+    const cacheKey = `evaluaciones:${pacienteId}:${nutricionistaId}`;
+    const cached = await this.redisService.client.get(cacheKey);
+    
+    if (cached) {
+      return cached;
+    }
+
     // Esto asegura que la nutricionista solo vea las evaluaciones de SUS propios pacientes
-    return this.prisma.evaluacion.findMany({
+    const evaluaciones = await this.prisma.evaluacion.findMany({
       where: {
         paciente_id: pacienteId,
         nutricionista_id: nutricionistaId,
       },
       orderBy: { fecha_evaluacion: 'desc' }, // Traemos la más reciente primero
     });
+
+    await this.redisService.client.set(cacheKey, evaluaciones, { ex: 3600 });
+    return evaluaciones;
   }
 
   async findOne(id: string, nutricionistaId: string) {
@@ -108,19 +131,25 @@ export class EvaluacionesService {
   }
 
   async update(id: string, updateEvaluacionDto: UpdateEvaluacionDto, nutricionistaId: string) {
-    await this.findOne(id, nutricionistaId); // Reutilizamos findOne para garantizar que la evaluación le pertenece
+    const evaluacion = await this.findOne(id, nutricionistaId); // Reutilizamos findOne para garantizar que la evaluación le pertenece
 
-    return this.prisma.evaluacion.update({
+    const updated = await this.prisma.evaluacion.update({
       where: { id },
       data: updateEvaluacionDto,
     });
+
+    await this.redisService.client.del(`evaluaciones:${evaluacion.paciente_id}:${nutricionistaId}`);
+    return updated;
   }
 
   async remove(id: string, nutricionistaId: string) {
-    await this.findOne(id, nutricionistaId); // Garantizar pertenencia
+    const evaluacion = await this.findOne(id, nutricionistaId); // Garantizar pertenencia
 
-    return this.prisma.evaluacion.delete({
+    const deleted = await this.prisma.evaluacion.delete({
       where: { id },
     });
+
+    await this.redisService.client.del(`evaluaciones:${evaluacion.paciente_id}:${nutricionistaId}`);
+    return deleted;
   }
 }

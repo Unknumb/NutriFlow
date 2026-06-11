@@ -4,7 +4,7 @@
 # Autor: Álvaro Uribe
 # ==============================================================================
 
-DB_NAME="postgres"
+DB_NAME="nutriflow_test"
 DB_USER="postgres"
 DB_HOST="localhost"
 DB_PORT="5432"

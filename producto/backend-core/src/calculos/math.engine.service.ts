@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
+import { RedisService } from 'src/redis/redis.service';
 import { GuardarDistribucionMacrosDto } from './dto/guardar-distribucion.dto';
 
 @Injectable()
@@ -8,7 +9,10 @@ export class MathEngineService {
   // 1. Ajustamos la URL base según tu main.py (prefix: /api/calculadoras)
   private readonly pythonUrl = 'http://127.0.0.1:8000/api/calculadoras';
 
-  constructor(private readonly httpService: HttpService) {}
+  constructor(
+    private readonly httpService: HttpService,
+    private redisService: RedisService
+  ) {}
 
   /**
    * Llama al endpoint de TMB en FastAPI
@@ -26,10 +30,16 @@ export class MathEngineService {
    * Llama al Cuadrador de Macros en FastAPI
    */
   async obtenerCuadrador(datos: any) {
+    const cacheKey = `cuadrador:${JSON.stringify(datos)}`;
+    const cached = await this.redisService.client.get(cacheKey);
+    if (cached) return cached;
+
     // Este apunta a /api/calculadoras/cuadrador
     const { data } = await firstValueFrom(
       this.httpService.post(`${this.pythonUrl}/cuadrador`, datos)
     );
+    
+    await this.redisService.client.set(cacheKey, data, { ex: 86400 }); // 24h
     return data;
   }
 

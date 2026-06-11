@@ -1,5 +1,6 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { RedisService } from 'src/redis/redis.service';
 
 import { CreatePlanificacionDto } from './dto/create-planificacion.dto';
 
@@ -7,6 +8,7 @@ import { CreatePlanificacionDto } from './dto/create-planificacion.dto';
 export class PlanificacionesService {
   constructor(
     private readonly prisma: PrismaService,
+    private redisService: RedisService
   ) {}
 
   async create(createPlanificacionDto: CreatePlanificacionDto, userId: string) {
@@ -20,6 +22,8 @@ export class PlanificacionesService {
         },
       });
 
+      await this.redisService.client.del(`planificaciones:${userId}`);
+
       return planificacion;
     } catch (error) {
       console.error('Error al crear la planificación:', error);
@@ -29,7 +33,11 @@ export class PlanificacionesService {
 
   async findAll(userId: string) {
     try {
-      return await this.prisma.planificacion.findMany({
+      const cacheKey = `planificaciones:${userId}`;
+      const cached = await this.redisService.client.get(cacheKey);
+      if (cached) return cached;
+
+      const planificaciones = await this.prisma.planificacion.findMany({
         where: {
           nutricionista_id: userId,
         },
@@ -44,6 +52,9 @@ export class PlanificacionesService {
           },
         },
       });
+
+      await this.redisService.client.set(cacheKey, planificaciones, { ex: 3600 });
+      return planificaciones;
     } catch (error) {
       console.error('Error al obtener las planificaciones:', error);
       throw new InternalServerErrorException('Error al obtener las planificaciones');
@@ -52,12 +63,14 @@ export class PlanificacionesService {
 
   async remove(id: string, userId: string) {
     try {
-      return await this.prisma.planificacion.delete({
+      const deleted = await this.prisma.planificacion.delete({
         where: {
           id: id,
           nutricionista_id: userId,
         },
       });
+      await this.redisService.client.del(`planificaciones:${userId}`);
+      return deleted;
     } catch (error) {
       console.error('Error al eliminar la planificación:', error);
       throw new InternalServerErrorException('Error al eliminar la planificación');

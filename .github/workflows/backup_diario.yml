@@ -1,0 +1,32 @@
+name: Backup Diario de Base de Datos NutriFlow
+
+on:
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+jobs:
+  backup-database:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Instalar cliente de PostgreSQL
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Ejecutar pg_dump desde Supabase
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+          BACKUP_FILE="nutriflow_prod_${TIMESTAMP}.backup"
+          pg_dump $DB_URL -F c -b -v -f $BACKUP_FILE
+          echo "BACKUP_NAME=$BACKUP_FILE" >> $GITHUB_ENV
+
+      - name: Subir archivo de backup como Artefacto a GitHub
+        uses: actions/upload-artifact@v4
+        with:
+          name: nutriflow-database-backup
+          path: ${{ env.BACKUP_NAME }}
+          retention-days: 7

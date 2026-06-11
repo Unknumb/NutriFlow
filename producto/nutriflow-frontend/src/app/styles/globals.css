@@ -1,0 +1,71 @@
+@import "tailwindcss";
+
+:root {
+  /* ... tus variables se mantienen igual ... */
+  --text: #6b6375;
+  --text-h: #08060d;
+  --bg: #fff;
+  --border: #e5e4e7;
+  --code-bg: #f4f3ec;
+  --accent: #aa3bff;
+  --accent-bg: rgba(170, 59, 255, 0.1);
+  --accent-border: rgba(170, 59, 255, 0.5);
+  --social-bg: rgba(244, 243, 236, 0.5);
+  --shadow: rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+
+  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
+  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
+  --mono: ui-monospace, Consolas, monospace;
+
+  /* Reset de fuente */
+  font-family: var(--sans);
+  font-size: 16px;
+  /* Bajamos el base a 16px que es estándar de SaaS */
+  line-height: 1.5;
+  color-scheme: light dark;
+  color: var(--text);
+  background: var(--bg);
+
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* EL CAMBIO CLAVE ESTÁ AQUÍ */
+#root {
+  width: 100%;
+  /* Ocupa todo el ancho */
+  min-height: 100vh;
+  /* Ocupa todo el alto */
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  /* Eliminamos el auto para que no se centre */
+  text-align: left;
+  /* El texto debe nacer a la izquierda, no centrado */
+  border-inline: none;
+  /* Quitamos esas líneas laterales */
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  overflow-x: hidden;
+  /* Evita scroll horizontal accidental */
+}
+
+/* Limpieza de etiquetas globales */
+h1,
+h2,
+h3,
+h4,
+p {
+  margin: 0;
+}
+
+/* Mantengo tus estilos de títulos pero sin forzar márgenes que Tailwind ya maneja */
+h1 {
+  font-family: var(--heading);
+  color: var(--text-h);
+}

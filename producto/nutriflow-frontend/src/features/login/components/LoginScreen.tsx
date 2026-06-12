@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Mail, Lock, ArrowRight, Eye, EyeOff, Loader2 } from "lucide-react";
 import { useAuth } from "../../../shared/hooks/useAuth";
-import { useRouter } from "@tanstack/react-router";
+import { Link, useRouter } from "@tanstack/react-router";
 import { useAuthStore } from "../../../shared/store/useAuthStore";
 
 export const LoginScreen: React.FC = () => {
@@ -111,12 +111,12 @@ export const LoginScreen: React.FC = () => {
                   >
                     Contraseña
                   </label>
-                  <a
-                    href="#"
+                  <Link
+                    to="/forgot-password"
                     className="text-xs font-semibold text-[#006686] hover:text-[#7bd1fa] transition-colors"
                   >
                     ¿Olvidaste tu contraseña?
-                  </a>
+                  </Link>
                 </div>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-black" />
@@ -163,12 +163,12 @@ export const LoginScreen: React.FC = () => {
 
                 <p className="text-center text-sm text-[#3f484e] mt-2">
                   ¿No tienes una cuenta?{" "}
-                  <a
-                    href="#"
+                  <Link
+                    to="/register"
                     className="text-[#006686] font-medium hover:underline"
                   >
-                    Solicitar Acceso
-                  </a>
+                    Crear Cuenta
+                  </Link>
                 </p>
               </div>
             </form>

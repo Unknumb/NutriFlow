@@ -1,1 +1,4 @@
 .DS_Store
+
+# Memorias locales de agentes Claude
+**/.claude/

@@ -13,7 +13,8 @@ const MENU_ITEMS = [
     { path: '/porciones', label: 'Distribución de Porciones', icon: Grid3x3 },
     { path: '/biblioteca', label: 'Biblioteca de Preparaciones', icon: BookOpen },
     { path: '/generador', label: 'Generador Automático', icon: Sparkles },
-    { path: '/pacientes', label: 'Fichas de Pacientes', icon: Users }
+    { path: '/pacientes', label: 'Fichas de Pacientes', icon: Users },
+    { path: '/perfil', label: 'Mi Perfil', icon: User }
 ] as const;
 
 
@@ -26,6 +27,11 @@ export const Sidebar = () => {
         await supabase.auth.signOut();
         window.location.href = '/login';
     };
+
+    // Nombre completo desde user_metadata (nombre + apellido), con fallback al email
+    const nombreCompleto = [user?.user_metadata?.nombre, user?.user_metadata?.apellido]
+        .filter(Boolean)
+        .join(' ') || user?.email || 'Nutricionista';
 
     return (
         <aside className="w-64 bg-white border-r border-gray-200 flex flex-col shrink-0 h-screen sticky top-0">
@@ -68,8 +74,8 @@ export const Sidebar = () => {
                     <div className="flex items-center gap-3">
                         <User className="w-5 h-5 text-gray-700" />
                         <div className="overflow-hidden">
-                            <p className="text-sm font-medium text-gray-900 truncate" title={user?.user_metadata?.nombre || user?.email || 'Nutricionista'}>
-                                {user?.user_metadata?.nombre || user?.email || 'Nutricionista'}
+                            <p className="text-sm font-medium text-gray-900 truncate" title={nombreCompleto}>
+                                {nombreCompleto}
                             </p>
                             <p className="text-xs text-gray-500">Nutricionista</p>
                         </div>

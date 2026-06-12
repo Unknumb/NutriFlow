@@ -9,6 +9,8 @@ import { EvaluacionesModule } from './evaluaciones/evaluaciones.module';
 import { CalculosModule } from './calculos/calculos.module';
 import { MenusModule } from './menus/menus.module';
 import { PlanificacionesModule } from './planificaciones/planificaciones.module';
+import { PreparacionesModule } from './preparaciones/preparaciones.module';
+import { AlimentosModule } from './alimentos/alimentos.module';
 import { RedisModule } from './redis/redis.module';
 
 @Module({
@@ -22,6 +24,8 @@ import { RedisModule } from './redis/redis.module';
     CalculosModule,
     MenusModule,
     PlanificacionesModule,
+    PreparacionesModule,
+    AlimentosModule,
     RedisModule
   ],
   controllers: [AppController],

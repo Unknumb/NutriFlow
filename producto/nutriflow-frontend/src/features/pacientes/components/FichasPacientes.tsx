@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { usePacientes } from '../hooks/usePacientes';
 import { useClinicalStore } from '../../../shared/store/useClinicalStore';
 import { useAuthStore } from '../../../shared/store/useAuthStore';
-import { Loader2, Star, Trash2, Printer } from 'lucide-react';
+import { Loader2, Star, Trash2, Printer, Plus } from 'lucide-react';
 import type { Paciente } from '../types/paciente.types';
+import { ModalNuevoPaciente } from './ModalNuevoPaciente';
+import { DatosPersonalesPaciente } from './DatosPersonalesPaciente';
 import { useEvaluacionesByPaciente, useCreateEvaluacion } from '../../evaluaciones/hooks/useEvaluaciones';
 import type { CreateEvaluacionPayload } from '../../evaluaciones/types/evaluacion.types';
 import { useDeletePauta } from '../../pautas/hooks/usePautas';
@@ -36,6 +38,7 @@ export const FichasPacientes: React.FC = () => {
   const { user } = useAuthStore();
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'datos' | 'pautas' | 'sintomas' | 'progreso'>('datos');
+  const [showNuevoPaciente, setShowNuevoPaciente] = useState(false);
 
   const { data: evaluaciones, isLoading: loadingEvals } = useEvaluacionesByPaciente(selectedPatientId || '');
   const createEvaluacion = useCreateEvaluacion();
@@ -96,9 +99,18 @@ export const FichasPacientes: React.FC = () => {
           {/* PANEL IZQUIERDO: LISTA DE PACIENTES */}
           <div className="col-span-4 flex flex-col min-h-0">
             <div className="bg-white text-gray-900 flex flex-col rounded-xl border border-gray-200 h-full overflow-hidden shadow-sm">
-              <div className="px-6 pt-6 pb-4 border-b border-gray-100">
-                <h4 className="font-semibold text-lg leading-none mb-1">Pacientes Activos</h4>
-                <p className="text-sm text-gray-600">3 pacientes en seguimiento</p>
+              <div className="px-6 pt-6 pb-4 border-b border-gray-100 flex items-start justify-between gap-3">
+                <div>
+                  <h4 className="font-semibold text-lg leading-none mb-1">Pacientes Activos</h4>
+                  <p className="text-sm text-gray-600">{pacientes?.length ?? 0} pacientes en seguimiento</p>
+                </div>
+                <button
+                  onClick={() => setShowNuevoPaciente(true)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-teal-600 text-white rounded-md hover:bg-teal-700 transition-colors shrink-0"
+                >
+                  <Plus className="w-4 h-4" />
+                  Nuevo
+                </button>
               </div>
               
               <div className="px-6 py-4 flex-1 overflow-y-auto space-y-3">
@@ -248,6 +260,8 @@ export const FichasPacientes: React.FC = () => {
                 {/* --- TAB 1: DATOS CLÍNICOS --- */}
                 {activeTab === 'datos' && (
                   <div className="space-y-6 animate-in fade-in duration-300 mt-2">
+                    <DatosPersonalesPaciente key={pacienteSeleccionado.id} paciente={pacienteSeleccionado} />
+
                     <div className="flex justify-between items-center mb-4">
                       <h4 className="font-semibold text-gray-900">Historial de Evaluaciones</h4>
                       <button 
@@ -656,6 +670,15 @@ export const FichasPacientes: React.FC = () => {
           </div>
         </div>
       </div>
+
+      <ModalNuevoPaciente
+        isOpen={showNuevoPaciente}
+        onClose={() => setShowNuevoPaciente(false)}
+        onCreated={(pacienteId) => {
+          setSelectedPatientId(pacienteId);
+          setActiveTab('datos');
+        }}
+      />
     </div>
   );
 };

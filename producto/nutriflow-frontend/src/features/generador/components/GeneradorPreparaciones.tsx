@@ -1,23 +1,16 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
+import { Link } from '@tanstack/react-router';
 import { useGenerarMenu } from '../../menus/hooks/useMenus';
 import { usePortionsStore } from '../../porciones/store/usePortionsStore';
-
-// --- NUEVO: Datos para la pestaña de Biblioteca ---
-const BIBLIOTECA_RECETAS = [
-  { id: 1, nombre: 'Sándwich de huevo', tipo: 'Salada', color: 'sky', ingredientes: ['🌾 1 Cereales', '🥩 2 Proteínas', '🥛 1 Lácteos'], desc: 'Pan molde con huevos revueltos o fritos y queso Gauda. Preparación rápida y proteica.' },
-  { id: 2, nombre: 'Sándwich de pollo', tipo: 'Salada', color: 'sky', ingredientes: ['🌾 1 Cereales', '🥩 2 Proteínas', '🥛 1 Lácteos'], desc: 'Pan molde con pollo desmenuzado y queso crema. Ideal para preparar la noche anterior.' },
-  { id: 3, nombre: 'Sándwich de atún', tipo: 'Salada', color: 'sky', ingredientes: ['🌾 1 Cereales', '🥩 2 Proteínas', '🥛 1 Lácteos'], desc: 'Pan molde con atún mezclado con yogurt natural como mayonesa saludable. Se puede agregar lechuga, tomate y cebolla morada.' },
-  { id: 4, nombre: 'Sándwich de salmón ahumado', tipo: 'Salada', color: 'sky', ingredientes: ['🌾 1 Cereales', '🥩 2 Proteínas', '🥛 1 Lácteos'], desc: 'Pan molde con salmón ahumado y queso crema. Agregar lechuga, tomate y cebolla morada.' },
-  { id: 5, nombre: 'Fajita de atún', tipo: 'Salada', color: 'sky', ingredientes: ['🌾 1 Cereales', '🥩 2 Proteínas', '🥛 1 Lácteos'], desc: 'Tortilla XL con atún mezclado con yogurt natural. Agregar verduras a gusto.' },
-  { id: 6, nombre: 'Fajita de carne', tipo: 'Salada', color: 'sky', ingredientes: ['🌾 1 Cereales', '🥩 2 Proteínas', '🥛 1 Lácteos'], desc: 'Tortilla XL con carne vacuna y queso Gauda. Agregar lechuga, tomate, pepino y cebolla morada.' },
-  { id: 7, nombre: 'Fajita de pollo', tipo: 'Salada', color: 'sky', ingredientes: ['🌾 1 Cereales', '🥩 2 Proteínas', '🥛 1 Lácteos'], desc: 'Tortillas medianas con pollo y queso crema. Agregar lechuga, tomate, pepino y cebolla morada.' },
-  { id: 8, nombre: 'Fajita de salmón', tipo: 'Salada', color: 'sky', ingredientes: ['🌾 1 Cereales', '🥩 2 Proteínas', '🥛 1 Lácteos'], desc: 'Tortillas medianas con salmón ahumado y queso crema. Agregar lechuga, tomate, pepino.' },
-  { id: 9, nombre: 'Omelette con tostadas', tipo: 'Salada', color: 'sky', ingredientes: ['🌾 1 Cereales', '🥩 2 Proteínas', '🥛 1 Lácteos'], desc: 'Omelette de huevo relleno de queso Gauda con tomate Cherry, espinaca, morrón y albahaca, acompañado de tostadas.' },
-  { id: 10, nombre: 'Panqueques de avena', tipo: 'Dulce', color: 'amber', ingredientes: ['🌾 1 Cereales', '🥩 2 Proteínas', '🥛 1 Lácteos'], desc: 'Licuar avena, huevos y leche. Cocinar en sartén. Se puede endulzar con canela y polvo de hornear.' },
-  { id: 11, nombre: 'Yogurt protein con granola', tipo: 'Dulce', color: 'amber', ingredientes: ['🌾 1 Cereales', '🥩 2 Proteínas', '🥛 1 Lácteos'], desc: 'Yogurt proteico con granola o avena encima. Rápido, sin preparación.' },
-  { id: 12, nombre: 'Leche con cereal y huevos', tipo: 'Dulce', color: 'amber', ingredientes: ['🌾 1 Cereales', '🥩 2 Proteínas', '🥛 1 Lácteos'], desc: 'Tazón de leche con cereal/granola y huevos duros al lado como fuente proteica.' },
-  { id: 13, nombre: 'Ensalada de pollo con quinoa', tipo: 'Salada', color: 'sky', ingredientes: ['🌾 1 Cereales', '🥩 2 Proteínas', '🥦 2 Verduras', '🥑 1 Grasas'], desc: 'Bowl de ensalada con pollo, quinoa, lechuga y tomate. Aliñar con aceite de oliva y limón.' },
-];
+import { usePreparaciones } from '../../preparaciones/hooks/usePreparaciones';
+import { usePacientes } from '../../pacientes/hooks/usePacientes';
+import { TIPO_COMIDA_LABELS, type TipoComida } from '../../preparaciones/types/preparacion.types';
+import {
+  RESTRICCIONES_DIETETICAS,
+  RESTRICCION_LABELS,
+  derivarRestriccionesDePaciente,
+  type RestriccionDietetica,
+} from '../constants/restricciones';
 
 // Mini-componente para reciclar las filas de porciones sin repetir código
 const PorcionRow = ({ emoji, nombre, color, cantidad }: { emoji: string, nombre: string, color: string, cantidad: number }) => (
@@ -35,20 +28,77 @@ export const GeneradorPreparaciones: React.FC = () => {
   const [activeTab, setActiveTab] = useState('generador');
   const [alimentosRechazados, setAlimentosRechazados] = useState('');
   const [preferencias, setPreferencias] = useState('');
+  const [pacienteId, setPacienteId] = useState('');
+  const [restriccionesSel, setRestriccionesSel] = useState<Set<RestriccionDietetica>>(new Set());
+
+  const [busquedaBiblioteca, setBusquedaBiblioteca] = useState('');
+  const [filtroTiempo, setFiltroTiempo] = useState<'todos' | TipoComida>('todos');
 
   const { distributions } = usePortionsStore();
   const { mutate, data: menusGenerados, isPending } = useGenerarMenu();
+  const { data: preparaciones, isLoading: cargandoBiblioteca } = usePreparaciones();
+  const { data: pacientes } = usePacientes();
+
+  const pacienteSeleccionado = useMemo(
+    () => (pacientes ?? []).find((p) => p.id === pacienteId),
+    [pacientes, pacienteId],
+  );
+
+  // Al elegir paciente se precargan sus restricciones derivadas de la ficha
+  // (alergias + preferencias alimentarias). La selección queda editable solo
+  // para esta sesión: nunca se escribe de vuelta en la ficha.
+  const handleSeleccionPaciente = (id: string) => {
+    setPacienteId(id);
+    const paciente = (pacientes ?? []).find((p) => p.id === id);
+    if (!paciente) {
+      setRestriccionesSel(new Set());
+      return;
+    }
+    setRestriccionesSel(
+      new Set(
+        derivarRestriccionesDePaciente([
+          ...paciente.alergias,
+          ...paciente.preferencias_alimentarias,
+        ]),
+      ),
+    );
+  };
+
+  const toggleRestriccion = (restriccion: RestriccionDietetica) => {
+    setRestriccionesSel((prev) => {
+      const siguiente = new Set(prev);
+      if (siguiente.has(restriccion)) siguiente.delete(restriccion);
+      else siguiente.add(restriccion);
+      return siguiente;
+    });
+  };
+
+  const totalPreparaciones = preparaciones?.length ?? 0;
+
+  const preparacionesFiltradas = useMemo(() => {
+    const lista = preparaciones ?? [];
+    const termino = busquedaBiblioteca.trim().toLowerCase();
+    return lista.filter((p) => {
+      const coincideTexto =
+        !termino ||
+        p.nombre.toLowerCase().includes(termino) ||
+        p.ingredientes.some((ing) => ing.nombre.toLowerCase().includes(termino));
+      const coincideTiempo = filtroTiempo === 'todos' || p.tipo_comida === filtroTiempo;
+      return coincideTexto && coincideTiempo;
+    });
+  }, [preparaciones, busquedaBiblioteca, filtroTiempo]);
 
   const handleGenerar = () => {
     // Tomamos las porciones del almuerzo para generar (podría ser dinámico por tab)
     const porcionesAlmuerzo = distributions.almuerzo || {};
     mutate({
       porciones_disponibles: porcionesAlmuerzo,
-      alimentos_rechazados: alimentosRechazados.split(',').map(s => s.trim()).filter(Boolean)
+      paciente_id: pacienteId || undefined,
+      restricciones_dieteticas: Array.from(restriccionesSel),
+      alimentos_rechazados: alimentosRechazados.split(',').map(s => s.trim()).filter(Boolean),
+      preferencias_texto: preferencias.trim() || undefined,
     });
   };
-
-  const restricciones = ['Vegetariano', 'Vegano', 'Sin gluten', 'Sin lactosa', 'Sin mariscos', 'Sin frutos secos', 'Sin huevo', 'Sin cerdo', 'Bajo en sodio'];
 
   return (
     <div className="flex flex-col h-full bg-white flex-1 overflow-hidden">
@@ -60,7 +110,7 @@ export const GeneradorPreparaciones: React.FC = () => {
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7 text-teal-600"><path d="M17 21a1 1 0 0 0 1-1v-5.35c0-.457.316-.844.727-1.041a4 4 0 0 0-2.134-7.589 5 5 0 0 0-9.186 0 4 4 0 0 0-2.134 7.588c.411.198.727.585.727 1.041V20a1 1 0 0 0 1 1Z"></path><path d="M6 17h12"></path></svg>
               Generador de Preparaciones
             </h1>
-            <p className="text-sm text-gray-500 mt-0.5">Base de datos propia con 36 preparaciones · Sugerencia automática según distribución del plan</p>
+            <p className="text-sm text-gray-500 mt-0.5">Biblioteca con {totalPreparaciones} preparaciones · Sugerencia automática según distribución del plan</p>
           </div>
         </div>
       </div>
@@ -81,7 +131,7 @@ export const GeneradorPreparaciones: React.FC = () => {
               className={`inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center rounded-xl px-4 py-1 text-sm font-medium transition-all gap-2 ${activeTab === 'biblioteca' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 7v14"></path><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"></path></svg>
-              Mi Biblioteca (36)
+              Mi Biblioteca ({totalPreparaciones})
             </button>
           </div>
         </div>
@@ -159,7 +209,64 @@ export const GeneradorPreparaciones: React.FC = () => {
                     Preferencias del paciente
                   </h2>
                   <div className="space-y-4">
-                    
+
+                    {/* Selector de Paciente */}
+                    <div>
+                      <label className="text-xs font-medium text-gray-700 mb-1.5 block">Paciente (opcional)</label>
+                      <select
+                        className="flex h-9 w-full rounded-md border border-gray-300 px-3 py-1 bg-white text-sm outline-none focus-visible:ring-2 focus-visible:ring-teal-500 text-gray-700"
+                        value={pacienteId}
+                        onChange={(e) => handleSeleccionPaciente(e.target.value)}
+                      >
+                        <option value="">Sin paciente asociado</option>
+                        {(pacientes ?? []).map((p) => (
+                          <option key={p.id} value={p.id}>{p.nombre} {p.apellido}</option>
+                        ))}
+                      </select>
+                      <p className="text-xs text-gray-400 mt-1">Al elegir, se precargan sus restricciones (editables solo para esta sesión)</p>
+                    </div>
+
+                    {/* Contexto de la ficha del paciente */}
+                    {pacienteSeleccionado && (
+                      <div className="bg-teal-50 border border-teal-100 rounded-lg p-3 space-y-2">
+                        {pacienteSeleccionado.alergias.length > 0 && (
+                          <div>
+                            <p className="text-[10px] font-semibold text-teal-800 uppercase tracking-wide mb-1">Alergias</p>
+                            <div className="flex flex-wrap gap-1">
+                              {pacienteSeleccionado.alergias.map((a) => (
+                                <span key={a} className="text-[10px] px-1.5 py-0.5 rounded bg-red-100 text-red-700 font-medium">{a}</span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {pacienteSeleccionado.preferencias_alimentarias.length > 0 && (
+                          <div>
+                            <p className="text-[10px] font-semibold text-teal-800 uppercase tracking-wide mb-1">Preferencias alimentarias</p>
+                            <div className="flex flex-wrap gap-1">
+                              {pacienteSeleccionado.preferencias_alimentarias.map((p) => (
+                                <span key={p} className="text-[10px] px-1.5 py-0.5 rounded bg-teal-100 text-teal-700 font-medium">{p}</span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {pacienteSeleccionado.enfermedades.length > 0 && (
+                          <div>
+                            <p className="text-[10px] font-semibold text-teal-800 uppercase tracking-wide mb-1">Enfermedades</p>
+                            <div className="flex flex-wrap gap-1">
+                              {pacienteSeleccionado.enfermedades.map((e) => (
+                                <span key={e} className="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 font-medium">{e}</span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {pacienteSeleccionado.alergias.length === 0 &&
+                          pacienteSeleccionado.preferencias_alimentarias.length === 0 &&
+                          pacienteSeleccionado.enfermedades.length === 0 && (
+                            <p className="text-xs text-teal-700">La ficha no registra alergias, preferencias ni enfermedades.</p>
+                          )}
+                      </div>
+                    )}
+
                     {/* Alimentos Rechazados */}
                     <div>
                       <label className="text-xs font-medium text-gray-700 mb-1.5 block">Alimentos no preferidos / rechazados</label>
@@ -177,12 +284,26 @@ export const GeneradorPreparaciones: React.FC = () => {
                     <div>
                       <label className="text-xs font-medium text-gray-700 mb-2 block">Restricciones dietéticas</label>
                       <div className="flex flex-wrap gap-1.5">
-                        {restricciones.map((res, index) => (
-                          <button key={index} className="text-xs px-2.5 py-1 rounded-full border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors">
-                            {res}
-                          </button>
-                        ))}
+                        {RESTRICCIONES_DIETETICAS.map((res) => {
+                          const activa = restriccionesSel.has(res);
+                          return (
+                            <button
+                              key={res}
+                              type="button"
+                              aria-pressed={activa}
+                              onClick={() => toggleRestriccion(res)}
+                              className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                                activa
+                                  ? 'border-teal-600 bg-teal-600 text-white'
+                                  : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                              }`}
+                            >
+                              {RESTRICCION_LABELS[res]}
+                            </button>
+                          );
+                        })}
                       </div>
+                      <p className="text-xs text-gray-400 mt-1.5">Se excluirán preparaciones con ingredientes incompatibles (según etiquetado de alimentos)</p>
                     </div>
 
                     {/* Preferencias Extra */}
@@ -225,7 +346,7 @@ export const GeneradorPreparaciones: React.FC = () => {
                     {menusGenerados.matches_exactos.map(m => (
                        <div key={m.id} className="border p-4 rounded-xl bg-teal-50 border-teal-100 shadow-sm">
                           <h4 className="font-bold text-teal-900">{m.nombre}</h4>
-                          <p className="text-xs text-teal-700 mt-1">Ingredientes: {m.ingredientes.join(', ')}</p>
+                          <p className="text-xs text-teal-700 mt-1">Ingredientes: {m.ingredientes.map(i => `${i.nombre} (${i.cantidad_g}g)`).join(', ')}</p>
                        </div>
                     ))}
                   </div>
@@ -236,7 +357,7 @@ export const GeneradorPreparaciones: React.FC = () => {
                     {menusGenerados.matches_parciales.map(m => (
                        <div key={m.id} className="border p-4 rounded-xl bg-amber-50 border-amber-100 shadow-sm">
                           <h4 className="font-bold text-amber-900">{m.nombre}</h4>
-                          <p className="text-xs text-amber-700 mt-1">Ingredientes: {m.ingredientes.join(', ')}</p>
+                          <p className="text-xs text-amber-700 mt-1">Ingredientes: {m.ingredientes.map(i => `${i.nombre} (${i.cantidad_g}g)`).join(', ')}</p>
                        </div>
                     ))}
                   </div>
@@ -275,94 +396,103 @@ export const GeneradorPreparaciones: React.FC = () => {
             <div className="flex flex-wrap items-center gap-3 mb-6">
               <div className="relative flex-1 min-w-60">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
-                <input 
-                  type="text" 
-                  className="flex h-9 w-full rounded-md border border-gray-300 px-3 py-1 bg-white pl-9 text-sm outline-none focus-visible:ring-2 focus-visible:ring-teal-500" 
-                  placeholder="Buscar por nombre, ingrediente o etiqueta..." 
+                <input
+                  type="text"
+                  className="flex h-9 w-full rounded-md border border-gray-300 px-3 py-1 bg-white pl-9 text-sm outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
+                  placeholder="Buscar por nombre o ingrediente..."
+                  value={busquedaBiblioteca}
+                  onChange={(e) => setBusquedaBiblioteca(e.target.value)}
                 />
               </div>
-              <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
-                <button className="px-3 py-1.5 rounded-md text-xs font-medium transition-colors bg-white shadow-sm text-gray-900">Todas</button>
-                <button className="px-3 py-1.5 rounded-md text-xs font-medium transition-colors text-gray-600 hover:text-gray-900">🥙 Saladas</button>
-                <button className="px-3 py-1.5 rounded-md text-xs font-medium transition-colors text-gray-600 hover:text-gray-900">🍯 Dulces</button>
-              </div>
-              <select className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 h-9">
+              <select
+                className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 h-9"
+                value={filtroTiempo}
+                onChange={(e) => setFiltroTiempo(e.target.value as 'todos' | TipoComida)}
+              >
                 <option value="todos">Todos los tiempos</option>
-                <option value="desayuno">Desayuno</option>
-                <option value="almuerzo">Almuerzo</option>
+                {Object.entries(TIPO_COMIDA_LABELS).map(([valor, etiqueta]) => (
+                  <option key={valor} value={valor}>{etiqueta}</option>
+                ))}
               </select>
-              <button className="inline-flex items-center justify-center rounded-md text-sm font-medium text-white h-9 px-4 bg-teal-600 hover:bg-teal-700 gap-2 transition-colors">
+              <Link
+                to="/biblioteca"
+                className="inline-flex items-center justify-center rounded-md text-sm font-medium text-white h-9 px-4 bg-teal-600 hover:bg-teal-700 gap-2 transition-colors"
+              >
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>
-                Nueva Preparación
-              </button>
+                Gestionar en Biblioteca
+              </Link>
             </div>
 
             {/* Tarjetas de Resumen (Métricas) */}
-            <div className="grid grid-cols-4 gap-4 mb-6">
+            <div className="grid grid-cols-3 gap-4 mb-6">
               <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
                 <p className="text-xs text-gray-500 mb-1">Total preparaciones</p>
-                <p className="text-2xl font-bold text-gray-900">36</p>
+                <p className="text-2xl font-bold text-gray-900">{totalPreparaciones}</p>
               </div>
               <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
-                <p className="text-xs text-gray-500 mb-1">Saladas</p>
-                <p className="text-2xl font-bold text-sky-700">20</p>
+                <p className="text-xs text-gray-500 mb-1">Del sistema</p>
+                <p className="text-2xl font-bold text-teal-700">{(preparaciones ?? []).filter(p => p.es_sistema).length}</p>
               </div>
               <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
-                <p className="text-xs text-gray-500 mb-1">Dulces</p>
-                <p className="text-2xl font-bold text-amber-700">16</p>
-              </div>
-              <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
-                <p className="text-xs text-gray-500 mb-1">Grupos cubiertos</p>
-                <p className="text-2xl font-bold text-teal-700">6</p>
+                <p className="text-xs text-gray-500 mb-1">Propias</p>
+                <p className="text-2xl font-bold text-sky-700">{(preparaciones ?? []).filter(p => !p.es_sistema).length}</p>
               </div>
             </div>
 
             {/* Grid de Preparaciones */}
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              {BIBLIOTECA_RECETAS.map((receta) => (
-                <div key={receta.id} className="bg-white rounded-xl border border-gray-200 hover:shadow-md transition-all p-4 flex flex-col">
-                  {/* Título y Acciones */}
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap mb-1">
-                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${receta.color === 'sky' ? 'bg-sky-50 text-sky-700' : 'bg-amber-50 text-amber-700'}`}>
-                          {receta.color === 'sky' ? '🥙 Salada' : '🍯 Dulce'}
-                        </span>
+            {cargandoBiblioteca ? (
+              <div className="text-center py-16 text-teal-600 font-medium">Cargando preparaciones...</div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                {preparacionesFiltradas.map((receta) => (
+                  <div key={receta.id} className="bg-white rounded-xl border border-gray-200 hover:shadow-md transition-all overflow-hidden flex flex-col">
+                    {/* Imagen (si la preparación tiene una) */}
+                    {receta.imagen_url && (
+                      <img
+                        src={receta.imagen_url}
+                        alt={receta.nombre}
+                        loading="lazy"
+                        className="w-full h-28 object-cover"
+                      />
+                    )}
+                    <div className="p-4 flex flex-col flex-1">
+                    {/* Título */}
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                          <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-teal-50 text-teal-700">
+                            {receta.tipo_comida ? TIPO_COMIDA_LABELS[receta.tipo_comida] : 'Sin clasificar'}
+                          </span>
+                          {receta.es_sistema && (
+                            <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-gray-100 text-gray-600">Sistema</span>
+                          )}
+                        </div>
+                        <h3 className="font-semibold text-gray-900 text-sm truncate">{receta.nombre}</h3>
                       </div>
-                      <h3 className="font-semibold text-gray-900 text-sm truncate">{receta.nombre}</h3>
+                      <span className="text-xs font-semibold text-gray-700 shrink-0">{Math.round(receta.totales.calorias)} kcal</span>
                     </div>
-                    <div className="flex items-center gap-1 shrink-0">
-                      <button className="p-1.5 text-gray-400 hover:text-teal-600 transition-colors rounded"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"></path></svg></button>
-                      <button className="p-1.5 text-gray-400 hover:text-red-500 transition-colors rounded"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path><line x1="10" x2="10" y1="11" y2="17"></line><line x1="14" x2="14" y1="11" y2="17"></line></svg></button>
+
+                    {/* Etiquetas de Ingredientes */}
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {receta.ingredientes.map((ing) => (
+                        <span key={ing.id} title={`${ing.cantidad_g} g`} className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-50 text-gray-700 border border-gray-100">
+                          {ing.nombre}
+                        </span>
+                      ))}
+                    </div>
+
+                    {/* Descripción */}
+                    {receta.descripcion && (
+                      <p className="text-xs text-gray-500 mt-3 line-clamp-2 flex-1">{receta.descripcion}</p>
+                    )}
                     </div>
                   </div>
-
-                  {/* Etiquetas de Ingredientes (Simulando colores por grupo) */}
-                  <div className="flex flex-wrap gap-1 mt-2">
-                    {receta.ingredientes.map((ing, i) => (
-                      <span key={i} className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium 
-                        ${ing.includes('Cereales') ? 'bg-yellow-50 text-yellow-700' : ''}
-                        ${ing.includes('Proteínas') ? 'bg-red-50 text-red-700' : ''}
-                        ${ing.includes('Verduras') ? 'bg-green-50 text-green-700' : ''}
-                        ${ing.includes('Lácteos') ? 'bg-purple-50 text-purple-700' : ''}
-                        ${ing.includes('Grasas') ? 'bg-blue-50 text-blue-700' : ''}
-                        ${ing.includes('Frutas') ? 'bg-orange-50 text-orange-700' : ''}
-                      `}>
-                        {ing}
-                      </span>
-                    ))}
-                  </div>
-
-                  {/* Descripción */}
-                  <p className="text-xs text-gray-500 mt-3 line-clamp-2 flex-1">{receta.desc}</p>
-
-                  <button className="text-[11px] text-teal-600 hover:text-teal-700 mt-3 flex items-center gap-1 font-medium w-fit transition-colors">
-                    Ver ingredientes
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
-                  </button>
-                </div>
-              ))}
-            </div>
+                ))}
+                {preparacionesFiltradas.length === 0 && (
+                  <div className="col-span-full text-center py-12 text-gray-500">No se encontraron preparaciones</div>
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>

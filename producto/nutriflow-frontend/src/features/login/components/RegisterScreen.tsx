@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Mail, Lock, ArrowRight, Eye, EyeOff, Loader2, MailCheck } from "lucide-react";
+import { Mail, Lock, ArrowRight, Eye, EyeOff, Loader2, MailCheck, User } from "lucide-react";
 import { Link, useRouter } from "@tanstack/react-router";
 import { useAuth } from "../../../shared/hooks/useAuth";
 import { useAuthStore } from "../../../shared/store/useAuthStore";
@@ -11,6 +11,8 @@ const inputClass =
 const labelClass = "text-xs font-semibold tracking-wide text-[#3f484e] ml-1 uppercase";
 
 export const RegisterScreen: React.FC = () => {
+  const [nombre, setNombre] = useState("");
+  const [apellido, setApellido] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -34,6 +36,10 @@ export const RegisterScreen: React.FC = () => {
     e.preventDefault();
     setError(null);
 
+    if (!nombre.trim() || !apellido.trim()) {
+      setError("El nombre y el apellido son obligatorios.");
+      return;
+    }
     if (password.length < 8) {
       setError("La contraseña debe tener al menos 8 caracteres.");
       return;
@@ -44,7 +50,7 @@ export const RegisterScreen: React.FC = () => {
     }
 
     setIsSubmitting(true);
-    const result = await signUp({ email, password });
+    const result = await signUp({ email, password, nombre, apellido });
     setIsSubmitting(false);
 
     if (result.error) {
@@ -91,6 +97,50 @@ export const RegisterScreen: React.FC = () => {
       )}
 
       <form className="space-y-6 flex flex-col" onSubmit={handleSubmit}>
+        {/* Nombre y Apellido */}
+        <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
+          <div className="flex flex-col gap-1.5">
+            <label className={labelClass} htmlFor="nombre">
+              Nombre
+            </label>
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-black" />
+              <input
+                id="nombre"
+                name="nombre"
+                type="text"
+                value={nombre}
+                onChange={(e) => setNombre(e.target.value)}
+                placeholder="Javiera"
+                required
+                maxLength={60}
+                disabled={isSubmitting}
+                className={inputClass}
+              />
+            </div>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label className={labelClass} htmlFor="apellido">
+              Apellido
+            </label>
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-black" />
+              <input
+                id="apellido"
+                name="apellido"
+                type="text"
+                value={apellido}
+                onChange={(e) => setApellido(e.target.value)}
+                placeholder="Pérez"
+                required
+                maxLength={60}
+                disabled={isSubmitting}
+                className={inputClass}
+              />
+            </div>
+          </div>
+        </div>
+
         {/* Email */}
         <div className="flex flex-col gap-1.5 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
           <label className={labelClass} htmlFor="email">

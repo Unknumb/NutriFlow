@@ -1,8 +1,17 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { CreatePacienteDto } from './dto/create-paciente.dto';
 import { UpdatePacienteDto } from './dto/update-paciente.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { RedisService } from 'src/redis/redis.service';
+
+/** Detecta violación del índice único parcial (nutricionista_id, rut). */
+function esConflictoRut(error: unknown): boolean {
+  return (
+    error instanceof Prisma.PrismaClientKnownRequestError &&
+    error.code === 'P2002'
+  );
+}
 
 @Injectable()
 export class PacientesService {
@@ -13,7 +22,7 @@ export class PacientesService {
 
   async create(createPacienteDto: CreatePacienteDto, nutricionista_id: string) {
     const { talla_cm, peso_kg, ...pacienteData } = createPacienteDto;
-    
+
     const result = await this.prisma.$transaction(async (prisma) => {
       const paciente = await prisma.pacientes.create({
         data: {

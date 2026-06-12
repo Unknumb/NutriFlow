@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, Numeric, Text, text, ForeignKey
+from sqlalchemy import TIMESTAMP, Column, Numeric, Text, text, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from models.base import Base
@@ -11,6 +11,11 @@ class Preparacion(Base):
     nombre = Column(Text, nullable=False)
     descripcion = Column(Text, nullable=True)
     instrucciones = Column(Text, nullable=True)
+    # NULL = preparación del sistema (visible para todos los nutricionistas)
+    nutricionista_id = Column(UUID(as_uuid=True), nullable=True)
+    tipo_comida = Column(Text, nullable=True)  # desayuno | almuerzo | cena | colacion
+    imagen_url = Column(Text, nullable=True)
+    fecha_creacion = Column(TIMESTAMP(timezone=True), nullable=True, server_default=text("now()"))
 
     # Relación con la tabla intermedia
     ingredientes = relationship("IngredientePreparacion", back_populates="preparacion", cascade="all, delete-orphan")

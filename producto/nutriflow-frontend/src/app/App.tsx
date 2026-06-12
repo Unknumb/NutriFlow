@@ -106,6 +106,12 @@ const pacientesRoute = createRoute({
     component: lazyRouteComponent(() => import('../pages/pacientes/index'), 'PacientesPage'),
 });
 
+const perfilRoute = createRoute({
+    getParentRoute: () => protectedLayout,
+    path: '/perfil',
+    component: lazyRouteComponent(() => import('../pages/perfil/index'), 'PerfilPage'),
+});
+
 // 6. ENSAMBLADO DEL ÁRBOL
 const routeTree = rootRoute.addChildren([
     indexRoute,
@@ -120,7 +126,8 @@ const routeTree = rootRoute.addChildren([
         porcionesRoute,
         bibliotecaRoute,
         generadorRoute,
-        pacientesRoute
+        pacientesRoute,
+        perfilRoute
     ])
 ]);
 

@@ -7,6 +7,11 @@ interface LoginCredentials {
   password: string;
 }
 
+interface SignUpData extends LoginCredentials {
+  nombre: string;
+  apellido: string;
+}
+
 interface AuthResult {
   error: string | null;
   /** true cuando el registro requiere confirmación de email antes de poder iniciar sesión */
@@ -16,7 +21,7 @@ interface AuthResult {
 interface UseAuthReturn {
   login: (credentials: LoginCredentials) => Promise<void>;
   logout: () => Promise<void>;
-  signUp: (credentials: LoginCredentials) => Promise<AuthResult>;
+  signUp: (data: SignUpData) => Promise<AuthResult>;
   requestPasswordReset: (email: string) => Promise<AuthResult>;
   updatePassword: (newPassword: string) => Promise<AuthResult>;
   isLoggingIn: boolean;
@@ -73,13 +78,19 @@ export function useAuth(): UseAuthReturn {
    * Si la confirmación de email está habilitada en Supabase, el usuario
    * recibirá un correo y `needsEmailConfirmation` será true.
    */
-  const signUp = async ({ email, password }: LoginCredentials): Promise<AuthResult> => {
+  const signUp = async ({ email, password, nombre, apellido }: SignUpData): Promise<AuthResult> => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         // Tras confirmar el email, Supabase redirige al login
         emailRedirectTo: `${window.location.origin}/login`,
+        // El trigger handle_new_user() en Postgres lee estos campos para crear
+        // el perfil en perfiles_nutricionistas; el Sidebar los muestra desde user_metadata
+        data: {
+          nombre: nombre.trim(),
+          apellido: apellido.trim(),
+        },
       },
     });
 

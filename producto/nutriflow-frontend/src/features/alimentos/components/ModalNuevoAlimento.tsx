@@ -122,19 +122,19 @@ const FormularioNuevoAlimento: React.FC<Omit<ModalNuevoAlimentoProps, 'isOpen'>>
 
   return createPortal(
     <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-card shadow-xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex justify-between items-center mb-5 pb-4 border-b border-gray-100">
+        <div className="flex justify-between items-center mb-5 pb-4 border-b border-mist/70">
           <div>
-            <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-              <Apple className="w-5 h-5 text-teal-600" />
+            <h2 className="text-xl font-bold text-ink flex items-center gap-2">
+              <Apple className="w-5 h-5 text-pine-soft" />
               Nuevo Alimento
             </h2>
-            <p className="text-sm text-gray-500 mt-1">Valores nutricionales por 100 g</p>
+            <p className="text-sm text-ink-soft mt-1">Valores nutricionales por 100 g</p>
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+            className="p-2 text-ink-soft/60 hover:text-ink-soft hover:bg-mist/60 rounded-full transition-colors"
             aria-label="Cerrar"
           >
             <X className="w-5 h-5" />
@@ -143,34 +143,34 @@ const FormularioNuevoAlimento: React.FC<Omit<ModalNuevoAlimentoProps, 'isOpen'>>
 
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
+            <label className="block text-sm font-medium text-ink-soft mb-1">Nombre *</label>
             <input
               type="text"
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
               placeholder="Ej: Quinoa cocida"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
+              className="w-full border border-mist rounded-lg px-3 py-2 outline-none focus:border-pine-soft focus:ring-1 focus:ring-pine-soft"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Marca (opcional)</label>
+              <label className="block text-sm font-medium text-ink-soft mb-1">Marca (opcional)</label>
               <input
                 type="text"
                 value={marca}
                 onChange={(e) => setMarca(e.target.value)}
                 placeholder="Ej: Genérico"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
+                className="w-full border border-mist rounded-lg px-3 py-2 outline-none focus:border-pine-soft focus:ring-1 focus:ring-pine-soft"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Categoría *</label>
+              <label className="block text-sm font-medium text-ink-soft mb-1">Categoría *</label>
               <select
                 value={categoria}
                 onChange={(e) => setCategoria(e.target.value)}
                 disabled={cargandoCategorias}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 bg-white disabled:bg-gray-50"
+                className="w-full border border-mist rounded-lg px-3 py-2 outline-none focus:border-pine-soft focus:ring-1 focus:ring-pine-soft bg-white disabled:bg-porcelain"
               >
                 <option value="">
                   {cargandoCategorias ? 'Cargando...' : 'Selecciona una categoría'}
@@ -187,7 +187,7 @@ const FormularioNuevoAlimento: React.FC<Omit<ModalNuevoAlimentoProps, 'isOpen'>>
           <div className="grid grid-cols-2 gap-3">
             {CAMPOS_NUTRICIONALES.map(({ campo, etiqueta }) => (
               <div key={campo}>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{etiqueta} *</label>
+                <label className="block text-sm font-medium text-ink-soft mb-1">{etiqueta} *</label>
                 <input
                   type="number"
                   min="0"
@@ -195,7 +195,7 @@ const FormularioNuevoAlimento: React.FC<Omit<ModalNuevoAlimentoProps, 'isOpen'>>
                   value={valores[campo]}
                   onChange={(e) => handleValorChange(campo, e.target.value)}
                   placeholder="0"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
+                  className="w-full border border-mist rounded-lg px-3 py-2 outline-none focus:border-pine-soft focus:ring-1 focus:ring-pine-soft"
                 />
               </div>
             ))}
@@ -209,7 +209,7 @@ const FormularioNuevoAlimento: React.FC<Omit<ModalNuevoAlimentoProps, 'isOpen'>>
           />
 
           {error && (
-            <p className="text-sm text-red-600" role="alert">
+            <p className="text-sm text-clinical-red" role="alert">
               {error}
             </p>
           )}
@@ -218,14 +218,14 @@ const FormularioNuevoAlimento: React.FC<Omit<ModalNuevoAlimentoProps, 'isOpen'>>
             <button
               onClick={onClose}
               disabled={guardando}
-              className="flex-1 border border-gray-300 text-gray-700 font-medium py-2.5 rounded-xl hover:bg-gray-50 transition-colors disabled:opacity-50"
+              className="flex-1 border border-mist text-ink-soft font-medium py-2.5 rounded-card hover:bg-porcelain transition-colors disabled:opacity-50"
             >
               Cancelar
             </button>
             <button
               onClick={handleGuardar}
               disabled={guardando}
-              className="flex-1 flex items-center justify-center gap-2 bg-teal-600 hover:bg-teal-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-medium py-2.5 rounded-xl transition-colors shadow-sm"
+              className="flex-1 flex items-center justify-center gap-2 bg-pine hover:bg-pine-soft disabled:bg-mist disabled:cursor-not-allowed text-white font-medium py-2.5 rounded-card transition-colors shadow-sm"
             >
               {guardando ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               {guardando ? 'Guardando...' : 'Crear Alimento'}

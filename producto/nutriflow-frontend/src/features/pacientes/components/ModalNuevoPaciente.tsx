@@ -52,8 +52,8 @@ const FORM_INICIAL: FormState = {
 };
 
 const inputClass =
-  'w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-colors';
-const labelClass = 'block text-sm font-medium text-gray-700 mb-1';
+  'w-full border border-mist rounded-lg px-3 py-2 text-sm outline-none focus:border-pine-soft focus:ring-1 focus:ring-pine-soft transition-colors';
+const labelClass = 'block text-sm font-medium text-ink-soft mb-1';
 
 export const ModalNuevoPaciente: React.FC<ModalNuevoPacienteProps> = ({ isOpen, onClose, onCreated }) => {
   const createPaciente = useCreatePaciente();
@@ -110,17 +110,17 @@ export const ModalNuevoPaciente: React.FC<ModalNuevoPacienteProps> = ({ isOpen, 
 
   return createPortal(
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden">
+      <div className="bg-white rounded-card shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="flex justify-between items-center p-6 pb-4 border-b border-gray-100">
+        <div className="flex justify-between items-center p-6 pb-4 border-b border-mist/70">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-              <UserPlus className="w-6 h-6 text-teal-600" />
+            <h2 className="text-2xl font-bold text-ink flex items-center gap-2">
+              <UserPlus className="w-6 h-6 text-pine-soft" />
               Nuevo Paciente
             </h2>
-            <p className="text-sm text-gray-500 mt-1">Registra la ficha del paciente con sus datos de contacto y salud</p>
+            <p className="text-sm text-ink-soft mt-1">Registra la ficha del paciente con sus datos de contacto y salud</p>
           </div>
-          <button onClick={handleClose} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors">
+          <button onClick={handleClose} className="p-2 text-ink-soft/60 hover:text-ink-soft hover:bg-mist/60 rounded-full transition-colors">
             <X className="w-6 h-6" />
           </button>
         </div>
@@ -129,7 +129,7 @@ export const ModalNuevoPaciente: React.FC<ModalNuevoPacienteProps> = ({ isOpen, 
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           {/* Datos personales */}
           <section>
-            <h3 className="text-sm font-semibold text-gray-900 mb-3">Datos personales</h3>
+            <h3 className="text-sm font-semibold text-ink mb-3">Datos personales</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className={labelClass}>Nombre *</label>
@@ -143,12 +143,12 @@ export const ModalNuevoPaciente: React.FC<ModalNuevoPacienteProps> = ({ isOpen, 
                 <label className={labelClass}>RUT</label>
                 <input
                   type="text"
-                  className={`${inputClass} ${rutInvalido ? 'border-red-400 focus:border-red-500 focus:ring-red-500' : ''}`}
+                  className={`${inputClass} ${rutInvalido ? 'border-clinical-red/60 focus:border-clinical-red focus:ring-clinical-red' : ''}`}
                   value={form.rut}
                   onChange={e => set('rut', formatearRutInput(e.target.value))}
                   placeholder="12.345.678-9"
                 />
-                {rutInvalido && <p className="text-xs text-red-600 mt-1">RUT inválido: verifica el dígito verificador</p>}
+                {rutInvalido && <p className="text-xs text-clinical-red mt-1">RUT inválido: verifica el dígito verificador</p>}
               </div>
               <div>
                 <label className={labelClass}>Fecha de nacimiento *</label>
@@ -183,7 +183,7 @@ export const ModalNuevoPaciente: React.FC<ModalNuevoPacienteProps> = ({ isOpen, 
 
           {/* Datos antropométricos iniciales */}
           <section>
-            <h3 className="text-sm font-semibold text-gray-900 mb-3">Evaluación inicial</h3>
+            <h3 className="text-sm font-semibold text-ink mb-3">Evaluación inicial</h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className={labelClass}>Talla inicial (cm) *</label>
@@ -197,8 +197,8 @@ export const ModalNuevoPaciente: React.FC<ModalNuevoPacienteProps> = ({ isOpen, 
           </section>
 
           {/* Salud y preferencias */}
-          <section className="p-4 bg-gray-50 rounded-xl border border-gray-200 space-y-4">
-            <h3 className="text-sm font-semibold text-gray-900">Salud y preferencias</h3>
+          <section className="p-4 bg-porcelain rounded-card border border-mist space-y-4">
+            <h3 className="text-sm font-semibold text-ink">Salud y preferencias</h3>
             <ChipsInput
               label="Enfermedades / condiciones"
               values={form.enfermedades}
@@ -232,22 +232,22 @@ export const ModalNuevoPaciente: React.FC<ModalNuevoPacienteProps> = ({ isOpen, 
           </section>
 
           {errorMsg && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">{errorMsg}</div>
+            <div className="p-3 bg-clinical-red/5 border border-clinical-red/30 rounded-lg text-sm text-clinical-red">{errorMsg}</div>
           )}
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end gap-3 p-6 pt-4 border-t border-gray-100">
+        <div className="flex justify-end gap-3 p-6 pt-4 border-t border-mist/70">
           <button
             onClick={handleClose}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            className="px-4 py-2 text-sm font-medium text-ink-soft bg-white border border-mist rounded-lg hover:bg-porcelain transition-colors"
           >
             Cancelar
           </button>
           <button
             onClick={handleGuardar}
             disabled={!puedeGuardar}
-            className="px-4 py-2 text-sm font-medium text-white bg-teal-600 rounded-lg hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="px-4 py-2 text-sm font-medium text-white bg-pine rounded-lg hover:bg-pine-soft disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {createPaciente.isPending ? 'Guardando...' : 'Guardar Paciente'}
           </button>

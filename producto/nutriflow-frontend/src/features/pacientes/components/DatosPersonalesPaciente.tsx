@@ -24,21 +24,21 @@ interface EditState {
 }
 
 const inputClass =
-  'w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-colors';
-const labelClass = 'block text-xs font-medium text-gray-700 mb-1';
+  'w-full border border-mist rounded-lg px-3 py-2 text-sm outline-none focus:border-pine-soft focus:ring-1 focus:ring-pine-soft transition-colors';
+const labelClass = 'block text-xs font-medium text-ink-soft mb-1';
 
 const CampoLectura: React.FC<{ label: string; value?: string | null }> = ({ label, value }) => (
   <div>
-    <p className="text-xs text-gray-500 mb-0.5">{label}</p>
-    <p className={`text-sm font-medium ${value ? 'text-gray-900' : 'text-gray-400'}`}>{value || 'No registrado'}</p>
+    <p className="text-xs text-ink-soft mb-0.5">{label}</p>
+    <p className={`text-sm font-medium ${value ? 'text-ink' : 'text-ink-soft/60'}`}>{value || 'No registrado'}</p>
   </div>
 );
 
 const ListaChipsLectura: React.FC<{ label: string; values: string[]; chipClassName: string }> = ({ label, values, chipClassName }) => (
   <div>
-    <p className="text-xs text-gray-500 mb-1">{label}</p>
+    <p className="text-xs text-ink-soft mb-1">{label}</p>
     {values.length === 0 ? (
-      <p className="text-sm text-gray-400">Sin registros</p>
+      <p className="text-sm text-ink-soft/60">Sin registros</p>
     ) : (
       <div className="flex flex-wrap gap-1.5">
         {values.map((v, i) => (
@@ -115,13 +115,13 @@ export const DatosPersonalesPaciente: React.FC<DatosPersonalesPacienteProps> = (
   };
 
   return (
-    <div className="p-5 border border-gray-200 bg-white rounded-xl shadow-sm">
+    <div className="p-5 border border-mist bg-white rounded-card shadow-sm">
       <div className="flex justify-between items-center mb-4">
-        <h4 className="font-semibold text-gray-900">Datos Personales y Salud</h4>
+        <h4 className="font-semibold text-ink">Datos Personales y Salud</h4>
         {editando ? (
           <button
             onClick={() => setEditando(false)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-md transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-ink-soft hover:text-ink hover:bg-mist/60 rounded-md transition-colors"
           >
             <X className="w-4 h-4" />
             Cancelar
@@ -129,7 +129,7 @@ export const DatosPersonalesPaciente: React.FC<DatosPersonalesPacienteProps> = (
         ) : (
           <button
             onClick={iniciarEdicion}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-teal-700 hover:bg-teal-50 border border-teal-200 rounded-md transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-pine-soft hover:bg-pine-soft/5 border border-pine-soft/30 rounded-md transition-colors"
           >
             <Pencil className="w-4 h-4" />
             Editar
@@ -148,7 +148,7 @@ export const DatosPersonalesPaciente: React.FC<DatosPersonalesPacienteProps> = (
               <CampoLectura label="Dirección" value={paciente.direccion} />
             </div>
           </div>
-          <div className="pt-4 border-t border-gray-100 space-y-3">
+          <div className="pt-4 border-t border-mist/70 space-y-3">
             <ListaChipsLectura label="Enfermedades / condiciones" values={paciente.enfermedades || []} chipClassName="bg-clinical-red/5 text-clinical-red border-clinical-red/30" />
             <ListaChipsLectura label="Alergias alimentarias" values={paciente.alergias || []} chipClassName="bg-apricot/10 text-[#8a5a2a] border-apricot/50" />
             <ListaChipsLectura label="Preferencias alimentarias" values={paciente.preferencias_alimentarias || []} chipClassName="bg-pine-soft/5 text-pine-soft border-pine-soft/30" />
@@ -162,12 +162,12 @@ export const DatosPersonalesPaciente: React.FC<DatosPersonalesPacienteProps> = (
               <label className={labelClass}>RUT</label>
               <input
                 type="text"
-                className={`${inputClass} ${rutInvalido ? 'border-red-400 focus:border-red-500 focus:ring-red-500' : ''}`}
+                className={`${inputClass} ${rutInvalido ? 'border-clinical-red/60 focus:border-clinical-red focus:ring-clinical-red' : ''}`}
                 value={form.rut}
                 onChange={e => set('rut', formatearRutInput(e.target.value))}
                 placeholder="12.345.678-9"
               />
-              {rutInvalido && <p className="text-xs text-red-600 mt-1">RUT inválido: verifica el dígito verificador</p>}
+              {rutInvalido && <p className="text-xs text-clinical-red mt-1">RUT inválido: verifica el dígito verificador</p>}
             </div>
             <div>
               <label className={labelClass}>Ocupación</label>
@@ -187,7 +187,7 @@ export const DatosPersonalesPaciente: React.FC<DatosPersonalesPacienteProps> = (
             </div>
           </div>
 
-          <div className="pt-4 border-t border-gray-100 space-y-4">
+          <div className="pt-4 border-t border-mist/70 space-y-4">
             <ChipsInput
               label="Enfermedades / condiciones"
               values={form.enfermedades}
@@ -220,12 +220,12 @@ export const DatosPersonalesPaciente: React.FC<DatosPersonalesPacienteProps> = (
             </div>
           </div>
 
-          {errorMsg && <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">{errorMsg}</div>}
+          {errorMsg && <div className="p-3 bg-clinical-red/5 border border-clinical-red/30 rounded-lg text-sm text-clinical-red">{errorMsg}</div>}
 
           <button
             onClick={handleGuardar}
             disabled={rutInvalido || updatePaciente.isPending}
-            className="w-full py-2 bg-teal-600 hover:bg-teal-700 disabled:bg-teal-400 text-white font-medium rounded-md text-sm transition-colors"
+            className="w-full py-2 bg-pine hover:bg-pine-soft disabled:opacity-60 text-white font-medium rounded-md text-sm transition-colors"
           >
             {updatePaciente.isPending ? 'Guardando...' : 'Guardar Cambios'}
           </button>

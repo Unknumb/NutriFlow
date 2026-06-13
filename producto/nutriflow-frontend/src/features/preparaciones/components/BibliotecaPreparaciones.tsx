@@ -12,7 +12,7 @@ const COLORES_TAGS = [
   'bg-blue-100 text-blue-800',
   'bg-purple-100 text-purple-800',
   'bg-green-100 text-green-800',
-  'bg-red-100 text-red-800',
+  'bg-clinical-red/10 text-clinical-red',
 ];
 
 const TarjetaPreparacion: React.FC<{
@@ -21,9 +21,9 @@ const TarjetaPreparacion: React.FC<{
   onEliminar: (prep: Preparacion) => void;
   eliminando: boolean;
 }> = ({ preparacion, onEditar, onEliminar, eliminando }) => (
-  <div className="bg-white text-gray-900 flex flex-col rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow animate-in fade-in duration-300">
+  <div className="bg-white text-ink flex flex-col rounded-card border border-mist overflow-hidden hover:shadow-lg transition-shadow animate-in fade-in duration-300">
     {/* Imagen */}
-    <div className="aspect-video bg-gray-100 relative overflow-hidden flex items-center justify-center">
+    <div className="aspect-video bg-mist/60 relative overflow-hidden flex items-center justify-center">
       {preparacion.imagen_url ? (
         <img
           src={preparacion.imagen_url}
@@ -31,18 +31,18 @@ const TarjetaPreparacion: React.FC<{
           className="w-full h-full object-cover"
         />
       ) : (
-        <ImageOff className="w-10 h-10 text-gray-300" />
+        <ImageOff className="w-10 h-10 text-ink-soft/40" />
       )}
 
       <div className="absolute top-3 right-3">
-        <span className="inline-flex items-center justify-center rounded-md border px-2 py-0.5 text-xs font-medium bg-white/90 backdrop-blur text-gray-700 shadow-sm">
+        <span className="inline-flex items-center justify-center rounded-md border px-2 py-0.5 text-xs font-medium bg-white/90 backdrop-blur text-ink-soft shadow-sm">
           {Math.round(preparacion.totales.calorias)} kcal
         </span>
       </div>
 
       {preparacion.es_sistema && (
         <div className="absolute top-3 left-3">
-          <span className="inline-flex items-center justify-center rounded-md px-2 py-0.5 text-xs font-medium bg-teal-600/90 text-white shadow-sm">
+          <span className="inline-flex items-center justify-center rounded-md px-2 py-0.5 text-xs font-medium bg-pine/90 text-white shadow-sm">
             Sistema
           </span>
         </div>
@@ -53,8 +53,8 @@ const TarjetaPreparacion: React.FC<{
     <div className="p-4 pb-5 flex flex-col flex-1">
       <div className="mb-3 flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <h3 className="font-semibold text-gray-900 mb-1 truncate">{preparacion.nombre}</h3>
-          <p className="text-xs text-gray-500">
+          <h3 className="font-semibold text-ink mb-1 truncate">{preparacion.nombre}</h3>
+          <p className="text-xs text-ink-soft">
             {preparacion.tipo_comida ? TIPO_COMIDA_LABELS[preparacion.tipo_comida] : 'Sin clasificar'}
             {' · '}P {preparacion.totales.proteinas}g · CHO {preparacion.totales.carbohidratos}g · G{' '}
             {preparacion.totales.grasas}g
@@ -65,7 +65,7 @@ const TarjetaPreparacion: React.FC<{
             <button
               onClick={() => onEditar(preparacion)}
               title="Editar preparación"
-              className="p-1.5 text-gray-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors"
+              className="p-1.5 text-ink-soft/60 hover:text-pine-soft hover:bg-pine-soft/5 rounded-lg transition-colors"
             >
               <Pencil className="w-4 h-4" />
             </button>
@@ -73,7 +73,7 @@ const TarjetaPreparacion: React.FC<{
               onClick={() => onEliminar(preparacion)}
               disabled={eliminando}
               title="Eliminar preparación"
-              className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+              className="p-1.5 text-ink-soft/60 hover:text-clinical-red hover:bg-clinical-red/5 rounded-lg transition-colors disabled:opacity-50"
             >
               <Trash2 className="w-4 h-4" />
             </button>
@@ -137,8 +137,8 @@ export const BibliotecaPreparaciones: React.FC = () => {
     <div className="p-8 max-w-7xl mx-auto">
       {/* Encabezado */}
       <div className="mb-8">
-        <h1 className="text-3xl font-semibold text-gray-900">Biblioteca de Preparaciones</h1>
-        <p className="text-gray-600 mt-1">
+        <h1 className="text-3xl font-semibold text-ink">Biblioteca de Preparaciones</h1>
+        <p className="text-ink-soft mt-1">
           Gestiona tus preparaciones y utiliza las del sistema
           {preparaciones ? ` · ${preparaciones.length} disponibles` : ''}
         </p>
@@ -147,10 +147,10 @@ export const BibliotecaPreparaciones: React.FC = () => {
       {/* Controles */}
       <div className="mb-6 flex items-center gap-4">
         <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-ink-soft/60" />
           <input
             type="text"
-            className="flex h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base transition-colors outline-none focus-visible:border-gray-400 focus-visible:ring-2 focus-visible:ring-gray-200 pl-10"
+            className="flex h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base transition-colors outline-none focus-visible:border-mist focus-visible:ring-2 focus-visible:ring-mist pl-10"
             placeholder="Buscar por nombre o ingrediente..."
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
@@ -159,7 +159,7 @@ export const BibliotecaPreparaciones: React.FC = () => {
 
         <button
           onClick={() => setIsModalOpen(true)}
-          className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border bg-white text-gray-900 hover:bg-gray-100 h-9 px-4 py-2 gap-2 shadow-sm"
+          className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border bg-white text-ink hover:bg-mist/60 h-9 px-4 py-2 gap-2 shadow-sm"
         >
           <Plus className="w-4 h-4" />
           Nueva Preparación
@@ -167,7 +167,7 @@ export const BibliotecaPreparaciones: React.FC = () => {
 
         <Link
           to="/generador"
-          className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors text-white h-9 px-4 py-2 gap-2 bg-teal-600 hover:bg-teal-700 shadow-sm"
+          className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors text-white h-9 px-4 py-2 gap-2 bg-pine hover:bg-pine-soft shadow-sm"
         >
           <Sparkles className="w-4 h-4" />
           Ir al Generador de Menús
@@ -176,13 +176,13 @@ export const BibliotecaPreparaciones: React.FC = () => {
 
       {/* Estados de carga / error */}
       {isLoading && (
-        <div className="flex items-center justify-center py-20 text-teal-600 gap-2">
+        <div className="flex items-center justify-center py-20 text-pine-soft gap-2">
           <Loader2 className="w-5 h-5 animate-spin" />
           Cargando preparaciones...
         </div>
       )}
       {isError && (
-        <div className="text-center py-20 text-red-600">
+        <div className="text-center py-20 text-clinical-red">
           No se pudieron cargar las preparaciones. Intenta nuevamente.
         </div>
       )}
@@ -200,7 +200,7 @@ export const BibliotecaPreparaciones: React.FC = () => {
             />
           ))}
           {preparacionesFiltradas.length === 0 && (
-            <div className="col-span-3 text-center py-12 text-gray-500">
+            <div className="col-span-3 text-center py-12 text-ink-soft">
               No se encontraron preparaciones
             </div>
           )}

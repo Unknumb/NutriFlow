@@ -248,15 +248,15 @@ const FormularioPreparacion: React.FC<{
 
   return createPortal(
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl p-6 h-[85vh] flex flex-col overflow-hidden">
+      <div className="bg-white rounded-card shadow-xl w-full max-w-4xl p-6 h-[85vh] flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="flex justify-between items-center mb-6 pb-4 border-b border-gray-100">
+        <div className="flex justify-between items-center mb-6 pb-4 border-b border-mist/70">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-              <Utensils className="w-6 h-6 text-teal-600" />
+            <h2 className="text-2xl font-bold text-ink flex items-center gap-2">
+              <Utensils className="w-6 h-6 text-pine-soft" />
               {esEdicion ? 'Editar Preparación' : 'Nueva Preparación'}
             </h2>
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-sm text-ink-soft mt-1">
               {esEdicion
                 ? 'Modifica los datos, ingredientes o la imagen de tu preparación'
                 : 'Crea una nueva receta usando la base de datos de alimentos'}
@@ -264,7 +264,7 @@ const FormularioPreparacion: React.FC<{
           </div>
           <button
             onClick={limpiarYCerrar}
-            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+            className="p-2 text-ink-soft/60 hover:text-ink-soft hover:bg-mist/60 rounded-full transition-colors"
             aria-label="Cerrar"
           >
             <X className="w-6 h-6" />
@@ -276,21 +276,21 @@ const FormularioPreparacion: React.FC<{
           {/* Columna izquierda: formulario y búsqueda */}
           <div className="w-1/2 flex flex-col gap-4 overflow-y-auto pr-2">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Nombre de la Preparación</label>
+              <label className="block text-sm font-medium text-ink-soft mb-1">Nombre de la Preparación</label>
               <input
                 type="text"
                 value={nombre}
                 onChange={(e) => setNombre(e.target.value)}
                 placeholder="Ej: Avena con plátano"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
+                className="w-full border border-mist rounded-lg px-3 py-2 outline-none focus:border-pine-soft focus:ring-1 focus:ring-pine-soft"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Comida</label>
+              <label className="block text-sm font-medium text-ink-soft mb-1">Tipo de Comida</label>
               <select
                 value={tipoComida}
                 onChange={(e) => setTipoComida(e.target.value as TipoComida)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 bg-white"
+                className="w-full border border-mist rounded-lg px-3 py-2 outline-none focus:border-pine-soft focus:ring-1 focus:ring-pine-soft bg-white"
               >
                 {Object.entries(TIPO_COMIDA_LABELS).map(([valor, etiqueta]) => (
                   <option key={valor} value={valor}>
@@ -302,26 +302,26 @@ const FormularioPreparacion: React.FC<{
 
             {/* Imagen (opcional) */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Imagen (opcional)</label>
+              <label className="block text-sm font-medium text-ink-soft mb-1">Imagen (opcional)</label>
               {imagenMostrada ? (
-                <div className="relative rounded-xl overflow-hidden border border-gray-200">
+                <div className="relative rounded-card overflow-hidden border border-mist">
                   <img src={imagenMostrada} alt="Vista previa de la preparación" className="w-full h-36 object-cover" />
                   <div className="absolute bottom-2 right-2 flex gap-2">
-                    <label className="cursor-pointer bg-white/90 backdrop-blur text-gray-700 text-xs font-medium px-2.5 py-1.5 rounded-lg shadow-sm hover:bg-white transition-colors">
+                    <label className="cursor-pointer bg-white/90 backdrop-blur text-ink-soft text-xs font-medium px-2.5 py-1.5 rounded-lg shadow-sm hover:bg-white transition-colors">
                       Cambiar
                       <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleSeleccionarImagen} />
                     </label>
                     <button
                       type="button"
                       onClick={handleQuitarImagen}
-                      className="bg-white/90 backdrop-blur text-red-600 text-xs font-medium px-2.5 py-1.5 rounded-lg shadow-sm hover:bg-white transition-colors"
+                      className="bg-white/90 backdrop-blur text-clinical-red text-xs font-medium px-2.5 py-1.5 rounded-lg shadow-sm hover:bg-white transition-colors"
                     >
                       Quitar
                     </button>
                   </div>
                 </div>
               ) : (
-                <label className="flex flex-col items-center justify-center gap-1.5 border-2 border-dashed border-gray-300 rounded-xl py-6 cursor-pointer text-gray-400 hover:border-teal-400 hover:text-teal-600 transition-colors">
+                <label className="flex flex-col items-center justify-center gap-1.5 border-2 border-dashed border-mist rounded-card py-6 cursor-pointer text-ink-soft/60 hover:border-pine-soft hover:text-pine-soft transition-colors">
                   <ImagePlus className="w-6 h-6" />
                   <span className="text-xs font-medium">Subir imagen — JPG, PNG o WebP (máx. 2 MB)</span>
                   <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleSeleccionarImagen} />
@@ -331,24 +331,24 @@ const FormularioPreparacion: React.FC<{
 
             {/* Búsqueda de alimentos (server-side) */}
             <div className="mt-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Buscar Alimentos</label>
+              <label className="block text-sm font-medium text-ink-soft mb-2">Buscar Alimentos</label>
               <div className="relative mb-2">
-                <Search className="w-5 h-5 absolute left-3 top-2.5 text-gray-400" />
+                <Search className="w-5 h-5 absolute left-3 top-2.5 text-ink-soft/60" />
                 <input
                   type="text"
                   value={busqueda}
                   onChange={(e) => setBusqueda(e.target.value)}
                   placeholder="Buscar en la base de datos..."
-                  className="w-full border border-gray-300 rounded-lg pl-10 pr-9 py-2 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 bg-gray-50"
+                  className="w-full border border-mist rounded-lg pl-10 pr-9 py-2 outline-none focus:border-pine-soft focus:ring-1 focus:ring-pine-soft bg-porcelain"
                 />
                 {buscando && (
-                  <Loader2 className="w-4 h-4 absolute right-3 top-3 text-teal-500 animate-spin" />
+                  <Loader2 className="w-4 h-4 absolute right-3 top-3 text-pine-soft animate-spin" />
                 )}
               </div>
               <select
                 value={categoriaFiltro ?? ''}
                 onChange={(e) => setCategoriaFiltro(e.target.value || null)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm text-gray-700 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 bg-white mb-3"
+                className="w-full border border-mist rounded-lg px-3 py-1.5 text-sm text-ink-soft outline-none focus:border-pine-soft focus:ring-1 focus:ring-pine-soft bg-white mb-3"
               >
                 <option value="">Todas las categorías</option>
                 {(categorias ?? []).map((cat) => (
@@ -358,21 +358,21 @@ const FormularioPreparacion: React.FC<{
                 ))}
               </select>
 
-              <div className="border border-gray-200 rounded-xl overflow-hidden flex-1 max-h-[300px] overflow-y-auto">
+              <div className="border border-mist rounded-card overflow-hidden flex-1 max-h-[300px] overflow-y-auto">
                 {!hayFiltroActivo ? (
-                  <div className="p-4 text-center text-gray-500 text-sm">
+                  <div className="p-4 text-center text-ink-soft text-sm">
                     Escribe un nombre o elige una categoría para buscar
                   </div>
                 ) : errorBusqueda ? (
-                  <div className="p-4 text-center text-red-600 text-sm">
+                  <div className="p-4 text-center text-clinical-red text-sm">
                     No se pudo buscar alimentos. Intenta nuevamente.
                   </div>
                 ) : alimentosEncontrados.length === 0 && !buscando ? (
                   <div className="p-4 text-center text-sm">
-                    <p className="text-gray-500 mb-3">No se encontraron alimentos para tu búsqueda</p>
+                    <p className="text-ink-soft mb-3">No se encontraron alimentos para tu búsqueda</p>
                     <button
                       onClick={() => setModalAlimentoAbierto(true)}
-                      className="inline-flex items-center gap-1.5 text-teal-700 font-medium hover:text-teal-800 bg-teal-50 hover:bg-teal-100 px-3 py-1.5 rounded-lg transition-colors"
+                      className="inline-flex items-center gap-1.5 text-pine-soft font-medium hover:text-pine-soft bg-pine-soft/5 hover:bg-pine-soft/10 px-3 py-1.5 rounded-lg transition-colors"
                     >
                       <Plus className="w-4 h-4" />
                       Crear alimento nuevo
@@ -380,21 +380,21 @@ const FormularioPreparacion: React.FC<{
                   </div>
                 ) : (
                   <>
-                    <ul className="divide-y divide-gray-100">
+                    <ul className="divide-y divide-mist/70">
                       {alimentosEncontrados.map((alimento) => (
-                        <li key={alimento.id} className="flex items-center justify-between p-3 hover:bg-gray-50">
+                        <li key={alimento.id} className="flex items-center justify-between p-3 hover:bg-porcelain">
                           <div className="min-w-0">
-                            <p className="font-medium text-gray-900 text-sm truncate">
+                            <p className="font-medium text-ink text-sm truncate">
                               {alimento.nombre}
-                              {alimento.marca && <span className="text-gray-500 font-normal"> · {alimento.marca}</span>}
+                              {alimento.marca && <span className="text-ink-soft font-normal"> · {alimento.marca}</span>}
                             </p>
-                            <p className="text-xs text-gray-500">
+                            <p className="text-xs text-ink-soft">
                               {alimento.categoria ?? 'Sin categoría'} · {Math.round(alimento.calorias_100g)} kcal / 100g
                             </p>
                           </div>
                           <button
                             onClick={() => handleAgregarAlimento(alimento)}
-                            className="p-1.5 text-teal-600 hover:bg-teal-50 rounded-lg transition-colors shrink-0"
+                            className="p-1.5 text-pine-soft hover:bg-pine-soft/5 rounded-lg transition-colors shrink-0"
                             aria-label={`Agregar ${alimento.nombre}`}
                           >
                             <Plus className="w-5 h-5" />
@@ -402,13 +402,13 @@ const FormularioPreparacion: React.FC<{
                         </li>
                       ))}
                     </ul>
-                    <div className="p-2 border-t border-gray-100 bg-gray-50 flex items-center justify-between">
-                      <span className="text-[11px] text-gray-400 pl-1">
+                    <div className="p-2 border-t border-mist/70 bg-porcelain flex items-center justify-between">
+                      <span className="text-[11px] text-ink-soft/60 pl-1">
                         {resultados ? `${resultados.total} resultado${resultados.total === 1 ? '' : 's'}` : ''}
                       </span>
                       <button
                         onClick={() => setModalAlimentoAbierto(true)}
-                        className="text-xs text-teal-700 font-medium hover:text-teal-800 px-2 py-1 rounded transition-colors"
+                        className="text-xs text-pine-soft font-medium hover:text-pine-soft px-2 py-1 rounded transition-colors"
                       >
                         ¿No está? Crear alimento nuevo
                       </button>
@@ -420,25 +420,25 @@ const FormularioPreparacion: React.FC<{
           </div>
 
           {/* Columna derecha: ingredientes seleccionados y resumen */}
-          <div className="w-1/2 flex flex-col bg-gray-50 rounded-xl border border-gray-200 p-5 overflow-hidden">
-            <h3 className="font-semibold text-gray-900 mb-4 flex items-center justify-between">
+          <div className="w-1/2 flex flex-col bg-porcelain rounded-card border border-mist p-5 overflow-hidden">
+            <h3 className="font-semibold text-ink mb-4 flex items-center justify-between">
               Ingredientes Seleccionados
-              <span className="bg-teal-100 text-teal-800 text-xs px-2 py-1 rounded-full">{ingredientes.length}</span>
+              <span className="bg-pine-soft/10 text-pine-soft text-xs px-2 py-1 rounded-full">{ingredientes.length}</span>
             </h3>
 
             <div className="flex-1 overflow-y-auto mb-4 min-h-0">
               {ingredientes.length === 0 ? (
-                <div className="h-full flex flex-col items-center justify-center text-gray-400 text-sm">
+                <div className="h-full flex flex-col items-center justify-center text-ink-soft/60 text-sm">
                   <Utensils className="w-12 h-12 mb-2 opacity-20" />
                   No has agregado ingredientes
                 </div>
               ) : (
                 <ul className="space-y-3 pr-2">
                   {ingredientes.map((item) => (
-                    <li key={item.alimento_id} className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm flex items-center gap-3">
+                    <li key={item.alimento_id} className="bg-white border border-mist rounded-lg p-3 shadow-sm flex items-center gap-3">
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-gray-900 text-sm truncate">{item.nombre}</p>
-                        <p className="text-xs text-gray-500">
+                        <p className="font-medium text-ink text-sm truncate">{item.nombre}</p>
+                        <p className="text-xs text-ink-soft">
                           {Math.round((item.calorias_100g * item.gramos) / 100)} kcal
                         </p>
                       </div>
@@ -448,12 +448,12 @@ const FormularioPreparacion: React.FC<{
                           min="1"
                           value={item.gramos}
                           onChange={(e) => handleChangeGramos(item.alimento_id, Number(e.target.value))}
-                          className="w-20 border border-gray-300 rounded text-sm p-1 text-center outline-none focus:border-teal-500"
+                          className="w-20 border border-mist rounded text-sm p-1 text-center outline-none focus:border-pine-soft"
                         />
-                        <span className="text-xs text-gray-500 font-medium">g</span>
+                        <span className="text-xs text-ink-soft font-medium">g</span>
                         <button
                           onClick={() => handleQuitarIngrediente(item.alimento_id)}
-                          className="text-red-400 hover:text-red-600 hover:bg-red-50 p-1 rounded transition-colors ml-1"
+                          className="text-clinical-red/60 hover:text-clinical-red hover:bg-clinical-red/5 p-1 rounded transition-colors ml-1"
                           aria-label={`Quitar ${item.nombre}`}
                         >
                           <X className="w-4 h-4" />
@@ -466,24 +466,24 @@ const FormularioPreparacion: React.FC<{
             </div>
 
             {/* Totales y guardar */}
-            <div className="border-t border-gray-200 pt-4 mt-auto">
+            <div className="border-t border-mist pt-4 mt-auto">
               <div className="flex justify-between items-end mb-4">
                 <div>
-                  <p className="text-sm text-gray-500 mb-1">Total estimado</p>
-                  <p className="text-3xl font-bold text-gray-900">
-                    {Math.round(caloriasTotales)} <span className="text-base font-medium text-gray-500">kcal</span>
+                  <p className="text-sm text-ink-soft mb-1">Total estimado</p>
+                  <p className="text-3xl font-bold text-ink">
+                    {Math.round(caloriasTotales)} <span className="text-base font-medium text-ink-soft">kcal</span>
                   </p>
                 </div>
               </div>
               {error && (
-                <p className="text-sm text-red-600 mb-3" role="alert">
+                <p className="text-sm text-clinical-red mb-3" role="alert">
                   {error}
                 </p>
               )}
               <button
                 onClick={handleGuardar}
                 disabled={ocupado || ingredientes.length === 0 || !nombre.trim()}
-                className="w-full flex items-center justify-center gap-2 bg-teal-600 hover:bg-teal-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-medium py-3 rounded-xl transition-colors shadow-sm"
+                className="w-full flex items-center justify-center gap-2 bg-pine hover:bg-pine-soft disabled:bg-mist disabled:cursor-not-allowed text-white font-medium py-3 rounded-card transition-colors shadow-sm"
               >
                 {ocupado ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
                 {subiendoImagen

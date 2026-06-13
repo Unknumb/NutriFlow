@@ -5,7 +5,7 @@ import { isAxiosError } from 'axios';
 import { Apple, Loader2, Save, X } from 'lucide-react';
 import type { ApiError } from '../../../shared/api/apiClient';
 import { ChipsInput } from '../../pacientes/components/ChipsInput';
-import { useCategorias, useCrearAlimento } from '../hooks/useBuscarAlimentos';
+import { useCategorias, useCrearAlimento, useActualizarAlimento } from '../hooks/useBuscarAlimentos';
 import type { Alimento } from '../types/alimento.types';
 
 interface ModalNuevoAlimentoProps {
@@ -15,6 +15,10 @@ interface ModalNuevoAlimentoProps {
   onCreated?: (alimento: Alimento) => void;
   /** Pre-rellena el nombre con lo que el usuario estaba buscando. */
   nombreInicial?: string;
+  /** Si se entrega, el modal funciona en modo edición sobre ese alimento. */
+  alimentoExistente?: Alimento;
+  /** Se invoca con el alimento actualizado tras editar. */
+  onUpdated?: (alimento: Alimento) => void;
 }
 
 interface ValoresNutricionales {
@@ -38,16 +42,16 @@ const CAMPOS_NUTRICIONALES: { campo: keyof ValoresNutricionales; etiqueta: strin
   { campo: 'grasas_100g', etiqueta: 'Grasas (g)' },
 ];
 
-function mensajeDeErrorApi(error: unknown): string {
+function mensajeDeErrorApi(error: unknown, accion: 'crear' | 'guardar'): string {
   if (isAxiosError<ApiError>(error)) {
     if (error.response?.status === 409) {
-      return 'Ya existe un alimento con ese nombre y marca. Búscalo en el catálogo en lugar de crearlo de nuevo.';
+      return 'Ya existe un alimento con ese nombre y marca.';
     }
     const mensaje = error.response?.data?.message;
     if (typeof mensaje === 'string') return mensaje;
     if (Array.isArray(mensaje)) return mensaje.join('. ');
   }
-  return 'No se pudo crear el alimento. Intenta nuevamente.';
+  return `No se pudo ${accion} el alimento. Intenta nuevamente.`;
 }
 
 /**
@@ -63,16 +67,30 @@ export const ModalNuevoAlimento: React.FC<ModalNuevoAlimentoProps> = ({ isOpen, 
 const FormularioNuevoAlimento: React.FC<Omit<ModalNuevoAlimentoProps, 'isOpen'>> = ({
   onClose,
   onCreated,
+  onUpdated,
   nombreInicial = '',
+  alimentoExistente,
 }) => {
+  const esEdicion = !!alimentoExistente;
   const { data: categorias, isLoading: cargandoCategorias } = useCategorias();
-  const { mutateAsync: crearAlimento, isPending: guardando } = useCrearAlimento();
+  const { mutateAsync: crearAlimento, isPending: creando } = useCrearAlimento();
+  const { mutateAsync: actualizarAlimento, isPending: actualizando } = useActualizarAlimento();
+  const guardando = creando || actualizando;
 
-  const [nombre, setNombre] = useState(nombreInicial);
-  const [marca, setMarca] = useState('');
-  const [categoria, setCategoria] = useState('');
-  const [valores, setValores] = useState<ValoresNutricionales>(VALORES_INICIALES);
-  const [restricciones, setRestricciones] = useState<string[]>([]);
+  const [nombre, setNombre] = useState(alimentoExistente?.nombre ?? nombreInicial);
+  const [marca, setMarca] = useState(alimentoExistente?.marca ?? '');
+  const [categoria, setCategoria] = useState(alimentoExistente?.categoria ?? '');
+  const [valores, setValores] = useState<ValoresNutricionales>(
+    alimentoExistente
+      ? {
+          calorias_100g: String(alimentoExistente.calorias_100g),
+          proteinas_100g: String(alimentoExistente.proteinas_100g),
+          carbohidratos_100g: String(alimentoExistente.carbohidratos_100g),
+          grasas_100g: String(alimentoExistente.grasas_100g),
+        }
+      : VALORES_INICIALES,
+  );
+  const [restricciones, setRestricciones] = useState<string[]>(alimentoExistente?.restricciones ?? []);
   const [error, setError] = useState<string | null>(null);
 
   const handleValorChange = (campo: keyof ValoresNutricionales, valor: string) => {
@@ -102,21 +120,27 @@ const FormularioNuevoAlimento: React.FC<Omit<ModalNuevoAlimentoProps, 'isOpen'>>
     }
 
     setError(null);
+    const payload = {
+      nombre: nombre.trim(),
+      marca: marca.trim() || undefined,
+      categoria,
+      calorias_100g: Number(valores.calorias_100g),
+      proteinas_100g: Number(valores.proteinas_100g),
+      carbohidratos_100g: Number(valores.carbohidratos_100g),
+      grasas_100g: Number(valores.grasas_100g),
+      restricciones: restricciones.length > 0 ? restricciones : undefined,
+    };
     try {
-      const creado = await crearAlimento({
-        nombre: nombre.trim(),
-        marca: marca.trim() || undefined,
-        categoria,
-        calorias_100g: Number(valores.calorias_100g),
-        proteinas_100g: Number(valores.proteinas_100g),
-        carbohidratos_100g: Number(valores.carbohidratos_100g),
-        grasas_100g: Number(valores.grasas_100g),
-        restricciones: restricciones.length > 0 ? restricciones : undefined,
-      });
-      onCreated?.(creado);
+      if (esEdicion) {
+        const actualizado = await actualizarAlimento({ id: alimentoExistente.id, cambios: payload });
+        onUpdated?.(actualizado);
+      } else {
+        const creado = await crearAlimento(payload);
+        onCreated?.(creado);
+      }
       onClose();
     } catch (e) {
-      setError(mensajeDeErrorApi(e));
+      setError(mensajeDeErrorApi(e, esEdicion ? 'guardar' : 'crear'));
     }
   };
 
@@ -128,7 +152,7 @@ const FormularioNuevoAlimento: React.FC<Omit<ModalNuevoAlimentoProps, 'isOpen'>>
           <div>
             <h2 className="text-xl font-bold text-ink flex items-center gap-2">
               <Apple className="w-5 h-5 text-pine-soft" />
-              Nuevo Alimento
+              {esEdicion ? 'Editar Alimento' : 'Nuevo Alimento'}
             </h2>
             <p className="text-sm text-ink-soft mt-1">Valores nutricionales por 100 g</p>
           </div>
@@ -228,7 +252,7 @@ const FormularioNuevoAlimento: React.FC<Omit<ModalNuevoAlimentoProps, 'isOpen'>>
               className="flex-1 flex items-center justify-center gap-2 bg-pine hover:bg-pine-soft disabled:bg-mist disabled:cursor-not-allowed text-white font-medium py-2.5 rounded-card transition-colors shadow-sm"
             >
               {guardando ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-              {guardando ? 'Guardando...' : 'Crear Alimento'}
+              {guardando ? 'Guardando...' : esEdicion ? 'Guardar Cambios' : 'Crear Alimento'}
             </button>
           </div>
         </div>

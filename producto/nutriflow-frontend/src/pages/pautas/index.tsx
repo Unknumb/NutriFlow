@@ -18,9 +18,10 @@ export const PautasPage = () => {
     const { customFoods, addCustomFood, removeCustomFood } = usePortionsStore();
 
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-    // Las verduras de libre consumo son opcionales en la pauta (grupo sin aporte
-    // calórico; algunas pautas las incluyen "a libre demanda" y otras no).
-    const [incluirVlb, setIncluirVlb] = useState(true);
+    // Libre consumo configurable por grupo (ad libitum); vive en el store para
+    // reflejarse también en Distribución de Porciones.
+    const libreConsumoIds = usePortionsStore((s) => s.libreConsumoIds);
+    const toggleLibreConsumo = usePortionsStore((s) => s.toggleLibreConsumo);
 
     // Instanciamos el Cerebro (Custom Hook)
     const { 
@@ -65,9 +66,7 @@ export const PautasPage = () => {
         setIsAddModalOpen(false);
     };
 
-    // 'vlb' (Verduras Libre Consumo) solo se muestra si la nutricionista lo activa.
-    const gruposBase = incluirVlb ? FOOD_GROUPS : FOOD_GROUPS.filter((g) => g.id !== 'vlb');
-    const ALL_GROUPS = [...gruposBase, ...customFoods];
+    const ALL_GROUPS = [...FOOD_GROUPS, ...customFoods];
 
     return (
         <div className="p-4 max-w-[1400px] mx-auto w-full">
@@ -76,21 +75,12 @@ export const PautasPage = () => {
                     <h1 className="text-3xl font-bold text-ink tracking-tight">Armador de Pautas Alimentarias</h1>
                     <p className="text-ink-soft mt-1 font-medium">{ALL_GROUPS.length} grupos de alimentos · Sistema de intercambio por porciones</p>
                 </div>
-                <div className="flex items-center gap-4">
-                    <label className="inline-flex items-center gap-2 text-sm text-ink-soft cursor-pointer select-none">
-                        <input
-                            type="checkbox"
-                            checked={incluirVlb}
-                            onChange={(e) => setIncluirVlb(e.target.checked)}
-                            className="h-4 w-4 accent-pine rounded border-mist"
-                        />
-                        Verduras de libre consumo
-                    </label>
+                <div className="flex items-center gap-3">
                     <button
                         onClick={() => setIsAddModalOpen(true)}
                         className="inline-flex items-center gap-2 bg-white border-2 border-pine text-pine-soft hover:bg-pine-soft/5 px-5 py-2.5 rounded-card text-sm font-bold transition-colors shadow-sm"
                     >
-                        <Plus className="w-4 h-4" /> Añadir alimento
+                        <Plus className="w-4 h-4" /> Agregar grupo de alimento
                     </button>
                 </div>
             </div>
@@ -108,13 +98,15 @@ export const PautasPage = () => {
                 <div className="col-span-9">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {ALL_GROUPS.map((group) => (
-                            <FoodGroupCard 
+                            <FoodGroupCard
                                 key={group.id}
                                 group={group}
                                 portions={portions[group.id] || 0}
                                 onIncrement={() => actions.incrementPortion(group.id)}
                                 onDecrement={() => actions.decrementPortion(group.id)}
                                 onDelete={group.id.startsWith('custom-') ? () => removeCustomFood(group.id) : undefined}
+                                esLibre={libreConsumoIds.includes(group.id)}
+                                onToggleLibre={() => toggleLibreConsumo(group.id)}
                             />
                         ))}
                     </div>
@@ -131,11 +123,12 @@ export const PautasPage = () => {
                         >
                             <X className="w-5 h-5" />
                         </button>
-                        <h2 className="text-xl font-bold text-ink mb-4">Añadir Alimento Personalizado</h2>
+                        <h2 className="text-xl font-bold text-ink mb-1">Agregar grupo de alimento</h2>
+                        <p className="text-sm text-ink-soft mb-4">Se reflejará en Distribución de Porciones</p>
                         <form onSubmit={handleAddCustomFood} className="flex flex-col gap-4">
                             <div>
-                                <label className="block text-sm font-semibold text-ink-soft mb-1">Nombre del alimento</label>
-                                <input required name="title" type="text" placeholder="Ej: Whey Protein" className="w-full border-mist rounded-lg shadow-sm focus:ring-pine-soft focus:border-pine-soft border p-2" />
+                                <label className="block text-sm font-semibold text-ink-soft mb-1">Nombre del grupo</label>
+                                <input required name="title" type="text" placeholder="Ej: Suplementos" className="w-full border-mist rounded-lg shadow-sm focus:ring-pine-soft focus:border-pine-soft border p-2" />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>

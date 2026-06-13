@@ -60,3 +60,26 @@ export const useCrearAlimento = () => {
     },
   });
 };
+
+/** Edición de alimento (incluye mover de categoría); invalida búsquedas. */
+export const useActualizarAlimento = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, cambios }: { id: string; cambios: Partial<CreateAlimentoPayload> }) =>
+      alimentosApi.actualizar(id, cambios),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: alimentosKeys.all });
+    },
+  });
+};
+
+/** Eliminación de alimento; invalida búsquedas. 409 si está en uso. */
+export const useEliminarAlimento = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => alimentosApi.eliminar(id),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: alimentosKeys.all });
+    },
+  });
+};

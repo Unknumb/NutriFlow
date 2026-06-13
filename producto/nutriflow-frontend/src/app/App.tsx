@@ -100,6 +100,12 @@ const generadorRoute = createRoute({
     component: lazyRouteComponent(() => import('../pages/generador/index'), 'GeneradorPage'),
 });
 
+const alimentosRoute = createRoute({
+    getParentRoute: () => protectedLayout,
+    path: '/alimentos',
+    component: lazyRouteComponent(() => import('../pages/alimentos/index'), 'AlimentosPage'),
+});
+
 const pacientesRoute = createRoute({
     getParentRoute: () => protectedLayout,
     path: '/pacientes',
@@ -126,6 +132,7 @@ const routeTree = rootRoute.addChildren([
         porcionesRoute,
         bibliotecaRoute,
         generadorRoute,
+        alimentosRoute,
         pacientesRoute,
         perfilRoute
     ])

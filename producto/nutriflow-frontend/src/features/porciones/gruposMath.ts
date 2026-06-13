@@ -19,9 +19,8 @@ export const GRUPO_A_MATH: Record<string, string> = {
   lmg: 'lacteos_medios_grasa',
   lbg: 'lacteos_bajos_grasa',
   ace: 'aceites_y_grasas',
+  arg: 'alimentos_ricos_en_lipidos',
   azu: 'azucares',
-  // 'arg' (Alimentos ricos en grasa) no tiene grupo de intercambio propio en
-  // backend-math; se omite deliberadamente.
 };
 
 /**

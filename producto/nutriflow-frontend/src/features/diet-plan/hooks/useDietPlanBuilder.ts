@@ -13,10 +13,13 @@ export const useDietPlanBuilder = (initialTargets: ClinicalContext & { kcal: num
 
     const ALL_GROUPS = useMemo(() => [...FOOD_GROUPS, ...store.customFoods], [store.customFoods]);
 
+    const libreConsumoIds = store.libreConsumoIds;
+
     const currentTotals = useMemo<DietPlanTotals>(() => {
         return ALL_GROUPS.reduce((acc, group) => {
             const qty = portions[group.id] || 0;
-            if (!group.isFree && qty > 0) {
+            const esLibre = group.isFree || libreConsumoIds.includes(group.id);
+            if (!esLibre && qty > 0) {
                 acc.kcal += group.kcal * qty;
                 acc.prot += group.macros.p * qty;
                 acc.cho += group.macros.c * qty;
@@ -24,7 +27,7 @@ export const useDietPlanBuilder = (initialTargets: ClinicalContext & { kcal: num
             }
             return acc;
         }, { kcal: 0, prot: 0, cho: 0, fat: 0 });
-    }, [portions, ALL_GROUPS]);
+    }, [portions, ALL_GROUPS, libreConsumoIds]);
 
     const suggestDistribution = () => {
         let remainingProt = targets.prot;

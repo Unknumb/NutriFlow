@@ -1,9 +1,20 @@
 // backend-core/src/alimentos/alimentos.controller.ts
-import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AlimentosService } from './alimentos.service';
 import { CreateAlimentoDto } from './dto/create-alimento.dto';
+import { UpdateAlimentoDto } from './dto/update-alimento.dto';
 import { QueryAlimentosDto } from './dto/query-alimentos.dto';
 
 @ApiTags('Alimentos')
@@ -35,5 +46,23 @@ export class AlimentosController {
   @ApiResponse({ status: 409, description: 'Ya existe un alimento con ese nombre y marca.' })
   crear(@Body() createAlimentoDto: CreateAlimentoDto) {
     return this.alimentosService.crear(createAlimentoDto);
+  }
+
+  @Patch(':id')
+  @ApiOperation({ summary: 'Actualizar un alimento (incluye mover de categoría)' })
+  @ApiResponse({ status: 200, description: 'Alimento actualizado.' })
+  @ApiResponse({ status: 404, description: 'Alimento no encontrado.' })
+  @ApiResponse({ status: 409, description: 'Conflicto de nombre y marca.' })
+  actualizar(@Param('id') id: string, @Body() updateAlimentoDto: UpdateAlimentoDto) {
+    return this.alimentosService.actualizar(id, updateAlimentoDto);
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Eliminar un alimento del catálogo (si no está en uso)' })
+  @ApiResponse({ status: 200, description: 'Alimento eliminado.' })
+  @ApiResponse({ status: 404, description: 'Alimento no encontrado.' })
+  @ApiResponse({ status: 409, description: 'El alimento está en uso en preparaciones o pautas.' })
+  eliminar(@Param('id') id: string) {
+    return this.alimentosService.eliminar(id);
   }
 }

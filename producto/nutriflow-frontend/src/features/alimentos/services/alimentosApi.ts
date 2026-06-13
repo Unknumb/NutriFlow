@@ -25,4 +25,15 @@ export const alimentosApi = {
     const { data } = await apiClient.post<Alimento>('/alimentos', payload);
     return data;
   },
+
+  /** Actualiza un alimento (incluye mover de categoría). Campos parciales. */
+  actualizar: async (id: string, payload: Partial<CreateAlimentoPayload>): Promise<Alimento> => {
+    const { data } = await apiClient.patch<Alimento>(`/alimentos/${id}`, payload);
+    return data;
+  },
+
+  /** Elimina un alimento. 409 si está en uso en preparaciones o pautas. */
+  eliminar: async (id: string): Promise<void> => {
+    await apiClient.delete(`/alimentos/${id}`);
+  },
 };

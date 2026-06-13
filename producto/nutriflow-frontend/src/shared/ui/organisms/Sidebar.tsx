@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { Calculator, PieChart, FileText, Grid3x3, BookOpen, Sparkles, Users, LogOut } from 'lucide-react';
+import { Calculator, PieChart, FileText, Grid3x3, BookOpen, Sparkles, Users, LogOut, Apple } from 'lucide-react';
 import { supabase } from '../../utils/supabase';
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -27,6 +27,7 @@ const MENU_GROUPS = [
         items: [
             { path: '/biblioteca', label: 'Biblioteca', icon: BookOpen },
             { path: '/generador', label: 'Generador Automático', icon: Sparkles },
+            { path: '/alimentos', label: 'Alimentos', icon: Apple },
         ],
     },
 ] as const;

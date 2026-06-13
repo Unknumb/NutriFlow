@@ -13,7 +13,7 @@ export const FOOD_GROUPS: FoodGroupDef[] = [
     { id: 'fru', title: "Frutas", kcal: 60, macros: { p: 0, c: 15, g: 0 }, theme: { bgMain: 'bg-white', bgHeader: 'bg-[#E8A063]', border: 'border-[#E8A063]/50', text: '' } },
     { id: 'veg', title: "Verduras en General", kcal: 25, macros: { p: 1, c: 5, g: 0 }, theme: { bgMain: 'bg-white', bgHeader: 'bg-[#4F7A5A]', border: 'border-[#4F7A5A]/40', text: '' } },
     { id: 'vlb', title: "Verduras Libre Consumo", isFree: true, kcal: 0, macros: { p: 0, c: 0, g: 0 }, theme: { bgMain: 'bg-white', bgHeader: '', border: 'border-[#2E5547]/40', text: 'text-[#2E5547]' } },
-    { id: 'cag', title: "Carnes Altas en Grasa", kcal: 75, macros: { p: 7, c: 0, g: 5 }, theme: { bgMain: 'bg-white', bgHeader: 'bg-[#8C3B2E]', border: 'border-[#8C3B2E]/40', text: '' } },
+    { id: 'cag', title: "Carnes Altas en Grasa", kcal: 65, macros: { p: 7, c: 0, g: 4 }, theme: { bgMain: 'bg-white', bgHeader: 'bg-[#8C3B2E]', border: 'border-[#8C3B2E]/40', text: '' } },
     { id: 'cbg', title: "Carnes Bajas en Grasa", kcal: 55, macros: { p: 7, c: 0, g: 3 }, theme: { bgMain: 'bg-white', bgHeader: 'bg-[#B4533A]', border: 'border-[#B4533A]/40', text: '' } },
     { id: 'leg', title: "Leguminosas", kcal: 110, macros: { p: 7, c: 20, g: 0.5 }, theme: { bgMain: 'bg-white', bgHeader: 'bg-[#A8742F]', border: 'border-[#A8742F]/40', text: '' } },
     { id: 'lag', title: "Lácteos Altos en Grasa", kcal: 150, macros: { p: 8, c: 12, g: 8 }, theme: { bgMain: 'bg-white', bgHeader: 'bg-[#2F5570]', border: 'border-[#2F5570]/40', text: '' } },

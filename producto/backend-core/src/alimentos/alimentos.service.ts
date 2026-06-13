@@ -4,11 +4,13 @@ import {
   ConflictException,
   Injectable,
   Logger,
+  NotFoundException,
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { RedisService } from '../redis/redis.service';
 import { CreateAlimentoDto } from './dto/create-alimento.dto';
+import { UpdateAlimentoDto } from './dto/update-alimento.dto';
 import { QueryAlimentosDto } from './dto/query-alimentos.dto';
 
 /** Fila devuelta por la búsqueda raw (valores numéricos ya casteados a float8/int). */
@@ -164,6 +166,105 @@ export class AlimentosService {
       }
       throw error;
     }
+  }
+
+  /**
+   * Actualiza un alimento (incluye moverlo de categoría). Valida categoría
+   * y duplicado (nombre, marca) igual que `crear`. Invalida cachés al final.
+   */
+  async actualizar(id: string, dto: UpdateAlimentoDto) {
+    const existente = await this.prisma.alimentos.findUnique({ where: { id } });
+    if (!existente) {
+      throw new NotFoundException(`Alimento ${id} no encontrado`);
+    }
+
+    if (dto.categoria !== undefined && dto.categoria !== null) {
+      const categoriasValidas = await this.categorias();
+      if (!categoriasValidas.includes(dto.categoria)) {
+        throw new BadRequestException(
+          `La categoría "${dto.categoria}" no existe. Usa una de: ${categoriasValidas.join(', ')}`,
+        );
+      }
+    }
+
+    // Si cambia nombre o marca, verificar que no choque con otro alimento.
+    const nuevoNombre = dto.nombre?.trim() ?? existente.nombre;
+    const nuevaMarca =
+      dto.marca !== undefined ? (dto.marca?.trim() ?? null) : existente.marca;
+    if (dto.nombre !== undefined || dto.marca !== undefined) {
+      const duplicado = await this.prisma.alimentos.findFirst({
+        where: {
+          id: { not: id },
+          nombre: { equals: nuevoNombre, mode: 'insensitive' },
+          marca: nuevaMarca,
+        },
+        select: { id: true },
+      });
+      if (duplicado) {
+        throw new ConflictException(
+          `Ya existe otro alimento "${nuevoNombre}"${nuevaMarca ? ` de la marca "${nuevaMarca}"` : ' sin marca'}`,
+        );
+      }
+    }
+
+    const data: Prisma.alimentosUpdateInput = {};
+    if (dto.nombre !== undefined) data.nombre = nuevoNombre;
+    if (dto.marca !== undefined) data.marca = nuevaMarca;
+    if (dto.categoria !== undefined) data.categoria = dto.categoria ?? null;
+    if (dto.calorias_100g !== undefined) data.calorias_100g = dto.calorias_100g;
+    if (dto.proteinas_100g !== undefined) data.proteinas_100g = dto.proteinas_100g;
+    if (dto.carbohidratos_100g !== undefined) data.carbohidratos_100g = dto.carbohidratos_100g;
+    if (dto.grasas_100g !== undefined) data.grasas_100g = dto.grasas_100g;
+    if (dto.restricciones !== undefined) data.restricciones = dto.restricciones;
+
+    try {
+      const actualizado = await this.prisma.alimentos.update({ where: { id }, data });
+      await this.invalidarCaches();
+      this.logger.log(`Alimento actualizado: ${actualizado.nombre} (${id})`);
+      return this.toResponse(actualizado);
+    } catch (error) {
+      if (esErrorDeUnique(error)) {
+        throw new ConflictException(
+          `Ya existe otro alimento "${nuevoNombre}" con esa marca`,
+        );
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Elimina un alimento del catálogo. Se bloquea (409) si el alimento está
+   * usado en preparaciones o pautas, para no corromper esos registros: la
+   * nutricionista debe quitarlo de ahí primero.
+   */
+  async eliminar(id: string) {
+    const existente = await this.prisma.alimentos.findUnique({
+      where: { id },
+      select: { id: true, nombre: true },
+    });
+    if (!existente) {
+      throw new NotFoundException(`Alimento ${id} no encontrado`);
+    }
+
+    const [usosEnPreparaciones, usosEnPautas] = await Promise.all([
+      this.prisma.ingredientes_preparacion.count({ where: { alimento_id: id } }),
+      this.prisma.detalle_pauta.count({ where: { alimento_id: id } }),
+    ]);
+
+    if (usosEnPreparaciones > 0 || usosEnPautas > 0) {
+      const partes: string[] = [];
+      if (usosEnPreparaciones > 0)
+        partes.push(`${usosEnPreparaciones} preparación(es)`);
+      if (usosEnPautas > 0) partes.push(`${usosEnPautas} pauta(s)`);
+      throw new ConflictException(
+        `No se puede eliminar "${existente.nombre}" porque está en uso en ${partes.join(' y ')}. Quítalo de ahí primero.`,
+      );
+    }
+
+    await this.prisma.alimentos.delete({ where: { id } });
+    await this.invalidarCaches();
+    this.logger.log(`Alimento eliminado: ${existente.nombre} (${id})`);
+    return { id, eliminado: true };
   }
 
   /**

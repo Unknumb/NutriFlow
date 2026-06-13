@@ -16,6 +16,9 @@ export interface PortionsState {
     activeMeals: string[];
     activeGroups: string[];
     customFoods: CustomFoodDef[];
+    /** Grupos marcados como libre consumo (ad libitum); no cuentan en los totales. */
+    libreConsumoIds: string[];
+    toggleLibreConsumo: (groupId: string) => void;
     incrementPortion: (mealId: string, groupId: string) => void;
     decrementPortion: (mealId: string, groupId: string) => void;
     setPortion: (mealId: string, groupId: string, value: number) => void;
@@ -44,6 +47,13 @@ export const usePortionsStore = create<PortionsState>((set) => ({
     activeGroups: ['cer', 'veg', 'fru', 'cbg', 'lmg', 'ace'],
     // Alimentos personalizados añadidos
     customFoods: [],
+    // 'vlb' (Verduras Libre Consumo) es libre por defecto; el resto se activa a mano.
+    libreConsumoIds: ['vlb'],
+    toggleLibreConsumo: (groupId) => set((state) => ({
+        libreConsumoIds: state.libreConsumoIds.includes(groupId)
+            ? state.libreConsumoIds.filter((id) => id !== groupId)
+            : [...state.libreConsumoIds, groupId],
+    })),
     loadedPatientId: null,
     setLoadedPatientId: (id) => set({ loadedPatientId: id }),
     

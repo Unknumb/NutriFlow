@@ -15,7 +15,7 @@ const FOOD_GROUP_OPTIONS: FoodGroupOption[] = [
     { id: 'lmg', title: 'Lácteos Medios', emoji: '🥛', headerColor: '#3E6B8C', categoria: 'Lácteos Medios en Grasa' },
     { id: 'lbg', title: 'Lácteos Bajos', emoji: '🍼', headerColor: '#6E94AE', categoria: 'Lácteos Bajos en Grasa' },
     { id: 'ace', title: 'Aceites y Grasas', emoji: '🫒', headerColor: '#9C7A4D', categoria: 'Aceites y Grasas' },
-    { id: 'arg', title: 'ARG', subtitle: 'Alimentos ricos en grasa', emoji: '🥑', headerColor: '#7A5C8E', categoria: null },
+    { id: 'arg', title: 'ARG', subtitle: 'Alimentos ricos en grasa', emoji: '🥑', headerColor: '#7A5C8E', categoria: 'Alimentos ricos en grasas' },
     { id: 'azu', title: 'Azúcar', emoji: '🍬', headerColor: '#B95F7E', categoria: 'Azúcares' },
 ];
 

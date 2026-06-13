@@ -34,7 +34,7 @@ export const PortionCell = ({ value, cellBg, textBtn, mealId, groupId, onIncreme
         return (
             <button 
                 onClick={onIncrement}
-                className="w-6 h-6 mx-auto rounded-full border border-dashed border-gray-300 text-gray-400 hover:border-teal-400 hover:text-teal-500 flex items-center justify-center transition-colors"
+                className="w-6 h-6 mx-auto rounded-full border border-dashed border-mist text-ink-soft/60 hover:border-pine-soft hover:text-pine-soft flex items-center justify-center transition-colors"
                 title="Agregar porción"
             >
                 +
@@ -49,7 +49,7 @@ export const PortionCell = ({ value, cellBg, textBtn, mealId, groupId, onIncreme
             ref={setNodeRef}
             {...listeners}
             {...attributes}
-            className={`${cellBg} rounded-lg px-2 py-0.5 mx-auto w-12 flex flex-col items-center shadow-sm cursor-grab active:cursor-grabbing hover:ring-2 hover:ring-offset-1 hover:ring-gray-300 transition-all ${isDragging ? 'opacity-50 scale-105' : ''}`}
+            className={`${cellBg} rounded-lg px-2 py-0.5 mx-auto w-12 flex flex-col items-center shadow-sm cursor-grab active:cursor-grabbing hover:ring-2 hover:ring-offset-1 hover:ring-mist transition-all ${isDragging ? 'opacity-50 scale-105' : ''}`}
             title="Arrastra hacia arriba para restar"
         >
             <button onClick={onIncrement} className={`text-[10px] ${textBtn} opacity-60 hover:opacity-100 w-full font-bold`} onPointerDown={(e) => e.stopPropagation()}>▲</button>
@@ -61,7 +61,7 @@ export const PortionCell = ({ value, cellBg, textBtn, mealId, groupId, onIncreme
                     value={value}
                     onChange={(e) => onSetPortion?.(parseFloat(e.target.value) || 0)}
                     onPointerDown={(e) => e.stopPropagation()} // Evita que se inicie el drag al hacer clic
-                    className={`font-bold text-base ${textBtn} w-full text-center bg-transparent focus:outline-none focus:ring-1 focus:ring-teal-400 rounded hide-arrows p-0 m-0`}
+                    className={`font-bold text-base ${textBtn} w-full text-center bg-transparent focus:outline-none focus:ring-1 focus:ring-pine-soft rounded hide-arrows p-0 m-0`}
                     style={{ WebkitAppearance: 'none', MozAppearance: 'textfield' }}
                 />
             </div>

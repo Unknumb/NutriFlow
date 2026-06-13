@@ -29,20 +29,20 @@ export const ReferenceWeightsCard = (_props: WeightsProps) => {
                                 key={w.id}
                                 onClick={() => setSelectedWeightId(w.id)}
                                 className={`flex items-center justify-between p-3 rounded-lg border transition-all cursor-pointer ${isSelected
-                                        ? 'border-teal-500 bg-teal-50/30 shadow-sm'
-                                        : 'border-gray-200 hover:bg-gray-50'
+                                        ? 'border-pine-soft bg-pine-soft/5'
+                                        : 'border-mist hover:bg-porcelain'
                                     }`}
                             >
                                 <div className="flex items-center gap-3">
-                                    <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-colors ${isSelected ? 'border-teal-600' : 'border-gray-300'
+                                    <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-colors ${isSelected ? 'border-pine-soft' : 'border-mist'
                                         }`}>
-                                        {isSelected && <div className="w-2 h-2 rounded-full bg-teal-600" />}
+                                        {isSelected && <div className="w-2 h-2 rounded-full bg-pine-soft" />}
                                     </div>
-                                    <span className={`text-sm font-medium ${isSelected ? 'text-teal-900' : 'text-gray-700'}`}>
+                                    <span className={`text-sm font-medium ${isSelected ? 'text-pine-soft' : 'text-ink-soft'}`}>
                                         {w.label}
                                     </span>
                                 </div>
-                                <span className={`font-semibold ${isSelected ? 'text-teal-700' : 'text-gray-900'}`}>
+                                <span className={`font-semibold tnum ${isSelected ? 'text-pine-soft' : 'text-ink'}`}>
                                     {w.value.toFixed(1)} kg
                                 </span>
                             </div>
@@ -50,9 +50,9 @@ export const ReferenceWeightsCard = (_props: WeightsProps) => {
                     })}
                 </div>
 
-                <div className="mt-4 p-3 bg-teal-50 rounded-lg border border-teal-200 flex justify-between items-center transition-colors">
-                    <span className="text-sm font-medium text-teal-900">Peso Activo Seleccionado</span>
-                    <span className="text-lg font-semibold text-teal-700">
+                <div className="mt-4 p-4 bg-pine rounded-md flex justify-between items-center">
+                    <span className="text-sm font-medium text-porcelain/80 uppercase tracking-wide text-[12px]">Peso activo</span>
+                    <span className="cifra-data text-2xl font-medium text-porcelain">
                         {selectedWeightValue.toFixed(1)} kg
                     </span>
                 </div>

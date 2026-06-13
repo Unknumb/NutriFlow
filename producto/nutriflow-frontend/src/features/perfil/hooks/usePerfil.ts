@@ -20,7 +20,7 @@ export const usePerfilNutricionista = () => {
 
       const { data, error } = await supabase
         .from('perfiles_nutricionistas')
-        .select('id, nombre, apellido, registro_profesional, email, fecha_creacion')
+        .select('id, nombre, apellido, registro_profesional, email, avatar_url, fecha_creacion')
         .eq('id', userData.user.id)
         .single();
 
@@ -54,12 +54,16 @@ export const useUpdatePerfil = () => {
         throw new Error('El nombre y el apellido son obligatorios.');
       }
 
+      // avatar_url solo se incluye si viene en el payload (undefined = no tocar)
+      const incluyeAvatar = payload.avatar_url !== undefined;
+
       const { error: perfilError } = await supabase
         .from('perfiles_nutricionistas')
         .update({
           nombre,
           apellido,
           registro_profesional: registroProfesional,
+          ...(incluyeAvatar ? { avatar_url: payload.avatar_url } : {}),
         })
         .eq('id', userData.user.id);
 
@@ -67,10 +71,10 @@ export const useUpdatePerfil = () => {
         throw new Error(`No se pudo guardar el perfil: ${perfilError.message}`);
       }
 
-      // Sincronizamos user_metadata para que el Sidebar muestre el nombre actualizado.
+      // Sincronizamos user_metadata para que el Sidebar muestre el nombre y la foto actualizados.
       // onAuthStateChange (USER_UPDATED) refresca el store automáticamente.
       const { error: authError } = await supabase.auth.updateUser({
-        data: { nombre, apellido },
+        data: { nombre, apellido, ...(incluyeAvatar ? { avatar_url: payload.avatar_url } : {}) },
       });
 
       if (authError) {

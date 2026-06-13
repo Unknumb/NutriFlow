@@ -204,21 +204,21 @@ export const ModalNuevoPaciente: React.FC<ModalNuevoPacienteProps> = ({ isOpen, 
               values={form.enfermedades}
               onChange={v => set('enfermedades', v)}
               placeholder="Ej: Diabetes tipo 2 (Enter para agregar)"
-              chipClassName="bg-red-50 text-red-800 border-red-200"
+              chipClassName="bg-clinical-red/5 text-clinical-red border-clinical-red/30"
             />
             <ChipsInput
               label="Alergias alimentarias"
               values={form.alergias}
               onChange={v => set('alergias', v)}
               placeholder="Ej: Maní (Enter para agregar)"
-              chipClassName="bg-amber-50 text-amber-800 border-amber-200"
+              chipClassName="bg-apricot/10 text-[#8a5a2a] border-apricot/50"
             />
             <ChipsInput
               label="Preferencias alimentarias"
               values={form.preferencias_alimentarias}
               onChange={v => set('preferencias_alimentarias', v)}
               placeholder="Ej: Vegetariano (Enter para agregar)"
-              chipClassName="bg-teal-50 text-teal-800 border-teal-200"
+              chipClassName="bg-pine-soft/5 text-pine-soft border-pine-soft/30"
             />
             <div>
               <label className={labelClass}>Notas sobre salud y preferencias</label>

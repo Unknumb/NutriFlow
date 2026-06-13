@@ -5,10 +5,10 @@ export const CaloricDistributionChart = ({ pieData }: { pieData: any[] }) => {
     const renderCustomLabel = ({ name, value }: any) => `${name}: ${value}%`;
 
     return (
-        <div className="bg-white text-gray-900 flex flex-col gap-6 rounded-xl border border-gray-200 shadow-sm">
-            <div className="px-6 pt-6 border-b border-gray-100 pb-4">
-                <h4 className="leading-none flex items-center gap-2 font-semibold">
-                    <Activity className="w-5 h-5 text-gray-700" />
+        <div className="bg-white text-ink flex flex-col gap-6 rounded-card border border-mist shadow-card">
+            <div className="px-6 pt-6 border-b border-mist pb-4">
+                <h4 className="leading-none flex items-center gap-2 font-display font-semibold text-[17px]">
+                    <Activity className="w-5 h-5 text-pine-soft" />
                     Distribución Calórica
                 </h4>
             </div>
@@ -31,7 +31,7 @@ export const CaloricDistributionChart = ({ pieData }: { pieData: any[] }) => {
                             </Pie>
                             <Tooltip
                                 formatter={(value: any) => [`${value}%`, 'Porcentaje']}
-                                contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb' }}
+                                contentStyle={{ borderRadius: '8px', border: '1px solid #E8EAE3', fontFamily: 'inherit' }}
                             />
                         </PieChart>
                     </ResponsiveContainer>

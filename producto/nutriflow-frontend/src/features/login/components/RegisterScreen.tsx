@@ -3,12 +3,7 @@ import { Mail, Lock, ArrowRight, Eye, EyeOff, Loader2, MailCheck, User } from "l
 import { Link, useRouter } from "@tanstack/react-router";
 import { useAuth } from "../../../shared/hooks/useAuth";
 import { useAuthStore } from "../../../shared/store/useAuthStore";
-import { AuthLayout } from "./AuthLayout";
-
-const inputClass =
-  "w-full bg-white/50 backdrop-blur-sm border-b-2 border-transparent focus:border-[#7dd3fc] focus:bg-white focus:ring-0 rounded-t-lg px-3 py-2.5 pl-11 pr-11 text-base text-[#0b1c30] placeholder-[#bec8ce] transition-all duration-300 outline-none shadow-inner disabled:opacity-50";
-
-const labelClass = "text-xs font-semibold tracking-wide text-[#3f484e] ml-1 uppercase";
+import { AuthLayout, authInputClass, authLabelClass, authButtonClass, authErrorClass, authLinkClass } from "./AuthLayout";
 
 export const RegisterScreen: React.FC = () => {
   const [nombre, setNombre] = useState("");
@@ -70,15 +65,15 @@ export const RegisterScreen: React.FC = () => {
     return (
       <AuthLayout title="Revisa tu correo" subtitle="Te enviamos un enlace de confirmación">
         <div className="flex flex-col items-center gap-6 text-center">
-          <MailCheck className="w-14 h-14 text-[#7dd3fc]" />
-          <p className="text-sm text-[#3f484e]">
+          <MailCheck className="w-14 h-14 text-pine-soft" />
+          <p className="text-sm text-ink-soft">
             Enviamos un correo de confirmación a{" "}
-            <span className="font-semibold text-[#0b1c30]">{email}</span>. Haz clic en el enlace
+            <span className="font-semibold text-ink">{email}</span>. Haz clic en el enlace
             del correo para activar tu cuenta y luego inicia sesión.
           </p>
           <Link
             to="/login"
-            className="w-full bg-[#7dd3fc] text-white font-medium text-[15px] py-3 rounded-xl hover:bg-[#6ecaf4] hover:shadow-[0_0_20px_rgba(125,211,252,0.4)] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2"
+            className={authButtonClass}
           >
             Ir a Iniciar Sesión
             <ArrowRight className="w-5 h-5" />
@@ -91,20 +86,20 @@ export const RegisterScreen: React.FC = () => {
   return (
     <AuthLayout title="Crear Cuenta" subtitle="Regístrate para acceder a tu panel clínico">
       {error && (
-        <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 animate-in fade-in duration-300">
+        <div className={authErrorClass}>
           {error}
         </div>
       )}
 
       <form className="space-y-6 flex flex-col" onSubmit={handleSubmit}>
         {/* Nombre y Apellido */}
-        <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
+        <div className="grid grid-cols-2 gap-4">
           <div className="flex flex-col gap-1.5">
-            <label className={labelClass} htmlFor="nombre">
+            <label className={authLabelClass} htmlFor="nombre">
               Nombre
             </label>
             <div className="relative">
-              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-black" />
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-ink-soft/60" />
               <input
                 id="nombre"
                 name="nombre"
@@ -115,16 +110,16 @@ export const RegisterScreen: React.FC = () => {
                 required
                 maxLength={60}
                 disabled={isSubmitting}
-                className={inputClass}
+                className={authInputClass}
               />
             </div>
           </div>
           <div className="flex flex-col gap-1.5">
-            <label className={labelClass} htmlFor="apellido">
+            <label className={authLabelClass} htmlFor="apellido">
               Apellido
             </label>
             <div className="relative">
-              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-black" />
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-ink-soft/60" />
               <input
                 id="apellido"
                 name="apellido"
@@ -135,19 +130,19 @@ export const RegisterScreen: React.FC = () => {
                 required
                 maxLength={60}
                 disabled={isSubmitting}
-                className={inputClass}
+                className={authInputClass}
               />
             </div>
           </div>
         </div>
 
         {/* Email */}
-        <div className="flex flex-col gap-1.5 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
-          <label className={labelClass} htmlFor="email">
+        <div className="flex flex-col gap-1.5">
+          <label className={authLabelClass} htmlFor="email">
             Correo Electrónico
           </label>
           <div className="relative">
-            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-black" />
+            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-ink-soft/60" />
             <input
               id="email"
               name="email"
@@ -157,18 +152,18 @@ export const RegisterScreen: React.FC = () => {
               placeholder="nombre@ejemplo.com"
               required
               disabled={isSubmitting}
-              className={inputClass}
+              className={authInputClass}
             />
           </div>
         </div>
 
         {/* Password */}
-        <div className="flex flex-col gap-1.5 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
-          <label className={labelClass} htmlFor="password">
+        <div className="flex flex-col gap-1.5">
+          <label className={authLabelClass} htmlFor="password">
             Contraseña
           </label>
           <div className="relative">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-black" />
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-ink-soft/60" />
             <input
               id="password"
               name="password"
@@ -179,12 +174,12 @@ export const RegisterScreen: React.FC = () => {
               required
               minLength={8}
               disabled={isSubmitting}
-              className={inputClass}
+              className={authInputClass}
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6f787e] hover:text-black transition-colors"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-soft hover:text-ink transition-colors duration-150"
             >
               {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
             </button>
@@ -192,12 +187,12 @@ export const RegisterScreen: React.FC = () => {
         </div>
 
         {/* Confirmar password */}
-        <div className="flex flex-col gap-1.5 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
-          <label className={labelClass} htmlFor="confirmPassword">
+        <div className="flex flex-col gap-1.5">
+          <label className={authLabelClass} htmlFor="confirmPassword">
             Confirmar Contraseña
           </label>
           <div className="relative">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-black" />
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-ink-soft/60" />
             <input
               id="confirmPassword"
               name="confirmPassword"
@@ -208,7 +203,7 @@ export const RegisterScreen: React.FC = () => {
               required
               minLength={8}
               disabled={isSubmitting}
-              className={inputClass}
+              className={authInputClass}
             />
           </div>
         </div>
@@ -217,7 +212,7 @@ export const RegisterScreen: React.FC = () => {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full bg-[#7dd3fc] text-white font-medium text-[15px] py-3 rounded-xl hover:bg-[#6ecaf4] hover:shadow-[0_0_20px_rgba(125,211,252,0.4)] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:shadow-none disabled:active:scale-100"
+            className={authButtonClass}
           >
             {isSubmitting ? (
               <>
@@ -232,9 +227,9 @@ export const RegisterScreen: React.FC = () => {
             )}
           </button>
 
-          <p className="text-center text-sm text-[#3f484e] mt-2">
+          <p className="text-center text-sm text-ink-soft mt-2">
             ¿Ya tienes una cuenta?{" "}
-            <Link to="/login" className="text-[#006686] font-medium hover:underline">
+            <Link to="/login" className={authLinkClass}>
               Iniciar Sesión
             </Link>
           </p>

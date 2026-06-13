@@ -136,8 +136,8 @@ export const PortionsTable = () => {
 
   if (visibleGroups.length === 0) {
     return (
-      <div className="animate-in fade-in duration-300 p-8 text-center bg-gray-50 border border-dashed border-gray-300 rounded-xl mt-4">
-        <p className="text-gray-500">
+      <div className="animate-in fade-in duration-300 p-8 text-center bg-porcelain border border-dashed border-mist rounded-xl mt-4">
+        <p className="text-ink-soft">
           Aún no has asignado porciones en el Armador de Pautas.
         </p>
       </div>
@@ -146,10 +146,10 @@ export const PortionsTable = () => {
 
   return (
     <div className="animate-in fade-in duration-300">
-      <div className="mb-4 bg-teal-50 border border-teal-200 rounded-xl p-3 flex items-start gap-3 shadow-sm">
-        <Info className="w-5 h-5 text-teal-600 shrink-0 mt-0.5" />
-        <p className="text-sm text-teal-800 leading-snug">
-          <strong className="block mb-1 font-bold text-teal-900">
+      <div className="mb-4 bg-pine-soft/5 border border-pine-soft/30 rounded-xl p-3 flex items-start gap-3 shadow-sm">
+        <Info className="w-5 h-5 text-pine-soft shrink-0 mt-0.5" />
+        <p className="text-sm text-pine-soft leading-snug">
+          <strong className="block mb-1 font-bold text-pine-soft">
             ¿Cómo asignar porciones?
           </strong>
           Arrastra el encabezado del grupo alimentario (ej. 🍎 Frutas) y
@@ -175,11 +175,11 @@ export const PortionsTable = () => {
               <tr>
                 <td
                   rowSpan={2}
-                  className="bg-yellow-50 border border-gray-200 text-center align-middle p-3 w-[130px]"
+                  className="bg-yellow-50 border border-mist text-center align-middle p-3 w-[130px]"
                 >
-                  <p className="text-xs text-gray-600 italic leading-snug">
+                  <p className="text-xs text-ink-soft italic leading-snug">
                     Guíate por el libro de{" "}
-                    <strong className="text-gray-800 not-italic">
+                    <strong className="text-ink not-italic">
                       porciones de intercambio
                     </strong>
                   </p>
@@ -200,16 +200,16 @@ export const PortionsTable = () => {
                   </td>
                 ))}
               </tr>
-              <tr className="bg-gray-100">
-                <td className="border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-600 text-center">
+              <tr className="bg-mist/60">
+                <td className="border border-mist px-3 py-2 text-xs font-semibold text-ink-soft text-center">
                   N° Porciones DIARIO
                 </td>
                 {visibleGroups.map((g) => (
                   <td
                     key={`target-txt-${g.id}`}
-                    className="border border-gray-200 text-center"
+                    className="border border-mist text-center"
                   >
-                    <span className="text-sm font-bold text-gray-700">
+                    <span className="text-sm font-bold text-ink-soft">
                       {targets[g.id]}
                     </span>
                   </td>
@@ -219,18 +219,18 @@ export const PortionsTable = () => {
             <tbody>
               {visibleMeals.map((meal, idx) => (
                 <DroppableMealRow key={meal.id} mealId={meal.id} idx={idx}>
-                  <td className="border border-gray-200 p-2 text-left pointer-events-none select-none">
-                    <div className="text-xs text-gray-500 font-mono">
+                  <td className="border border-mist p-2 text-left pointer-events-none select-none">
+                    <div className="text-xs text-ink-soft font-mono">
                       {meal.time}
                     </div>
-                    <span className="font-bold text-sm text-gray-800">
+                    <span className="font-bold text-sm text-ink">
                       {meal.name}
                     </span>
                   </td>
                   {visibleGroups.map((g) => (
                     <td
                       key={`${meal.id}-${g.id}`}
-                      className="border border-gray-200 text-center p-1"
+                      className="border border-mist text-center p-1"
                     >
                       <PortionCell
                         value={distributions[meal.id]?.[g.id] || 0}
@@ -246,8 +246,8 @@ export const PortionsTable = () => {
                   ))}
                 </DroppableMealRow>
               ))}
-              <tr className="bg-gray-100 border-t-2 border-gray-300">
-                <td className="border border-gray-200 p-2 text-xs font-bold text-gray-700 text-right uppercase tracking-wide">
+              <tr className="bg-mist/60 border-t-2 border-mist">
+                <td className="border border-mist p-2 text-xs font-bold text-ink-soft text-right uppercase tracking-wide">
                   Total
                 </td>
                 {visibleGroups.map((g) => {
@@ -262,7 +262,7 @@ export const PortionsTable = () => {
                   return (
                     <td
                       key={`total-${g.id}`}
-                      className="border border-gray-200 text-center py-2"
+                      className="border border-mist text-center py-2"
                     >
                       <span className={`text-sm font-bold ${colorClass}`}>
                         {total}
@@ -272,7 +272,7 @@ export const PortionsTable = () => {
                 })}
               </tr>
               <tr className="bg-white">
-                <td className="border border-gray-200 p-2 text-xs font-bold text-gray-700 text-right uppercase tracking-wide">
+                <td className="border border-mist p-2 text-xs font-bold text-ink-soft text-right uppercase tracking-wide">
                   Balance
                 </td>
                 {visibleGroups.map((g) => {
@@ -280,7 +280,7 @@ export const PortionsTable = () => {
                   return (
                     <td
                       key={`balance-${g.id}`}
-                      className={`border border-gray-100 text-center py-2 ${balance === "exact" ? "bg-emerald-50" : balance === "over" ? "bg-red-50" : "bg-amber-50"}`}
+                      className={`border border-mist/70 text-center py-2 ${balance === "exact" ? "bg-emerald-50" : balance === "over" ? "bg-red-50" : "bg-amber-50"}`}
                     >
                       {balance === "exact" && (
                         <CheckCircle className="w-5 h-5 text-emerald-500 mx-auto" />
@@ -323,7 +323,7 @@ export const PortionsTable = () => {
         </DragOverlay>
       </DndContext>
 
-      <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-gray-500 bg-gray-50 p-3 rounded-lg border border-gray-200">
+      <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-ink-soft bg-porcelain p-3 rounded-lg border border-mist">
         <div className="flex items-center gap-1.5">
           <CheckCircle className="w-4 h-4 text-emerald-500" />
           <span className="font-medium">Balance exacto</span>
@@ -340,7 +340,7 @@ export const PortionsTable = () => {
           </span>
           <span className="font-medium">Excede meta</span>
         </div>
-        <span className="text-gray-400 ml-auto">
+        <span className="text-ink-soft/60 ml-auto">
           · Haz click en horas o metas para editarlas
         </span>
       </div>
@@ -349,7 +349,7 @@ export const PortionsTable = () => {
         <button
           onClick={actions.handleSavePauta}
           disabled={state.isSaving}
-          className="bg-teal-600 hover:bg-teal-700 text-white font-medium px-6 py-2.5 rounded-lg transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          className="bg-pine hover:bg-pine-soft text-white font-medium px-6 py-2.5 rounded-lg transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
         >
           {state.isSaving ? "Guardando..." : "Guardar Pauta"}
         </button>

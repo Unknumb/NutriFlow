@@ -2,10 +2,7 @@ import React, { useState } from "react";
 import { Mail, ArrowRight, Loader2, MailCheck } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { useAuth } from "../../../shared/hooks/useAuth";
-import { AuthLayout } from "./AuthLayout";
-
-const inputClass =
-  "w-full bg-white/50 backdrop-blur-sm border-b-2 border-transparent focus:border-[#7dd3fc] focus:bg-white focus:ring-0 rounded-t-lg px-3 py-2.5 pl-11 text-base text-[#0b1c30] placeholder-[#bec8ce] transition-all duration-300 outline-none shadow-inner disabled:opacity-50";
+import { AuthLayout, authInputClass, authLabelClass, authButtonClass, authErrorClass, authLinkClass } from "./AuthLayout";
 
 export const ForgotPasswordScreen: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -34,15 +31,15 @@ export const ForgotPasswordScreen: React.FC = () => {
     return (
       <AuthLayout title="Revisa tu correo" subtitle="Te enviamos un enlace de recuperación">
         <div className="flex flex-col items-center gap-6 text-center">
-          <MailCheck className="w-14 h-14 text-[#7dd3fc]" />
-          <p className="text-sm text-[#3f484e]">
+          <MailCheck className="w-14 h-14 text-pine-soft" />
+          <p className="text-sm text-ink-soft">
             Si existe una cuenta asociada a{" "}
-            <span className="font-semibold text-[#0b1c30]">{email}</span>, recibirás un correo
+            <span className="font-semibold text-ink">{email}</span>, recibirás un correo
             con un enlace para restablecer tu contraseña. Revisa también tu carpeta de spam.
           </p>
           <Link
             to="/login"
-            className="w-full bg-[#7dd3fc] text-white font-medium text-[15px] py-3 rounded-xl hover:bg-[#6ecaf4] hover:shadow-[0_0_20px_rgba(125,211,252,0.4)] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2"
+            className={authButtonClass}
           >
             Volver a Iniciar Sesión
             <ArrowRight className="w-5 h-5" />
@@ -58,21 +55,21 @@ export const ForgotPasswordScreen: React.FC = () => {
       subtitle="Ingresa tu correo y te enviaremos un enlace de recuperación"
     >
       {error && (
-        <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 animate-in fade-in duration-300">
+        <div className={authErrorClass}>
           {error}
         </div>
       )}
 
       <form className="space-y-6 flex flex-col" onSubmit={handleSubmit}>
-        <div className="flex flex-col gap-1.5 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
+        <div className="flex flex-col gap-1.5">
           <label
-            className="text-xs font-semibold tracking-wide text-[#3f484e] ml-1 uppercase"
+            className="text-xs font-semibold tracking-wide text-ink-soft ml-1 uppercase"
             htmlFor="email"
           >
             Correo Electrónico
           </label>
           <div className="relative">
-            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-black" />
+            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-ink-soft/60" />
             <input
               id="email"
               name="email"
@@ -82,7 +79,7 @@ export const ForgotPasswordScreen: React.FC = () => {
               placeholder="nombre@ejemplo.com"
               required
               disabled={isSubmitting}
-              className={inputClass}
+              className={authInputClass}
             />
           </div>
         </div>
@@ -91,7 +88,7 @@ export const ForgotPasswordScreen: React.FC = () => {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full bg-[#7dd3fc] text-white font-medium text-[15px] py-3 rounded-xl hover:bg-[#6ecaf4] hover:shadow-[0_0_20px_rgba(125,211,252,0.4)] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:shadow-none disabled:active:scale-100"
+            className={authButtonClass}
           >
             {isSubmitting ? (
               <>
@@ -106,9 +103,9 @@ export const ForgotPasswordScreen: React.FC = () => {
             )}
           </button>
 
-          <p className="text-center text-sm text-[#3f484e] mt-2">
+          <p className="text-center text-sm text-ink-soft mt-2">
             ¿Recordaste tu contraseña?{" "}
-            <Link to="/login" className="text-[#006686] font-medium hover:underline">
+            <Link to="/login" className={authLinkClass}>
               Iniciar Sesión
             </Link>
           </p>

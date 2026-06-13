@@ -44,8 +44,8 @@ export const OpcionesPorGrupo = () => {
         <div className="animate-in fade-in duration-300 outline-none flex-1 overflow-auto m-0">
             <div className="p-8 max-w-5xl mx-auto">
                 <div className="mb-6">
-                    <h2 className="text-lg font-semibold text-gray-900">Opciones por grupo de alimento</h2>
-                    <p className="text-sm text-gray-500 mt-1">Referencia de equivalencias para cada grupo.</p>
+                    <h2 className="text-lg font-semibold text-ink">Opciones por grupo de alimento</h2>
+                    <p className="text-sm text-ink-soft mt-1">Referencia de equivalencias para cada grupo.</p>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {visibleOptions.map((group) => (
@@ -57,8 +57,8 @@ export const OpcionesPorGrupo = () => {
                         />
                     ))}
                     {visibleOptions.length === 0 && (
-                        <div className="col-span-1 md:col-span-2 text-center p-8 bg-gray-50 border border-dashed border-gray-300 rounded-xl">
-                            <p className="text-gray-500">Aún no has asignado porciones en el Armador de Pautas.</p>
+                        <div className="col-span-1 md:col-span-2 text-center p-8 bg-porcelain border border-dashed border-mist rounded-xl">
+                            <p className="text-ink-soft">Aún no has asignado porciones en el Armador de Pautas.</p>
                         </div>
                     )}
                 </div>

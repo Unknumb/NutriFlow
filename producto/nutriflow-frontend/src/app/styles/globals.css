@@ -1,50 +1,54 @@
+/* Tipografías del sistema de diseño "Consulta moderna" (ver REDISENO.md) */
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Albert+Sans:wght@400;500;600&family=Spline+Sans+Mono:wght@500&display=swap');
 @import "tailwindcss";
 
+@theme {
+  /* Paleta base */
+  --color-pine: #1F3D33;
+  --color-pine-soft: #2E5547;
+  --color-porcelain: #FAFAF7;
+  --color-ink: #22302B;
+  --color-ink-soft: #5A6660;
+  --color-mist: #E8EAE3;
+  --color-apricot: #E8A063;
+  --color-clinical-red: #B4533A;
+
+  /* Lenguaje de macros: idéntico en chips, gráficos, leyendas y PDF */
+  --color-macro-prot: #3E6B8C;   /* proteínas: azul acero */
+  --color-macro-cho: #C98B3D;    /* carbohidratos: ámbar trigo */
+  --color-macro-gra: #7A5C8E;    /* grasas/lípidos: ciruela */
+  --color-macro-kcal: #1F3D33;   /* energía: pino */
+
+  /* Tipografía */
+  --font-display: "Bricolage Grotesque", "Albert Sans", system-ui, sans-serif;
+  --font-sans: "Albert Sans", system-ui, "Segoe UI", sans-serif;
+  --font-data: "Spline Sans Mono", ui-monospace, Consolas, monospace;
+
+  /* Radios y sombras: una sola elevación, discreta */
+  --radius-card: 10px;
+  --shadow-card: 0 1px 2px rgba(34, 48, 43, 0.05), 0 2px 8px rgba(34, 48, 43, 0.04);
+}
+
 :root {
-  /* ... tus variables se mantienen igual ... */
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow: rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
-
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
-
-  /* Reset de fuente */
-  font-family: var(--sans);
+  font-family: var(--font-sans);
   font-size: 16px;
-  /* Bajamos el base a 16px que es estándar de SaaS */
   line-height: 1.5;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
+  color-scheme: light;
+  color: var(--color-ink);
+  background: var(--color-porcelain);
 
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* EL CAMBIO CLAVE ESTÁ AQUÍ */
 #root {
   width: 100%;
-  /* Ocupa todo el ancho */
   min-height: 100vh;
-  /* Ocupa todo el alto */
   display: flex;
   flex-direction: column;
   margin: 0;
-  /* Eliminamos el auto para que no se centre */
   text-align: left;
-  /* El texto debe nacer a la izquierda, no centrado */
-  border-inline: none;
-  /* Quitamos esas líneas laterales */
 }
 
 body {
@@ -52,20 +56,46 @@ body {
   padding: 0;
   width: 100%;
   overflow-x: hidden;
-  /* Evita scroll horizontal accidental */
+  background: var(--color-porcelain);
 }
 
-/* Limpieza de etiquetas globales */
-h1,
-h2,
-h3,
-h4,
-p {
-  margin: 0;
+/* En @layer base para que las utilidades de Tailwind (capa utilities) puedan sobreescribir */
+@layer base {
+  h1, h2, h3, h4, p {
+    margin: 0;
+  }
+
+  h1, h2 {
+    font-family: var(--font-display);
+    color: var(--color-ink);
+  }
 }
 
-/* Mantengo tus estilos de títulos pero sin forzar márgenes que Tailwind ya maneja */
-h1 {
-  font-family: var(--heading);
-  color: var(--text-h);
+/* Cifras clínicas: siempre tabulares para que las columnas de números queden alineadas */
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Cifras protagonistas (kcal hero, totales) */
+.cifra-data {
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+/* Foco visible consistente en toda la app */
+:focus-visible {
+  outline: 2px solid var(--color-apricot);
+  outline-offset: 2px;
+}
+
+/* Entrada suave de página; desactivada si el usuario prefiere menos movimiento */
+@media (prefers-reduced-motion: no-preference) {
+  .page-enter {
+    animation: page-fade 220ms ease-out;
+  }
+  @keyframes page-fade {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: none; }
+  }
 }

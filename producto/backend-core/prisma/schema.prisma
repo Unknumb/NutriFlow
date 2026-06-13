@@ -592,6 +592,7 @@ model perfiles_nutricionistas {
   apellido             String
   registro_profesional String?     @unique
   email                String      @unique
+  avatar_url           String?
   fecha_creacion       DateTime?       @default(now()) @db.Timestamptz(6)
   pacientes            pacientes[]
   preparaciones        preparaciones[]

@@ -3,12 +3,7 @@ import { Lock, ArrowRight, Eye, EyeOff, Loader2, CheckCircle2 } from "lucide-rea
 import { Link, useRouter } from "@tanstack/react-router";
 import { useAuth } from "../../../shared/hooks/useAuth";
 import { useAuthStore } from "../../../shared/store/useAuthStore";
-import { AuthLayout } from "./AuthLayout";
-
-const inputClass =
-  "w-full bg-white/50 backdrop-blur-sm border-b-2 border-transparent focus:border-[#7dd3fc] focus:bg-white focus:ring-0 rounded-t-lg px-3 py-2.5 pl-11 pr-11 text-base text-[#0b1c30] placeholder-[#bec8ce] transition-all duration-300 outline-none shadow-inner disabled:opacity-50";
-
-const labelClass = "text-xs font-semibold tracking-wide text-[#3f484e] ml-1 uppercase";
+import { AuthLayout, authInputClass, authLabelClass, authButtonClass, authErrorClass, authLinkClass } from "./AuthLayout";
 
 /**
  * Pantalla a la que llega el usuario desde el enlace del correo de recuperación.
@@ -57,7 +52,7 @@ export const ResetPasswordScreen: React.FC = () => {
     return (
       <AuthLayout title="Restablecer Contraseña" subtitle="Verificando enlace de recuperación...">
         <div className="flex justify-center py-8">
-          <Loader2 className="w-8 h-8 animate-spin text-[#7dd3fc]" />
+          <Loader2 className="w-8 h-8 animate-spin text-pine-soft" />
         </div>
       </AuthLayout>
     );
@@ -68,13 +63,13 @@ export const ResetPasswordScreen: React.FC = () => {
     return (
       <AuthLayout title="Enlace Inválido" subtitle="No pudimos verificar tu enlace de recuperación">
         <div className="flex flex-col items-center gap-6 text-center">
-          <p className="text-sm text-[#3f484e]">
+          <p className="text-sm text-ink-soft">
             El enlace de recuperación es inválido o ha expirado. Solicita uno nuevo para
             restablecer tu contraseña.
           </p>
           <Link
             to="/forgot-password"
-            className="w-full bg-[#7dd3fc] text-white font-medium text-[15px] py-3 rounded-xl hover:bg-[#6ecaf4] hover:shadow-[0_0_20px_rgba(125,211,252,0.4)] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2"
+            className={authButtonClass}
           >
             Solicitar Nuevo Enlace
             <ArrowRight className="w-5 h-5" />
@@ -88,14 +83,14 @@ export const ResetPasswordScreen: React.FC = () => {
     return (
       <AuthLayout title="Contraseña Actualizada" subtitle="Tu contraseña fue restablecida con éxito">
         <div className="flex flex-col items-center gap-6 text-center">
-          <CheckCircle2 className="w-14 h-14 text-[#7dd3fc]" />
-          <p className="text-sm text-[#3f484e]">
+          <CheckCircle2 className="w-14 h-14 text-pine-soft" />
+          <p className="text-sm text-ink-soft">
             Ya puedes usar tu nueva contraseña. Te llevaremos a tu panel clínico.
           </p>
           <button
             type="button"
             onClick={() => router.navigate({ to: "/dashboard" })}
-            className="w-full bg-[#7dd3fc] text-white font-medium text-[15px] py-3 rounded-xl hover:bg-[#6ecaf4] hover:shadow-[0_0_20px_rgba(125,211,252,0.4)] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2"
+            className={authButtonClass}
           >
             Ir al Panel
             <ArrowRight className="w-5 h-5" />
@@ -108,19 +103,19 @@ export const ResetPasswordScreen: React.FC = () => {
   return (
     <AuthLayout title="Restablecer Contraseña" subtitle="Define tu nueva contraseña">
       {error && (
-        <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 animate-in fade-in duration-300">
+        <div className={authErrorClass}>
           {error}
         </div>
       )}
 
       <form className="space-y-6 flex flex-col" onSubmit={handleSubmit}>
         {/* Nueva contraseña */}
-        <div className="flex flex-col gap-1.5 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
-          <label className={labelClass} htmlFor="password">
+        <div className="flex flex-col gap-1.5">
+          <label className={authLabelClass} htmlFor="password">
             Nueva Contraseña
           </label>
           <div className="relative">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-black" />
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-ink-soft/60" />
             <input
               id="password"
               name="password"
@@ -131,12 +126,12 @@ export const ResetPasswordScreen: React.FC = () => {
               required
               minLength={8}
               disabled={isSubmitting}
-              className={inputClass}
+              className={authInputClass}
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6f787e] hover:text-black transition-colors"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-soft hover:text-ink transition-colors duration-150"
             >
               {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
             </button>
@@ -144,12 +139,12 @@ export const ResetPasswordScreen: React.FC = () => {
         </div>
 
         {/* Confirmar contraseña */}
-        <div className="flex flex-col gap-1.5 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
-          <label className={labelClass} htmlFor="confirmPassword">
+        <div className="flex flex-col gap-1.5">
+          <label className={authLabelClass} htmlFor="confirmPassword">
             Confirmar Contraseña
           </label>
           <div className="relative">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-black" />
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-ink-soft/60" />
             <input
               id="confirmPassword"
               name="confirmPassword"
@@ -160,7 +155,7 @@ export const ResetPasswordScreen: React.FC = () => {
               required
               minLength={8}
               disabled={isSubmitting}
-              className={inputClass}
+              className={authInputClass}
             />
           </div>
         </div>
@@ -169,7 +164,7 @@ export const ResetPasswordScreen: React.FC = () => {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full bg-[#7dd3fc] text-white font-medium text-[15px] py-3 rounded-xl hover:bg-[#6ecaf4] hover:shadow-[0_0_20px_rgba(125,211,252,0.4)] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:shadow-none disabled:active:scale-100"
+            className={authButtonClass}
           >
             {isSubmitting ? (
               <>

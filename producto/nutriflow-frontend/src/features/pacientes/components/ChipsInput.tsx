@@ -7,7 +7,7 @@ interface ChipsInputProps {
   values: string[];
   onChange: (values: string[]) => void;
   placeholder?: string;
-  /** Clases tailwind para el chip; por defecto teal. */
+  /** Clases tailwind para el chip; por defecto neutro (tokens del sistema). */
   chipClassName?: string;
 }
 
@@ -20,7 +20,7 @@ export const ChipsInput: React.FC<ChipsInputProps> = ({
   values,
   onChange,
   placeholder = 'Escribe y presiona Enter',
-  chipClassName = 'bg-teal-50 text-teal-800 border-teal-200',
+  chipClassName = 'bg-white text-ink border-mist',
 }) => {
   const [draft, setDraft] = useState('');
 
@@ -51,8 +51,8 @@ export const ChipsInput: React.FC<ChipsInputProps> = ({
 
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
-      <div className="w-full border border-gray-300 rounded-lg px-2 py-1.5 bg-white focus-within:border-teal-500 focus-within:ring-1 focus-within:ring-teal-500 transition-colors">
+      <label className="block text-sm font-medium text-ink-soft mb-1">{label}</label>
+      <div className="w-full border border-mist rounded-md px-2 py-1.5 bg-white focus-within:border-pine-soft focus-within:ring-1 focus-within:ring-pine-soft transition-colors duration-150">
         <div className="flex flex-wrap items-center gap-1.5">
           {values.map((value, index) => (
             <span

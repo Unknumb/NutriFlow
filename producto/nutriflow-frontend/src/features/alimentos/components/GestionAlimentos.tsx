@@ -17,9 +17,12 @@ function mensajeError(error: unknown): string {
   return 'No se pudo completar la acción. Intenta nuevamente.';
 }
 
+const POR_PAGINA = 25;
+
 export const GestionAlimentos: React.FC = () => {
   const [busqueda, setBusqueda] = useState('');
   const [categoria, setCategoria] = useState<string>('');
+  const [pagina, setPagina] = useState(0);
   const busquedaDebounced = useDebouncedValue(busqueda, 300);
 
   const [modalAbierto, setModalAbierto] = useState(false);
@@ -30,15 +33,21 @@ export const GestionAlimentos: React.FC = () => {
   const { data: categorias } = useCategorias();
   const eliminar = useEliminarAlimento();
 
+  // Al cambiar filtros, volver a la primera página.
+  const onBuscar = (v: string) => { setBusqueda(v); setPagina(0); };
+  const onCategoria = (v: string) => { setCategoria(v); setPagina(0); };
+
   const { data, isLoading, isFetching } = useBuscarAlimentos({
     search: busquedaDebounced,
     categoria: categoria || null,
-    limit: 30,
+    limit: POR_PAGINA,
+    offset: pagina * POR_PAGINA,
+    permitirSinFiltro: true,
   });
 
   const alimentos = data?.items ?? [];
   const total = data?.total ?? 0;
-  const hayFiltro = busquedaDebounced.trim().length > 0 || !!categoria;
+  const totalPaginas = Math.max(1, Math.ceil(total / POR_PAGINA));
 
   const abrirNuevo = () => {
     setEditando(undefined);
@@ -87,14 +96,14 @@ export const GestionAlimentos: React.FC = () => {
             <input
               type="text"
               value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
+              onChange={(e) => onBuscar(e.target.value)}
               placeholder="Buscar por nombre..."
               className="w-full pl-10 pr-3 py-2.5 border border-mist rounded-md bg-white text-sm text-ink outline-none focus:border-pine-soft focus:ring-1 focus:ring-pine-soft"
             />
           </div>
           <select
             value={categoria}
-            onChange={(e) => setCategoria(e.target.value)}
+            onChange={(e) => onCategoria(e.target.value)}
             className="px-3 py-2.5 border border-mist rounded-md bg-white text-sm text-ink outline-none focus:border-pine-soft focus:ring-1 focus:ring-pine-soft sm:w-64"
           >
             <option value="">Todas las categorías</option>
@@ -119,21 +128,19 @@ export const GestionAlimentos: React.FC = () => {
 
         {/* Lista */}
         <div className="bg-white border border-mist rounded-card overflow-hidden">
-          {!hayFiltro ? (
-            <div className="p-10 text-center text-ink-soft">
-              <Apple className="w-8 h-8 mx-auto mb-2 text-ink-soft/40" />
-              Busca por nombre o elige una categoría para ver y gestionar los alimentos.
-            </div>
-          ) : isLoading ? (
+          {isLoading ? (
             <div className="p-10 flex justify-center">
               <Loader2 className="w-6 h-6 animate-spin text-pine-soft" />
             </div>
           ) : alimentos.length === 0 ? (
-            <div className="p-10 text-center text-ink-soft">No se encontraron alimentos con esos filtros.</div>
+            <div className="p-10 text-center text-ink-soft">
+              <Apple className="w-8 h-8 mx-auto mb-2 text-ink-soft/40" />
+              No se encontraron alimentos con esos filtros.
+            </div>
           ) : (
             <>
               <div className="px-4 py-2.5 border-b border-mist flex items-center justify-between text-xs text-ink-soft">
-                <span>Mostrando {alimentos.length} de {total}</span>
+                <span>{total} {total === 1 ? 'alimento' : 'alimentos'} en total</span>
                 {isFetching && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
               </div>
               <ul className="divide-y divide-mist/70">
@@ -167,6 +174,25 @@ export const GestionAlimentos: React.FC = () => {
                   </li>
                 ))}
               </ul>
+              {totalPaginas > 1 && (
+                <div className="flex items-center justify-between px-4 py-3 border-t border-mist">
+                  <button
+                    onClick={() => setPagina((p) => Math.max(0, p - 1))}
+                    disabled={pagina === 0}
+                    className="px-3 py-1.5 rounded-md border border-mist text-sm text-ink-soft hover:border-pine-soft hover:text-pine-soft disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Anterior
+                  </button>
+                  <span className="text-xs text-ink-soft tnum">Página {pagina + 1} de {totalPaginas}</span>
+                  <button
+                    onClick={() => setPagina((p) => Math.min(totalPaginas - 1, p + 1))}
+                    disabled={pagina >= totalPaginas - 1}
+                    className="px-3 py-1.5 rounded-md border border-mist text-sm text-ink-soft hover:border-pine-soft hover:text-pine-soft disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Siguiente
+                  </button>
+                </div>
+              )}
             </>
           )}
         </div>

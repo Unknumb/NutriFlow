@@ -10,31 +10,38 @@ interface UseBuscarAlimentosOptions {
   /** Permite deshabilitar la query (ej. modal cerrado). */
   enabled?: boolean;
   limit?: number;
+  offset?: number;
+  /** Si es true, consulta también sin texto ni categoría (modo navegación/gestión). */
+  permitirSinFiltro?: boolean;
 }
 
 /**
  * Búsqueda server-side de alimentos (debounce a cargo del consumidor).
- * Solo consulta cuando hay texto o categoría: evita descargar el catálogo completo.
- * `keepPreviousData` mantiene los resultados anteriores mientras llega la página nueva.
+ * Por defecto solo consulta cuando hay texto o categoría (evita descargar todo el
+ * catálogo desde el modal de preparaciones). En la gestión del catálogo se usa
+ * `permitirSinFiltro` para navegar todo paginado.
  */
 export const useBuscarAlimentos = ({
   search,
   categoria,
   enabled = true,
   limit = 20,
+  offset = 0,
+  permitirSinFiltro = false,
 }: UseBuscarAlimentosOptions) => {
   const termino = search.trim();
   const hayFiltro = termino.length > 0 || !!categoria;
 
   return useQuery({
-    queryKey: alimentosKeys.busqueda(termino, categoria),
+    queryKey: [...alimentosKeys.busqueda(termino, categoria), limit, offset],
     queryFn: () =>
       alimentosApi.buscar({
         search: termino || undefined,
         categoria: categoria ?? undefined,
         limit,
+        offset,
       }),
-    enabled: enabled && hayFiltro,
+    enabled: enabled && (hayFiltro || permitirSinFiltro),
     placeholderData: keepPreviousData,
     staleTime: 1000 * 60, // 1 min: el catálogo cambia poco dentro de una sesión
   });

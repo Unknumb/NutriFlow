@@ -12,6 +12,10 @@ interface DatosPersonalesPacienteProps {
 }
 
 interface EditState {
+  fecha_nacimiento: string; // YYYY-MM-DD
+  sexo_biologico: string;
+  talla: string;
+  peso: string;
   rut: string;
   email: string;
   telefono: string;
@@ -62,7 +66,12 @@ export const DatosPersonalesPaciente: React.FC<DatosPersonalesPacienteProps> = (
   const [form, setForm] = useState<EditState>(() => construirEstado(paciente));
 
   function construirEstado(p: Paciente): EditState {
+    const ultimaEval = p.Evaluacion?.[0];
     return {
+      fecha_nacimiento: (p.fecha_nacimiento || '').slice(0, 10),
+      sexo_biologico: p.sexo_biologico || '',
+      talla: ultimaEval?.talla_cm ? String(ultimaEval.talla_cm) : '',
+      peso: ultimaEval?.peso_actual ? String(ultimaEval.peso_actual) : '',
       rut: p.rut ? formatearRutInput(p.rut) : '',
       email: p.email || '',
       telefono: p.telefono || '',
@@ -92,6 +101,10 @@ export const DatosPersonalesPaciente: React.FC<DatosPersonalesPacienteProps> = (
 
     // null = limpiar el campo en el backend; un valor presente lo actualiza
     const payload: UpdatePacientePayload = {
+      ...(form.fecha_nacimiento ? { fecha_nacimiento: form.fecha_nacimiento } : {}),
+      sexo_biologico: form.sexo_biologico || null,
+      ...(form.talla.trim() ? { talla_cm: Number(form.talla) } : {}),
+      ...(form.peso.trim() ? { peso_kg: Number(form.peso) } : {}),
       rut: form.rut.trim() ? normalizarRut(form.rut) : null,
       email: form.email.trim() || null,
       telefono: form.telefono.trim() || null,
@@ -139,7 +152,13 @@ export const DatosPersonalesPaciente: React.FC<DatosPersonalesPacienteProps> = (
 
       {!editando ? (
         <div className="space-y-5">
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <CampoLectura label="Fecha de nacimiento" value={paciente.fecha_nacimiento ? paciente.fecha_nacimiento.slice(0, 10).split('-').reverse().join('-') : null} />
+            <CampoLectura label="Sexo biológico" value={paciente.sexo_biologico === 'M' ? 'Masculino' : paciente.sexo_biologico === 'F' ? 'Femenino' : null} />
+            <CampoLectura label="Talla" value={paciente.Evaluacion?.[0]?.talla_cm ? `${paciente.Evaluacion[0].talla_cm} cm` : null} />
+            <CampoLectura label="Peso" value={paciente.Evaluacion?.[0]?.peso_actual ? `${paciente.Evaluacion[0].peso_actual} kg` : null} />
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 pt-4 border-t border-mist/70">
             <CampoLectura label="RUT" value={paciente.rut ? formatearRutInput(paciente.rut) : null} />
             <CampoLectura label="Ocupación" value={paciente.ocupacion} />
             <CampoLectura label="Teléfono" value={paciente.telefono} />
@@ -157,7 +176,29 @@ export const DatosPersonalesPaciente: React.FC<DatosPersonalesPacienteProps> = (
         </div>
       ) : (
         <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div>
+              <label className={labelClass}>Fecha de nacimiento</label>
+              <input type="date" className={inputClass} value={form.fecha_nacimiento} onChange={e => set('fecha_nacimiento', e.target.value)} />
+            </div>
+            <div>
+              <label className={labelClass}>Sexo biológico</label>
+              <select className={inputClass} value={form.sexo_biologico} onChange={e => set('sexo_biologico', e.target.value)}>
+                <option value="">—</option>
+                <option value="M">Masculino</option>
+                <option value="F">Femenino</option>
+              </select>
+            </div>
+            <div>
+              <label className={labelClass}>Talla (cm)</label>
+              <input type="number" min="0" step="0.1" className={inputClass} value={form.talla} onChange={e => set('talla', e.target.value)} placeholder="170" />
+            </div>
+            <div>
+              <label className={labelClass}>Peso (kg)</label>
+              <input type="number" min="0" step="0.1" className={inputClass} value={form.peso} onChange={e => set('peso', e.target.value)} placeholder="65" />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-mist/70">
             <div>
               <label className={labelClass}>RUT</label>
               <input

@@ -5,6 +5,8 @@ import { usePortionsStore } from '../../porciones/store/usePortionsStore';
 import { usePreparaciones } from '../../preparaciones/hooks/usePreparaciones';
 import { usePacientes } from '../../pacientes/hooks/usePacientes';
 import { TIPO_COMIDA_LABELS, type TipoComida } from '../../preparaciones/types/preparacion.types';
+import { MEALS, NUTRITION_GROUPS } from '../../porciones/constants';
+import { traducirPorcionesParaMath } from '../../porciones/gruposMath';
 import {
   RESTRICCIONES_DIETETICAS,
   RESTRICCION_LABELS,
@@ -12,17 +14,24 @@ import {
   type RestriccionDietetica,
 } from '../constants/restricciones';
 
-// Mini-componente para reciclar las filas de porciones sin repetir código
-const PorcionRow = ({ emoji, nombre, color, cantidad }: { emoji: string, nombre: string, color: string, cantidad: number }) => (
-  <div className="flex items-center justify-between">
-    <span className={`text-xs font-medium ${color}`}>{emoji} {nombre}</span>
-    <div className="flex items-center gap-1.5">
-      <button className="w-6 h-6 rounded-full border border-mist flex items-center justify-center text-ink-soft hover:bg-mist/60 transition-colors text-xs">−</button>
-      <span className="w-5 text-center text-sm font-medium text-ink">{cantidad}</span>
-      <button className="w-6 h-6 rounded-full border border-mist flex items-center justify-center text-ink-soft hover:bg-mist/60 transition-colors text-xs">+</button>
-    </div>
-  </div>
+// Etiqueta + color de cada grupo de intercambio, para mostrar la distribución real.
+const GRUPO_INFO: Record<string, { label: string; emoji: string; color: string }> = Object.fromEntries(
+  (NUTRITION_GROUPS as Array<{ id: string; label: string; emoji: string; textBtn: string }>).map((g) => [
+    g.id,
+    { label: g.label, emoji: g.emoji, color: g.textBtn },
+  ]),
 );
+
+// Fila de solo lectura que muestra las porciones reales asignadas a un grupo.
+const PorcionRow = ({ grupoId, cantidad }: { grupoId: string; cantidad: number }) => {
+  const info = GRUPO_INFO[grupoId] ?? { label: grupoId, emoji: '•', color: 'text-ink' };
+  return (
+    <div className="flex items-center justify-between">
+      <span className={`text-xs font-medium ${info.color}`}>{info.emoji} {info.label}</span>
+      <span className="text-sm font-medium text-ink tnum tabular-nums">{cantidad}</span>
+    </div>
+  );
+};
 
 export const GeneradorPreparaciones: React.FC = () => {
   const [activeTab, setActiveTab] = useState('generador');
@@ -33,8 +42,10 @@ export const GeneradorPreparaciones: React.FC = () => {
 
   const [busquedaBiblioteca, setBusquedaBiblioteca] = useState('');
   const [filtroTiempo, setFiltroTiempo] = useState<'todos' | TipoComida>('todos');
+  // Comida sobre la que se generan las sugerencias (sus porciones alimentan al motor).
+  const [comidaGenerar, setComidaGenerar] = useState('almuerzo');
 
-  const { distributions } = usePortionsStore();
+  const { distributions, activeMeals } = usePortionsStore();
   const { mutate, data: menusGenerados, isPending } = useGenerarMenu();
   const { data: preparaciones, isLoading: cargandoBiblioteca } = usePreparaciones();
   const { data: pacientes } = usePacientes();
@@ -88,11 +99,22 @@ export const GeneradorPreparaciones: React.FC = () => {
     });
   }, [preparaciones, busquedaBiblioteca, filtroTiempo]);
 
+  // Porciones reales asignadas a la comida elegida (desde Distribución de Porciones),
+  // descartando los grupos en 0 para no mostrar ruido.
+  const porcionesComida = useMemo(() => {
+    const dist = distributions[comidaGenerar] || {};
+    return Object.entries(dist).filter(([, cant]) => cant > 0) as Array<[string, number]>;
+  }, [distributions, comidaGenerar]);
+
+  const tienePorciones = porcionesComida.length > 0;
+
   const handleGenerar = () => {
-    // Tomamos las porciones del almuerzo para generar (podría ser dinámico por tab)
-    const porcionesAlmuerzo = distributions.almuerzo || {};
+    // Traducimos los ids de grupo del frontend a las claves que espera backend-math.
+    const porcionesDisponibles = traducirPorcionesParaMath(
+      distributions[comidaGenerar] || {},
+    );
     mutate({
-      porciones_disponibles: porcionesAlmuerzo,
+      porciones_disponibles: porcionesDisponibles,
       paciente_id: pacienteId || undefined,
       restricciones_dieteticas: Array.from(restriccionesSel),
       alimentos_rechazados: alimentosRechazados.split(',').map(s => s.trim()).filter(Boolean),
@@ -143,61 +165,49 @@ export const GeneradorPreparaciones: React.FC = () => {
             <div className="w-96 border-r border-mist overflow-y-auto bg-porcelain shrink-0">
               <div className="p-6 space-y-6">
                 
-                {/* Título de Distribución */}
+                {/* Selector de comida + porciones reales */}
                 <div>
                   <h2 className="text-sm font-semibold text-ink mb-1">Plan de distribución</h2>
-                  <p className="text-xs text-ink-soft">Ingresa las porciones asignadas por tiempo de comida</p>
+                  <p className="text-xs text-ink-soft mb-3">Las porciones provienen de Distribución de Porciones</p>
+
+                  <label className="text-xs font-medium text-ink-soft mb-1.5 block">Generar para</label>
+                  <select
+                    className="flex h-9 w-full rounded-md border border-mist px-3 py-1 bg-white text-sm outline-none focus-visible:ring-2 focus-visible:ring-pine-soft text-ink"
+                    value={comidaGenerar}
+                    onChange={(e) => setComidaGenerar(e.target.value)}
+                  >
+                    {MEALS.filter((m) => activeMeals.includes(m.id)).map((m) => (
+                      <option key={m.id} value={m.id}>{m.name}</option>
+                    ))}
+                  </select>
                 </div>
 
-                {/* Tarjeta: Desayuno */}
+                {/* Porciones reales de la comida seleccionada */}
                 <div className="bg-white rounded-card border border-mist overflow-hidden shadow-sm">
                   <div className="flex items-center gap-2 px-4 py-3 border-b border-mist/70">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#8a5a2a]"><path d="M10 2v2"></path><path d="M14 2v2"></path><path d="M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1"></path><path d="M6 2v2"></path></svg>
-                    <span className="text-sm font-semibold text-ink">Desayuno</span>
-                    <span className="ml-auto text-xs text-pine-soft font-medium bg-pine-soft/5 px-2 py-0.5 rounded-full">4 porciones</span>
+                    <span className="text-sm font-semibold text-ink">
+                      {MEALS.find((m) => m.id === comidaGenerar)?.name ?? 'Comida'}
+                    </span>
+                    <span className="ml-auto text-xs text-pine-soft font-medium bg-pine-soft/5 px-2 py-0.5 rounded-full tnum">
+                      {porcionesComida.reduce((acc, [, c]) => acc + c, 0)} porciones
+                    </span>
                   </div>
-                  <div className="p-3 space-y-2">
-                    <PorcionRow emoji="🌾" nombre="Cereales" color="text-yellow-800" cantidad={1} />
-                    <PorcionRow emoji="🍎" nombre="Frutas" color="text-orange-800" cantidad={0} />
-                    <PorcionRow emoji="🥦" nombre="Verduras" color="text-green-800" cantidad={0} />
-                    <PorcionRow emoji="🥩" nombre="Proteínas" color="text-clinical-red" cantidad={2} />
-                    <PorcionRow emoji="🥑" nombre="Grasas" color="text-macro-gra" cantidad={0} />
-                    <PorcionRow emoji="🥛" nombre="Lácteos" color="text-purple-800" cantidad={1} />
-                  </div>
-                </div>
-
-                {/* Tarjeta: Colación AM */}
-                <div className="bg-white rounded-card border border-mist overflow-hidden shadow-sm">
-                  <div className="flex items-center gap-2 px-4 py-3 border-b border-mist/70">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-orange-500"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="m6.34 17.66-1.41 1.41"></path><path d="m19.07 4.93-1.41 1.41"></path></svg>
-                    <span className="text-sm font-semibold text-ink">Colación AM</span>
-                    <span className="ml-auto text-xs text-pine-soft font-medium bg-pine-soft/5 px-2 py-0.5 rounded-full">2 porciones</span>
-                  </div>
-                  <div className="p-3 space-y-2">
-                    <PorcionRow emoji="🌾" nombre="Cereales" color="text-yellow-800" cantidad={0} />
-                    <PorcionRow emoji="🍎" nombre="Frutas" color="text-orange-800" cantidad={0} />
-                    <PorcionRow emoji="🥦" nombre="Verduras" color="text-green-800" cantidad={0} />
-                    <PorcionRow emoji="🥩" nombre="Proteínas" color="text-clinical-red" cantidad={1} />
-                    <PorcionRow emoji="🥑" nombre="Grasas" color="text-macro-gra" cantidad={0} />
-                    <PorcionRow emoji="🥛" nombre="Lácteos" color="text-purple-800" cantidad={1} />
-                  </div>
-                </div>
-
-                {/* Tarjeta: Almuerzo */}
-                <div className="bg-white rounded-card border border-mist overflow-hidden shadow-sm">
-                  <div className="flex items-center gap-2 px-4 py-3 border-b border-mist/70">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-600"><path d="M7 21h10"></path><path d="M12 21a9 9 0 0 0 9-9H3a9 9 0 0 0 9 9Z"></path><path d="M11.38 12a2.4 2.4 0 0 1-.4-4.77 2.4 2.4 0 0 1 3.2-2.77 2.4 2.4 0 0 1 3.47-.63 2.4 2.4 0 0 1 3.37 3.37 2.4 2.4 0 0 1-1.1 3.7 2.51 2.51 0 0 1 .03 1.1"></path><path d="m13 12 4-4"></path><path d="M10.9 7.25A3.99 3.99 0 0 0 4 10c0 .73.2 1.41.54 2"></path></svg>
-                    <span className="text-sm font-semibold text-ink">Almuerzo</span>
-                    <span className="ml-auto text-xs text-pine-soft font-medium bg-pine-soft/5 px-2 py-0.5 rounded-full">6 porciones</span>
-                  </div>
-                  <div className="p-3 space-y-2">
-                    <PorcionRow emoji="🌾" nombre="Cereales" color="text-yellow-800" cantidad={1} />
-                    <PorcionRow emoji="🍎" nombre="Frutas" color="text-orange-800" cantidad={0} />
-                    <PorcionRow emoji="🥦" nombre="Verduras" color="text-green-800" cantidad={2} />
-                    <PorcionRow emoji="🥩" nombre="Proteínas" color="text-clinical-red" cantidad={2} />
-                    <PorcionRow emoji="🥑" nombre="Grasas" color="text-macro-gra" cantidad={1} />
-                    <PorcionRow emoji="🥛" nombre="Lácteos" color="text-purple-800" cantidad={0} />
-                  </div>
+                  {tienePorciones ? (
+                    <div className="p-3 space-y-2">
+                      {porcionesComida.map(([grupoId, cantidad]) => (
+                        <PorcionRow key={grupoId} grupoId={grupoId} cantidad={cantidad} />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-4 text-center">
+                      <p className="text-xs text-ink-soft mb-2">
+                        No has asignado porciones a esta comida.
+                      </p>
+                      <Link to="/porciones" className="text-xs font-semibold text-pine-soft hover:underline">
+                        Ir a Distribución de Porciones →
+                      </Link>
+                    </div>
+                  )}
                 </div>
 
                 <div className="bg-mist h-px w-full my-4"></div>
@@ -321,14 +331,20 @@ export const GeneradorPreparaciones: React.FC = () => {
                 </div>
 
                 {/* Botón Generar */}
-                <button 
+                <button
                   onClick={handleGenerar}
-                  disabled={isPending}
-                  className="inline-flex items-center justify-center rounded-md text-sm font-medium text-white h-9 px-4 py-2 w-full bg-pine hover:bg-pine-soft disabled:opacity-50 gap-2 shadow-sm transition-all"
+                  disabled={isPending || !tienePorciones}
+                  title={!tienePorciones ? 'Asigna porciones a esta comida en Distribución de Porciones' : undefined}
+                  className="inline-flex items-center justify-center rounded-md text-sm font-medium text-white h-9 px-4 py-2 w-full bg-pine hover:bg-pine-soft disabled:opacity-50 disabled:cursor-not-allowed gap-2 shadow-sm transition-all"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"></path><path d="M20 3v4"></path><path d="M22 5h-4"></path><path d="M4 17v2"></path><path d="M5 18H3"></path></svg>
                   {isPending ? 'Generando...' : 'Generar Sugerencias'}
                 </button>
+                {!tienePorciones && (
+                  <p className="text-xs text-ink-soft/70 text-center mt-2">
+                    Primero asigna porciones a esta comida.
+                  </p>
+                )}
               </div>
             </div>
 

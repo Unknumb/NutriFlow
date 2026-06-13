@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException
 from schemas.calculos import DatosPaciente, ResultadoTMB
 from schemas.cuadrador import InputCuadrador, OutputCuadrador
 from services.calculadora_tmb import calcular_todas_tmb
+from services.calculadora_pesos import calcular_pesos_referencia
 from services.distribucion_service import calcular_distribucion_macros
 
 router = APIRouter()
@@ -18,7 +19,12 @@ def calcular_tmb(datos: DatosPaciente):
         sexo=datos.sexo,
         porcentaje_grasa=datos.porcentaje_grasa
     )
-    
+
+    resultado["pesos_referencia"] = calcular_pesos_referencia(
+        peso_kg=datos.peso_kg,
+        talla_cm=datos.talla_cm
+    )
+
     return resultado
 
 @router.post("/cuadrador", response_model=OutputCuadrador, summary="Cuadrador Dinámico de Macronutrientes")

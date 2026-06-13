@@ -6,11 +6,22 @@ export interface TmbData {
   promedio_calculado: number;
 }
 
+export interface PesosReferencia {
+  imc_actual: number;
+  clasificacion_imc: string;
+  peso_ideal: number;
+  peso_saludable_min: number;
+  peso_saludable_max: number;
+  peso_ajustado_25: number;
+  peso_ajustado_50: number;
+  aplica_ajuste: boolean;
+}
+
 export interface DashboardClinicoResponse {
   pacienteId: string;
   tmb: TmbData;
   macros: any;
-  pesos: any;
+  pesos: PesosReferencia | null;
   status: string;
 }
 

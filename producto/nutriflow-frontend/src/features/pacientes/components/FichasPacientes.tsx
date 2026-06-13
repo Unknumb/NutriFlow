@@ -13,13 +13,18 @@ import { usePlanificaciones, useDeletePlanificacion } from '../../planificacione
 import { NUTRITION_GROUPS, MEALS } from '../../porciones/constants';
 import { PDFDownloadLink } from "@react-pdf/renderer";
 import { PautaDocumentPDF } from '../../porciones/components/PautaDocumentPDF';
+import { formatearFecha } from '../../../shared/utils/fechas';
+import { usePerfilNutricionista } from '../../perfil/hooks/usePerfil';
 
 const calculateAge = (birthDateString: string) => {
-  const birthDate = new Date(birthDateString);
+  // Usamos los componentes de la parte de fecha del ISO para evitar el desfase
+  // de zona horaria (ver shared/utils/fechas.ts).
+  const [y, m, d] = (birthDateString || '').slice(0, 10).split('-').map(Number);
+  if (!y || !m || !d) return 0;
   const today = new Date();
-  let age = today.getFullYear() - birthDate.getFullYear();
-  const m = today.getMonth() - birthDate.getMonth();
-  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+  let age = today.getFullYear() - y;
+  const diffMes = today.getMonth() + 1 - m;
+  if (diffMes < 0 || (diffMes === 0 && today.getDate() < d)) {
     age--;
   }
   return age;
@@ -36,6 +41,7 @@ export const FichasPacientes: React.FC = () => {
   const { data: pacientes, isLoading, error } = usePacientes();
   const { activePatient, setActivePatient, setPesoActivo, setTmbPromedio } = useClinicalStore();
   const { user } = useAuthStore();
+  const { data: perfil } = usePerfilNutricionista();
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'datos' | 'pautas' | 'sintomas' | 'progreso'>('datos');
   const [showNuevoPaciente, setShowNuevoPaciente] = useState(false);
@@ -216,11 +222,11 @@ export const FichasPacientes: React.FC = () => {
                   </div>
                   <div className="flex items-center gap-2 text-sm text-ink-soft">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-ink-soft/60"><path d="M8 2v4"></path><path d="M16 2v4"></path><rect width="18" height="18" x="3" y="4" rx="2"></rect><path d="M3 10h18"></path></svg>
-                    Ingreso: {new Date(pacienteSeleccionado.fecha_creacion).toLocaleDateString()}
+                    Ingreso: {formatearFecha(pacienteSeleccionado.fecha_creacion)}
                   </div>
                   <div className="flex items-center gap-2 text-sm text-ink-soft">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-ink-soft/60"><path d="M8 2v4"></path><path d="M16 2v4"></path><rect width="18" height="18" x="3" y="4" rx="2"></rect><path d="M3 10h18"></path></svg>
-                    Nacimiento: {new Date(pacienteSeleccionado.fecha_nacimiento).toLocaleDateString()}
+                    Nacimiento: {formatearFecha(pacienteSeleccionado.fecha_nacimiento)}
                   </div>
                 </div>
 
@@ -355,7 +361,7 @@ export const FichasPacientes: React.FC = () => {
                         {evaluaciones?.map(evaluacion => (
                           <div key={evaluacion.id} className="p-4 border border-mist bg-white rounded-card shadow-sm">
                             <div className="flex justify-between items-center mb-3 pb-3 border-b border-mist/70">
-                              <span className="font-medium text-ink">{new Date(evaluacion.fecha_evaluacion).toLocaleDateString()}</span>
+                              <span className="font-medium text-ink">{formatearFecha(evaluacion.fecha_evaluacion)}</span>
                               <span className="px-2 py-0.5 bg-blue-50 text-blue-700 text-xs font-medium border border-blue-100 rounded-md uppercase">
                                 {evaluacion.objetivo.replace('_', ' ')}
                               </span>
@@ -409,7 +415,7 @@ export const FichasPacientes: React.FC = () => {
                             <div className="flex justify-between items-center mb-5 pb-4 border-b border-mist">
                               <div>
                                 <span className="font-semibold text-ink text-xl">Planificación Base</span>
-                                <p className="text-sm text-ink-soft mt-1">Creada el {new Date(planificacion.fecha_creacion).toLocaleDateString()}</p>
+                                <p className="text-sm text-ink-soft mt-1">Creada el {formatearFecha(planificacion.fecha_creacion)}</p>
                               </div>
                               <div className="flex items-center gap-3">
                                 <span className="px-4 py-1.5 bg-pine-soft/5 text-pine-soft text-sm font-bold border border-pine-soft/30 rounded-full">
@@ -461,21 +467,45 @@ export const FichasPacientes: React.FC = () => {
                                             {pauta.descripcion_general || 'Pauta Regular'}
                                           </span>
                                           <span className="text-xs text-ink-soft ml-2 block sm:inline">
-                                            (Añadida el {new Date(pauta.fecha_creacion).toLocaleDateString()})
+                                            (Añadida el {formatearFecha(pauta.fecha_creacion)})
                                           </span>
                                         </div>
                                         <div className="flex items-center gap-1">
                                           <PDFDownloadLink
-                                            document={<PautaDocumentPDF data={{
-                                              patientContext: { name: `${pacienteSeleccionado?.nombre} ${pacienteSeleccionado?.apellido}` },
-                                              currentDate: new Intl.DateTimeFormat("es-CL", { day: "2-digit", month: "long", year: "numeric" }).format(new Date(pauta.fecha_creacion || new Date())),
-                                              distributions: pauta.tiempos_comida || {},
-                                              targets: pauta.estructura_grid_json?.targets || {},
-                                              totals: NUTRITION_GROUPS.reduce((acc, g) => {
-                                                acc[g.id] = Object.values(pauta.tiempos_comida || {}).reduce((sum: number, meal: any) => sum + (meal[g.id] || 0), 0);
-                                                return acc;
-                                              }, {} as Record<string, number>),
-                                            }} />}
+                                            document={<PautaDocumentPDF data={(() => {
+                                              const ultimaEval = evaluaciones?.[0];
+                                              const kcal = Math.round(planificacion.calorias_totales || 0);
+                                              const dm = planificacion.distribucion_macros || {};
+                                              const tallaM = (ultimaEval?.talla_cm || 0) / 100;
+                                              return {
+                                                paciente: {
+                                                  nombre: `${pacienteSeleccionado?.nombre ?? ''} ${pacienteSeleccionado?.apellido ?? ''}`.trim(),
+                                                  rut: pacienteSeleccionado?.rut || '',
+                                                  edad: pacienteSeleccionado?.fecha_nacimiento ? calculateAge(pacienteSeleccionado.fecha_nacimiento) : 0,
+                                                  sexo: pacienteSeleccionado?.sexo_biologico || '',
+                                                  peso: ultimaEval?.peso_actual || 0,
+                                                  talla: ultimaEval?.talla_cm || 0,
+                                                  imc: tallaM > 0 && ultimaEval?.peso_actual ? (ultimaEval.peso_actual / (tallaM * tallaM)).toFixed(1) : '',
+                                                },
+                                                nutricionista: {
+                                                  nombre: perfil ? `${perfil.nombre} ${perfil.apellido}`.trim() : '',
+                                                  registro: perfil?.registro_profesional || '',
+                                                },
+                                                fechaEmision: new Intl.DateTimeFormat("es-CL", { day: "2-digit", month: "long", year: "numeric" }).format(new Date(pauta.fecha_creacion || new Date())),
+                                                objetivos: {
+                                                  kcal,
+                                                  prot_g: Math.round(((dm.proteina || 0) / 100 * kcal) / 4),
+                                                  cho_g: Math.round(((dm.carbohidratos || 0) / 100 * kcal) / 4),
+                                                  fat_g: Math.round(((dm.grasa || 0) / 100 * kcal) / 9),
+                                                },
+                                                distributions: pauta.tiempos_comida || {},
+                                                targets: pauta.estructura_grid_json?.targets || {},
+                                                totals: NUTRITION_GROUPS.reduce((acc, g) => {
+                                                  acc[g.id] = Object.values(pauta.tiempos_comida || {}).reduce((sum: number, meal: any) => sum + (meal[g.id] || 0), 0);
+                                                  return acc;
+                                                }, {} as Record<string, number>),
+                                              };
+                                            })()} />}
                                             fileName={`Pauta_${pacienteSeleccionado?.nombre?.replace(/\s+/g, "_")}_${pacienteSeleccionado?.apellido?.replace(/\s+/g, "_")}.pdf`}
                                           >
                                             {({ loading }) => (

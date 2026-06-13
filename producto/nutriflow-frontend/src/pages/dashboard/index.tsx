@@ -30,7 +30,7 @@ export const DashboardPage = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <TmbCalculatorCard data={data?.tmb} />
-            <MacrosCard data={data?.macros} />
+            <MacrosCard />
             <ReferenceWeightsCard data={data?.pesos} />
           </div>
         </>

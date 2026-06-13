@@ -18,6 +18,9 @@ export const PautasPage = () => {
     const { customFoods, addCustomFood, removeCustomFood } = usePortionsStore();
 
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    // Las verduras de libre consumo son opcionales en la pauta (grupo sin aporte
+    // calórico; algunas pautas las incluyen "a libre demanda" y otras no).
+    const [incluirVlb, setIncluirVlb] = useState(true);
 
     // Instanciamos el Cerebro (Custom Hook)
     const { 
@@ -62,17 +65,28 @@ export const PautasPage = () => {
         setIsAddModalOpen(false);
     };
 
-    const ALL_GROUPS = [...FOOD_GROUPS, ...customFoods];
+    // 'vlb' (Verduras Libre Consumo) solo se muestra si la nutricionista lo activa.
+    const gruposBase = incluirVlb ? FOOD_GROUPS : FOOD_GROUPS.filter((g) => g.id !== 'vlb');
+    const ALL_GROUPS = [...gruposBase, ...customFoods];
 
     return (
         <div className="p-4 max-w-[1400px] mx-auto w-full">
             <div className="mb-6 flex items-start justify-between">
                 <div>
                     <h1 className="text-3xl font-bold text-ink tracking-tight">Armador de Pautas Alimentarias</h1>
-                    <p className="text-ink-soft mt-1 font-medium">13 grupos de alimentos · Sistema de intercambio por porciones</p>
+                    <p className="text-ink-soft mt-1 font-medium">{ALL_GROUPS.length} grupos de alimentos · Sistema de intercambio por porciones</p>
                 </div>
-                <div className="flex items-center gap-3">
-                    <button 
+                <div className="flex items-center gap-4">
+                    <label className="inline-flex items-center gap-2 text-sm text-ink-soft cursor-pointer select-none">
+                        <input
+                            type="checkbox"
+                            checked={incluirVlb}
+                            onChange={(e) => setIncluirVlb(e.target.checked)}
+                            className="h-4 w-4 accent-pine rounded border-mist"
+                        />
+                        Verduras de libre consumo
+                    </label>
+                    <button
                         onClick={() => setIsAddModalOpen(true)}
                         className="inline-flex items-center gap-2 bg-white border-2 border-pine text-pine-soft hover:bg-pine-soft/5 px-5 py-2.5 rounded-card text-sm font-bold transition-colors shadow-sm"
                     >

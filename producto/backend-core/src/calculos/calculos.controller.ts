@@ -33,12 +33,13 @@ export class CalculosController {
     // 2. Llamamos al método correcto del servicio (obtenerTMB)
     const resultadoTMB = await this.mathService.obtenerTMB(datosParaPython);
 
-    // 3. Retornamos la respuesta consolidada
+    // 3. Retornamos la respuesta consolidada.
+    // Los pesos de referencia los calcula backend-math junto con la TMB.
     return {
       pacienteId: id,
       tmb: resultadoTMB,
       macros: null, // Por ahora
-      pesos: null,  // Añadido para coincidir con la interfaz del Frontend
+      pesos: resultadoTMB?.pesos_referencia ?? null,
       status: 'success'
     };
   }

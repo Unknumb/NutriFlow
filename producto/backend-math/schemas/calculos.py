@@ -8,6 +8,17 @@ class DatosPaciente(BaseModel):
     peso_kg: float = Field(..., gt=0, description="Peso actual en kilogramos")
     porcentaje_grasa: Optional[float] = Field(None, ge=0, le=100, description="Porcentaje de grasa corporal (opcional)")
 
+class PesosReferencia(BaseModel):
+    imc_actual: float
+    clasificacion_imc: str
+    peso_ideal: float
+    peso_saludable_min: float
+    peso_saludable_max: float
+    peso_ajustado_25: float
+    peso_ajustado_50: float
+    aplica_ajuste: bool
+
 class ResultadoTMB(BaseModel):
     resultados_individuales: Dict[str, float]
     promedio_calculado: float
+    pesos_referencia: Optional[PesosReferencia] = None

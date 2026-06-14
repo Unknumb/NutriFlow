@@ -1,41 +1,80 @@
 // ❌ Eliminamos la importación de DashboardLayout
+import { useMemo, useState } from "react";
 import { MacronutrientSetupCard } from "../../features/macronutrients/components/MacronutrientSetupCard";
 import { MacronutrientsChartsColumn } from "../../features/macronutrients/components/MacronutrientsChartsColumn";
 import { MacronutrientsHeader } from "../../features/macronutrients/components/MacronutrientsHeader";
+import { SavePlanificacionModal } from "../../features/macronutrients/components/SavePlanificacionModal";
 import { useMacronutrientsSetup } from "../../features/macronutrients/hooks/useMacronutrientsSetup";
+import { usePlanificaciones } from "../../features/planificaciones/hooks/usePlanificaciones";
 import { useClinicalStore } from "../../shared/store/useClinicalStore";
+import { PageHeader } from "../../shared/ui/organisms/PageHeader";
+import { FlowStepper } from "../../shared/ui/organisms/FlowStepper";
 
 export const MacronutrientesPage = () => {
     // 1. Extraemos las acciones globales aquí arriba
     const setPesoActivo = useClinicalStore((state) => state.setPesoActivo);
     const setTmbPromedio = useClinicalStore((state) => state.setTmbPromedio);
-    
+    const activePatient = useClinicalStore((state) => state.activePatient);
+
     // 2. Ejecutamos nuestra lógica de cálculos
     const setup = useMacronutrientsSetup();
 
+    // 3. Modal de nombre. El sugerido es "Planificación N" según las del paciente activo.
+    const [modalOpen, setModalOpen] = useState(false);
+    const { data: planificaciones } = usePlanificaciones();
+    const suggestedName = useMemo(() => {
+        const delPaciente = (planificaciones || []).filter((p) => p.paciente_id === activePatient?.id);
+        return `Planificación ${delPaciente.length + 1}`;
+    }, [planificaciones, activePatient?.id]);
+
+    const handleConfirmSave = (nombre: string) => {
+        setup.actions.handleSave(nombre);
+        setModalOpen(false);
+    };
+
+    const openSaveModal = () => {
+        if (!activePatient?.id) {
+            alert('Selecciona un paciente primero');
+            return;
+        }
+        setModalOpen(true);
+    };
+
     return (
         // Reemplazamos el Layout por el contenedor estándar de nuestra arquitectura
-        <div className="p-4 max-w-[1400px] mx-auto w-full">
-            <div className="mb-6 flex justify-between items-end">
-                <div>
-                    <h1 className="text-3xl font-semibold text-gray-900">Planificación de Macronutrientes</h1>
-                    <p className="text-gray-600 mt-1">Ajuste manual y visualización en tiempo real</p>
-                </div>
-                <button 
-                    onClick={setup.actions.handleSave}
-                    disabled={setup.isSaving}
-                    className="px-6 py-2.5 bg-teal-600 hover:bg-teal-700 disabled:bg-teal-400 text-white font-medium rounded-lg shadow-sm transition-colors"
-                >
-                    {setup.isSaving ? 'Guardando...' : 'Guardar Planificación'}
-                </button>
-            </div>
+        <div className="p-8 max-w-[1400px] mx-auto w-full">
+            <FlowStepper current={1} />
+            <PageHeader
+                eyebrow="Planificación"
+                title="Macronutrientes"
+                description="Ajuste manual y visualización en tiempo real"
+                actions={
+                    <button
+                        onClick={openSaveModal}
+                        disabled={setup.isSaving}
+                        className="px-6 py-2.5 bg-pine hover:bg-pine-soft disabled:opacity-60 text-porcelain font-medium rounded-md transition-colors duration-150"
+                    >
+                        {setup.isSaving ? 'Guardando...' : 'Guardar planificación'}
+                    </button>
+                }
+            />
+
+            <SavePlanificacionModal
+                open={modalOpen}
+                suggestedName={suggestedName}
+                isSaving={setup.isSaving}
+                onClose={() => setModalOpen(false)}
+                onConfirm={handleConfirmSave}
+            />
 
             {/* 3. Inyectamos las dependencias hacia abajo (DIP) */}
-            <MacronutrientsHeader 
-                context={setup.context} 
-                totals={setup.totals} 
-                onPesoChange={setPesoActivo} 
-                onTmbChange={setTmbPromedio} 
+            <MacronutrientsHeader
+                context={setup.context}
+                totals={setup.totals}
+                isBalanced={setup.isBalanced}
+                onPesoChange={setPesoActivo}
+                onTmbChange={setTmbPromedio}
+                onAutoBalance={setup.actions.autoBalance}
             />
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-6">

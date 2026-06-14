@@ -29,11 +29,30 @@ const protectedLayout = createRoute({
     },
 });
 
-// 4. LOGIN (Acceso libre)
+// 4. RUTAS PÚBLICAS DE AUTENTICACIÓN (Acceso libre)
 const loginRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: '/login',
     component: lazyRouteComponent(() => import('../pages/login/index'), 'LoginPage'),
+});
+
+const registerRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/register',
+    component: lazyRouteComponent(() => import('../pages/register/index'), 'RegisterPage'),
+});
+
+const forgotPasswordRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/forgot-password',
+    component: lazyRouteComponent(() => import('../pages/forgot-password/index'), 'ForgotPasswordPage'),
+});
+
+// El usuario llega aquí desde el enlace del correo de recuperación de Supabase
+const resetPasswordRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/reset-password',
+    component: lazyRouteComponent(() => import('../pages/reset-password/index'), 'ResetPasswordPage'),
 });
 
 // 5. RUTAS HIJAS DEL DASHBOARD
@@ -81,16 +100,31 @@ const generadorRoute = createRoute({
     component: lazyRouteComponent(() => import('../pages/generador/index'), 'GeneradorPage'),
 });
 
+const alimentosRoute = createRoute({
+    getParentRoute: () => protectedLayout,
+    path: '/alimentos',
+    component: lazyRouteComponent(() => import('../pages/alimentos/index'), 'AlimentosPage'),
+});
+
 const pacientesRoute = createRoute({
     getParentRoute: () => protectedLayout,
     path: '/pacientes',
     component: lazyRouteComponent(() => import('../pages/pacientes/index'), 'PacientesPage'),
 });
 
+const perfilRoute = createRoute({
+    getParentRoute: () => protectedLayout,
+    path: '/perfil',
+    component: lazyRouteComponent(() => import('../pages/perfil/index'), 'PerfilPage'),
+});
+
 // 6. ENSAMBLADO DEL ÁRBOL
 const routeTree = rootRoute.addChildren([
     indexRoute,
-    loginRoute, 
+    loginRoute,
+    registerRoute,
+    forgotPasswordRoute,
+    resetPasswordRoute,
     protectedLayout.addChildren([
         dashboardRoute, 
         macronutrientesRoute, 
@@ -98,7 +132,9 @@ const routeTree = rootRoute.addChildren([
         porcionesRoute,
         bibliotecaRoute,
         generadorRoute,
-        pacientesRoute
+        alimentosRoute,
+        pacientesRoute,
+        perfilRoute
     ])
 ]);
 

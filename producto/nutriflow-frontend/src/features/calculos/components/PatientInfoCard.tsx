@@ -114,47 +114,47 @@ export const PatientInfoCard = () => {
             <CardHeader title="Información del Paciente" icon={UserCircle} />
             <CardContent>
                 {isCreating ? (
-                    <div className="bg-teal-50/50 p-4 rounded-lg border border-teal-100 mb-4 animate-in fade-in slide-in-from-top-4">
+                    <div className="bg-porcelain p-4 rounded-md border border-mist mb-4 animate-in fade-in slide-in-from-top-4">
                         <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-sm font-semibold text-teal-800">Crear Nuevo Paciente</h3>
-                            <button onClick={() => setIsCreating(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
+                            <h3 className="text-sm font-semibold text-pine-soft">Crear nuevo paciente</h3>
+                            <button onClick={() => setIsCreating(false)} className="text-ink-soft/60 hover:text-ink transition-colors duration-150">
                                 <X size={18} />
                             </button>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
                             <div className="col-span-2">
-                                <label className="block text-xs font-medium text-teal-800 mb-1">Nombre</label>
-                                <input type="text" className="w-full text-sm border-teal-200 rounded-md p-2 focus:ring-teal-500 focus:border-teal-500" value={newNombre} onChange={e => setNewNombre(e.target.value)} placeholder="Ej. Juan" />
+                                <label className="block text-xs font-medium text-ink-soft mb-1">Nombre</label>
+                                <input type="text" className="w-full text-sm border border-mist rounded-md p-2 bg-white text-ink focus:ring-1 focus:ring-pine-soft focus:border-pine-soft outline-none" value={newNombre} onChange={e => setNewNombre(e.target.value)} placeholder="Ej. Juan" />
                             </div>
                             <div className="col-span-2">
-                                <label className="block text-xs font-medium text-teal-800 mb-1">Apellido</label>
-                                <input type="text" className="w-full text-sm border-teal-200 rounded-md p-2 focus:ring-teal-500 focus:border-teal-500" value={newApellido} onChange={e => setNewApellido(e.target.value)} placeholder="Ej. Pérez" />
+                                <label className="block text-xs font-medium text-ink-soft mb-1">Apellido</label>
+                                <input type="text" className="w-full text-sm border border-mist rounded-md p-2 bg-white text-ink focus:ring-1 focus:ring-pine-soft focus:border-pine-soft outline-none" value={newApellido} onChange={e => setNewApellido(e.target.value)} placeholder="Ej. Pérez" />
                             </div>
                             <div className="col-span-2">
-                                <label className="block text-xs font-medium text-teal-800 mb-1">F. Nacimiento</label>
-                                <input type="date" className="w-full text-sm border-teal-200 rounded-md p-2 focus:ring-teal-500 focus:border-teal-500" value={newFechaNacimiento} onChange={e => setNewFechaNacimiento(e.target.value)} />
+                                <label className="block text-xs font-medium text-ink-soft mb-1">F. Nacimiento</label>
+                                <input type="date" className="w-full text-sm border border-mist rounded-md p-2 bg-white text-ink focus:ring-1 focus:ring-pine-soft focus:border-pine-soft outline-none" value={newFechaNacimiento} onChange={e => setNewFechaNacimiento(e.target.value)} />
                             </div>
                             <div className="col-span-2">
-                                <label className="block text-xs font-medium text-teal-800 mb-1">Sexo Biológico</label>
-                                <select className="w-full text-sm border-teal-200 rounded-md p-2 focus:ring-teal-500 focus:border-teal-500 bg-white" value={newSexo} onChange={e => setNewSexo(e.target.value)}>
+                                <label className="block text-xs font-medium text-ink-soft mb-1">Sexo Biológico</label>
+                                <select className="w-full text-sm border border-mist rounded-md p-2 bg-white text-ink focus:ring-1 focus:ring-pine-soft focus:border-pine-soft outline-none" value={newSexo} onChange={e => setNewSexo(e.target.value)}>
                                     <option value="">Seleccionar...</option>
                                     <option value="M">Masculino</option>
                                     <option value="F">Femenino</option>
                                 </select>
                             </div>
                             <div className="col-span-2">
-                                <label className="block text-xs font-medium text-teal-800 mb-1">Talla Inicial (cm)</label>
-                                <input type="number" className="w-full text-sm border-teal-200 rounded-md p-2 focus:ring-teal-500 focus:border-teal-500" value={newTalla} onChange={e => setNewTalla(e.target.value ? Number(e.target.value) : '')} placeholder="170" />
+                                <label className="block text-xs font-medium text-ink-soft mb-1">Talla Inicial (cm)</label>
+                                <input type="number" className="w-full text-sm border border-mist rounded-md p-2 bg-white text-ink focus:ring-1 focus:ring-pine-soft focus:border-pine-soft outline-none" value={newTalla} onChange={e => setNewTalla(e.target.value ? Number(e.target.value) : '')} placeholder="170" />
                             </div>
                             <div className="col-span-2 flex items-end gap-2">
                                 <div className="flex-1">
-                                    <label className="block text-xs font-medium text-teal-800 mb-1">Peso Inicial (kg)</label>
-                                    <input type="number" className="w-full text-sm border-teal-200 rounded-md p-2 focus:ring-teal-500 focus:border-teal-500" value={newPeso} onChange={e => setNewPeso(e.target.value ? Number(e.target.value) : '')} placeholder="70" />
+                                    <label className="block text-xs font-medium text-ink-soft mb-1">Peso Inicial (kg)</label>
+                                    <input type="number" className="w-full text-sm border border-mist rounded-md p-2 bg-white text-ink focus:ring-1 focus:ring-pine-soft focus:border-pine-soft outline-none" value={newPeso} onChange={e => setNewPeso(e.target.value ? Number(e.target.value) : '')} placeholder="70" />
                                 </div>
                                 <button 
                                     onClick={handleCreatePatient}
                                     disabled={!newNombre || !newApellido || !newFechaNacimiento || !newSexo || !newTalla || !newPeso || createPacienteMutation.isPending}
-                                    className="bg-teal-600 hover:bg-teal-700 text-white p-2 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center h-[38px] w-[38px]"
+                                    className="bg-pine hover:bg-pine-soft text-porcelain p-2 rounded-md transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center h-[38px] w-[38px]"
                                     title="Guardar Paciente"
                                 >
                                     <Save size={18} />
@@ -166,9 +166,9 @@ export const PatientInfoCard = () => {
                     <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-4">
                         <div className="col-span-2 flex items-end gap-2">
                             <div className="flex-1">
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
+                                <label className="block text-sm font-medium text-ink-soft mb-1">Nombre</label>
                                 <select 
-                                    className="w-full text-sm border-gray-300 rounded-md bg-gray-50 focus:ring-teal-500 focus:border-teal-500 p-2 border"
+                                    className="w-full text-sm border border-mist rounded-md bg-white text-ink focus:ring-1 focus:ring-pine-soft focus:border-pine-soft p-2 outline-none"
                                     value={selectedId}
                                     onChange={handlePatientChange}
                                     disabled={isLoading}
@@ -181,49 +181,49 @@ export const PatientInfoCard = () => {
                             </div>
                             <button 
                                 onClick={() => setIsCreating(true)}
-                                className="bg-teal-100 hover:bg-teal-200 text-teal-700 p-2 rounded-md transition-colors h-[38px] w-[38px] flex items-center justify-center flex-shrink-0"
+                                className="bg-pine-soft/10 hover:bg-pine-soft/20 text-pine-soft p-2 rounded-md transition-colors duration-150 h-[38px] w-[38px] flex items-center justify-center flex-shrink-0"
                                 title="Crear Nuevo Paciente"
                             >
                                 <Plus size={18} />
                             </button>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Edad</label>
-                            <input type="number" readOnly className="w-full text-sm border-gray-300 rounded-md bg-gray-100 text-gray-500 p-2 border cursor-not-allowed" value={edad || ''} />
+                            <label className="block text-sm font-medium text-ink-soft mb-1">Edad</label>
+                            <input type="number" readOnly className="w-full text-sm border border-mist rounded-md bg-mist/40 text-ink-soft p-2 cursor-not-allowed tnum" value={edad || ''} />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Sexo</label>
-                            <input type="text" readOnly className="w-full text-sm border-gray-300 rounded-md bg-gray-100 text-gray-500 p-2 border cursor-not-allowed" value={sexo === 'M' ? 'Masculino' : sexo === 'F' ? 'Femenino' : sexo || ''} />
+                            <label className="block text-sm font-medium text-ink-soft mb-1">Sexo</label>
+                            <input type="text" readOnly className="w-full text-sm border border-mist rounded-md bg-mist/40 text-ink-soft p-2 cursor-not-allowed tnum" value={sexo === 'M' ? 'Masculino' : sexo === 'F' ? 'Femenino' : sexo || ''} />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Talla (cm)</label>
-                            <input type="number" readOnly className="w-full text-sm border-gray-300 rounded-md bg-gray-100 text-gray-500 p-2 border cursor-not-allowed" value={talla || ''} />
+                            <label className="block text-sm font-medium text-ink-soft mb-1">Talla (cm)</label>
+                            <input type="number" readOnly className="w-full text-sm border border-mist rounded-md bg-mist/40 text-ink-soft p-2 cursor-not-allowed tnum" value={talla || ''} />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Peso Real (kg)</label>
-                            <input type="number" readOnly className="w-full text-sm border-gray-300 rounded-md bg-gray-100 text-gray-500 p-2 border cursor-not-allowed" value={peso || ''} />
+                            <label className="block text-sm font-medium text-ink-soft mb-1">Peso Real (kg)</label>
+                            <input type="number" readOnly className="w-full text-sm border border-mist rounded-md bg-mist/40 text-ink-soft p-2 cursor-not-allowed tnum" value={peso || ''} />
                         </div>
                     </div>
                 )}
 
                 {!isCreating && (
-                    <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-100">
+                    <div className="flex items-center justify-between mt-6 pt-4 border-t border-mist">
                         <div className="flex items-center">
-                            <input id="recordar" type="checkbox" className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded" />
-                            <label htmlFor="recordar" className="ml-2 block text-sm text-gray-600">
+                            <input id="recordar" type="checkbox" className="h-4 w-4 accent-pine border-mist rounded" />
+                            <label htmlFor="recordar" className="ml-2 block text-sm text-ink-soft">
                                 Recordar datos para la próxima sesión
                             </label>
                         </div>
                         <div className="flex items-center space-x-4">
                             {(peso <= 0 || talla <= 0 || edad <= 0 || !sexo) && selectedId && (
-                                <span className="text-xs text-amber-600 font-medium">
+                                <span className="text-xs text-apricot font-medium">
                                     Faltan datos requeridos (Edad, Sexo, Talla, Peso) para activarlo.
                                 </span>
                             )}
                             <button 
                                 onClick={handleSave}
                                 disabled={!selectedId || peso <= 0 || talla <= 0 || edad <= 0 || !sexo}
-                                className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-2 rounded-md text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="bg-pine hover:bg-pine-soft text-porcelain px-6 py-2 rounded-md text-sm font-medium transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 Establecer como paciente activo
                             </button>

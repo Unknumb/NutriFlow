@@ -1,55 +1,96 @@
 import { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../../shared/api/apiClient';
 import { usePortionsStore } from '../store/usePortionsStore';
 import { useClinicalStore } from '../../../shared/store/useClinicalStore';
 import { usePaciente } from '../../pacientes/hooks/usePacientes';
-import { useCreatePauta } from '../../pautas/hooks/usePautas';
+import { useObjetivosActivos } from '../../planificaciones/hooks/useObjetivosActivos';
+
+export interface PautaResumen {
+    id: string;
+    nombre: string | null;
+    planificacion_id: string | null;
+    fecha_creacion: string;
+}
 
 export const usePortions = () => {
     // 1. Estado de Navegación UI
     const [activeTab, setActiveTab] = useState<'tabla' | 'pauta' | 'opciones' | 'pdf'>('tabla');
+    // Pauta seleccionada en el selector (null = pauta nueva sin guardar).
+    const [selectedPautaId, setSelectedPautaId] = useState<string | null>(null);
+    const queryClient = useQueryClient();
 
     // 2. Estado Global de Zustand
-    const { targets, distributions, activeMeals, activeGroups, customFoods, incrementPortion, decrementPortion, setPortion, removeTargetGroup, setInitialPortions, toggleMeal, toggleGroup, resetDistributions } = usePortionsStore();
+    const { targets, distributions, activeMeals, activeGroups, customFoods, libreConsumoIds, customMeals, mealTimes, addCustomMeal, removeCustomMeal, setMealTime, incrementPortion, decrementPortion, setPortion, removeTargetGroup, setInitialPortions, toggleMeal, toggleGroup, resetDistributions } = usePortionsStore();
 
     // 3. Datos del paciente conectado con backend
-    const { activePatient, activePlanificacionId } = useClinicalStore();
+    const { activePatient } = useClinicalStore();
     usePaciente(activePatient?.id || '');
 
+    // Objetivos y planificación activa (fuente única; obligatoria para guardar).
+    const { planificacionActiva, objetivos } = useObjetivosActivos();
+
     // Transformamos los datos del backend al formato que necesita la UI
-    const patientContext = { 
-        name: activePatient?.nombre || "Sin seleccionar", 
-        age: activePatient?.edad || 0, 
-        weight: activePatient?.peso || 0, 
-        kcal: targets.kcal || 0 
+    const patientContext = {
+        name: activePatient?.nombre || "Sin seleccionar",
+        age: activePatient?.edad || 0,
+        weight: activePatient?.peso || 0,
+        kcal: objetivos?.kcal || targets.kcal || 0
     };
 
-    // 4. Consulta a la API para traer las porciones calculadas (Armador de Pautas)
-    const { data: armadorData } = useQuery({
-        queryKey: ['portions-armador', activePatient?.id],
+    // 4. Lista de pautas del paciente (para el selector).
+    const { data: pautasList } = useQuery<PautaResumen[]>({
+        queryKey: ['pautas-lista', activePatient?.id],
         queryFn: async () => {
-            if (!activePatient?.id) return null;
-            // Endpoint sugerido para obtener cálculos de porciones desde NestJS/FastAPI
-            const { data } = await apiClient.get(`/pautas/armador/${activePatient.id}`);
+            if (!activePatient?.id) return [];
+            const { data } = await apiClient.get(`/pautas/lista/${activePatient.id}`);
             return data;
         },
         enabled: !!activePatient?.id,
     });
 
-    // 5. Sincronizar la data que llega del backend con el store de Zustand
-    const { loadedPatientId, setLoadedPatientId } = usePortionsStore();
+    // Pautas que pertenecen a la planificación activa del paciente.
+    const pautasDeActiva = (pautasList || []).filter(
+        (p) => !planificacionActiva || p.planificacion_id === planificacionActiva.id,
+    );
+
+    // Al cambiar de paciente o de planificación activa, seleccionar por defecto
+    // la pauta más reciente de esa planificación (o "nueva" si no hay ninguna).
+    const [loadedKey, setLoadedKey] = useState<string | null>(null);
     useEffect(() => {
-        if (armadorData && armadorData.targets && activePatient?.id && loadedPatientId !== activePatient.id) {
+        const defaultId = pautasDeActiva.length > 0 ? pautasDeActiva[0].id : null;
+        setSelectedPautaId(defaultId);
+        setLoadedKey(null); // fuerza recargar el detalle de la nueva selección
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activePatient?.id, planificacionActiva?.id]);
+
+    // 5. Cargar el detalle de la pauta seleccionada en el store de Zustand.
+    const { data: pautaDetalle } = useQuery({
+        queryKey: ['pauta-detalle', selectedPautaId],
+        queryFn: async () => {
+            if (!selectedPautaId) return null;
+            const { data } = await apiClient.get(`/pautas/${selectedPautaId}`);
+            return data;
+        },
+        enabled: !!selectedPautaId,
+    });
+
+    useEffect(() => {
+        if (!selectedPautaId) return;
+        const grid = pautaDetalle?.estructura_grid_json;
+        if (pautaDetalle && grid && grid.targets && loadedKey !== selectedPautaId) {
             setInitialPortions({
-                targets: armadorData.targets,
-                distributions: armadorData.distributions || {},
-                activeMeals: armadorData.activeMeals || [],
-                activeGroups: armadorData.activeGroups || []
+                targets: grid.targets,
+                distributions: grid.distributions || {},
+                activeMeals: grid.activeMeals || [],
+                activeGroups: grid.activeGroups || [],
+                libreConsumoIds: grid.libreConsumoIds || [],
+                customMeals: grid.customMeals || [],
+                mealTimes: grid.mealTimes || {}
             });
-            setLoadedPatientId(activePatient.id);
+            setLoadedKey(selectedPautaId);
         }
-    }, [armadorData, activePatient?.id, loadedPatientId, setInitialPortions, setLoadedPatientId]);
+    }, [pautaDetalle, selectedPautaId, loadedKey, setInitialPortions]);
 
 
 
@@ -68,55 +109,81 @@ export const usePortions = () => {
         return 'under';
     };
 
-    const createPauta = useCreatePauta();
-    const handleSavePauta = () => {
+    const [isSaving, setIsSaving] = useState(false);
+
+    // Guarda la pauta (distribución de porciones por comida + targets + libre
+    // consumo) en el paciente activo. Persiste vía /pautas/guardar-distribucion,
+    // que hace upsert de la última pauta — así sobrevive a recargas y se recarga
+    // al volver a seleccionar al paciente. Devuelve {ok, message} para la UI.
+    const guardarPauta = async (nombre?: string): Promise<{ ok: boolean; message: string }> => {
         if (!activePatient?.id) {
-            alert('Selecciona un paciente primero para poder guardar la pauta.');
-            return;
+            return { ok: false, message: 'Selecciona un paciente activo antes de guardar la pauta.' };
+        }
+        // P7: no se puede guardar una pauta sin una planificación de macros asignada.
+        if (!planificacionActiva) {
+            return { ok: false, message: 'Crea o asigna una planificación de macronutrientes antes de guardar la pauta.' };
+        }
+        const hayPorciones = Object.values(distributions).some(
+            (meal) => Object.values(meal || {}).some((v) => v > 0),
+        );
+        if (!hayPorciones) {
+            return { ok: false, message: 'Asigna porciones por comida antes de guardar la pauta.' };
         }
 
-        if (!activePlanificacionId) {
-            alert('Primero debes crear y guardar una Planificación (Metas de Macronutrientes).');
-            return;
-        }
-
-        const descripcion = window.prompt("Ingresa un nombre para esta Pauta (ej: Día de entrenamiento, Día de descanso):", "Pauta Regular");
-        if (descripcion === null) {
-            // Usuario canceló el prompt
-            return;
-        }
-
-        createPauta.mutate({
-            paciente_id: activePatient.id,
-            planificacion_id: activePlanificacionId,
-            descripcion_general: descripcion,
-            tiempos_comida: distributions,
-        }, {
-            onSuccess: async () => {
-                try {
-                    await apiClient.post('/pautas/guardar-distribucion', {
-                        paciente_id: activePatient.id,
-                        distributions,
-                        targets,
-                        activeMeals,
-                        activeGroups
-                    });
-                    alert("¡Pauta guardada con éxito en la base de datos!");
-                } catch (error) {
-                    console.error('Error guardando distribución:', error);
-                    alert("La pauta se creó pero falló al guardar la distribución.");
-                }
-            },
-            onError: (err) => {
-                alert("Hubo un error al guardar la pauta");
-                console.error(err);
+        setIsSaving(true);
+        try {
+            const { data } = await apiClient.post('/pautas/guardar-distribucion', {
+                paciente_id: activePatient.id,
+                planificacion_id: planificacionActiva.id,
+                pauta_id: selectedPautaId || undefined,
+                nombre: nombre?.trim() || undefined,
+                distributions,
+                targets,
+                activeMeals,
+                activeGroups,
+                libreConsumoIds,
+                customMeals,
+                mealTimes,
+            });
+            const nuevaId = data?.pautaId;
+            if (nuevaId) {
+                setSelectedPautaId(nuevaId);
+                setLoadedKey(nuevaId); // ya está cargada en el store, no recargar
             }
-        });
+            queryClient.invalidateQueries({ queryKey: ['pautas-lista', activePatient.id] });
+            // Las pautas se muestran anidadas en planificaciones (ficha del paciente).
+            queryClient.invalidateQueries({ queryKey: ['planificaciones'] });
+            return { ok: true, message: 'Pauta guardada en la ficha del paciente.' };
+        } catch (error) {
+            console.error('Error guardando la pauta:', error);
+            return { ok: false, message: 'No se pudo guardar la pauta. Intenta nuevamente.' };
+        } finally {
+            setIsSaving(false);
+        }
     };
 
+    // Empieza una pauta nueva (vacía) dentro de la planificación activa.
+    const nuevaPauta = () => {
+        setSelectedPautaId(null);
+        setLoadedKey(null);
+        resetDistributions();
+    };
+
+    // Nombre sugerido para una pauta nueva: "Pauta N" según las de la planificación.
+    const nombrePautaSugerido = `Pauta ${pautasDeActiva.length + 1}`;
+    const pautaSeleccionada = pautasDeActiva.find((p) => p.id === selectedPautaId) || null;
+
     return {
-        state: { activeTab, patientContext, targets, distributions, activeMeals, activeGroups, customFoods, isSaving: createPauta.isPending },
-        actions: { setActiveTab, incrementPortion, decrementPortion, setPortion, handleSavePauta, removeTargetGroup, toggleMeal, toggleGroup, resetDistributions },
+        state: {
+            activeTab, patientContext, targets, distributions, activeMeals, activeGroups, customFoods, customMeals, mealTimes, libreConsumoIds, isSaving,
+            hayPacienteActivo: !!activePatient?.id,
+            hayPlanificacionActiva: !!planificacionActiva,
+            pautas: pautasDeActiva,
+            selectedPautaId,
+            pautaSeleccionada,
+            nombrePautaSugerido,
+        },
+        actions: { setActiveTab, incrementPortion, decrementPortion, setPortion, guardarPauta, removeTargetGroup, toggleMeal, toggleGroup, resetDistributions, addCustomMeal, removeCustomMeal, setMealTime, setSelectedPautaId, nuevaPauta },
         computed: { getGroupTotal, getGroupBalance }
     };
 };

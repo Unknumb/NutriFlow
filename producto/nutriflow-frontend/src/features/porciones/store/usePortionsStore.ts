@@ -16,6 +16,16 @@ export interface PortionsState {
     activeMeals: string[];
     activeGroups: string[];
     customFoods: CustomFoodDef[];
+    /** Tiempos de comida personalizados (colaciones extra, etc.). */
+    customMeals: { id: string; name: string; time: string }[];
+    /** Override del horario por comida (default o personalizada). */
+    mealTimes: Record<string, string>;
+    addCustomMeal: (name: string, time: string) => void;
+    removeCustomMeal: (id: string) => void;
+    setMealTime: (mealId: string, time: string) => void;
+    /** Grupos marcados como libre consumo (ad libitum); no cuentan en los totales. */
+    libreConsumoIds: string[];
+    toggleLibreConsumo: (groupId: string) => void;
     incrementPortion: (mealId: string, groupId: string) => void;
     decrementPortion: (mealId: string, groupId: string) => void;
     setPortion: (mealId: string, groupId: string, value: number) => void;
@@ -24,7 +34,7 @@ export interface PortionsState {
     resetPlan: () => void;
     resetDistributions: () => void;
     setTargets: (targets: Record<string, number>) => void;
-    setInitialPortions: (data: { targets: Record<string, number>, distributions: Record<string, Record<string, number>>, activeMeals: string[], activeGroups: string[] }) => void;
+    setInitialPortions: (data: { targets: Record<string, number>, distributions: Record<string, Record<string, number>>, activeMeals: string[], activeGroups: string[], libreConsumoIds?: string[], customMeals?: { id: string; name: string; time: string }[], mealTimes?: Record<string, string> }) => void;
     addCustomFood: (food: CustomFoodDef) => void;
     removeCustomFood: (id: string) => void;
     toggleMeal: (mealId: string) => void;
@@ -44,6 +54,38 @@ export const usePortionsStore = create<PortionsState>((set) => ({
     activeGroups: ['cer', 'veg', 'fru', 'cbg', 'lmg', 'ace'],
     // Alimentos personalizados añadidos
     customFoods: [],
+    // Tiempos de comida personalizados y overrides de horario
+    customMeals: [],
+    mealTimes: {},
+    addCustomMeal: (name, time) => set((state) => {
+        const id = 'meal-' + Date.now();
+        return {
+            customMeals: [...state.customMeals, { id, name: name.trim(), time: time.trim() }],
+            activeMeals: [...state.activeMeals, id],
+        };
+    }),
+    removeCustomMeal: (id) => set((state) => {
+        const newDistributions = { ...state.distributions };
+        delete newDistributions[id];
+        const newMealTimes = { ...state.mealTimes };
+        delete newMealTimes[id];
+        return {
+            customMeals: state.customMeals.filter((m) => m.id !== id),
+            activeMeals: state.activeMeals.filter((m) => m !== id),
+            distributions: newDistributions,
+            mealTimes: newMealTimes,
+        };
+    }),
+    setMealTime: (mealId, time) => set((state) => ({
+        mealTimes: { ...state.mealTimes, [mealId]: time },
+    })),
+    // Por defecto ningún grupo es libre consumo; la nutricionista lo activa por grupo.
+    libreConsumoIds: [],
+    toggleLibreConsumo: (groupId) => set((state) => ({
+        libreConsumoIds: state.libreConsumoIds.includes(groupId)
+            ? state.libreConsumoIds.filter((id) => id !== groupId)
+            : [...state.libreConsumoIds, groupId],
+    })),
     loadedPatientId: null,
     setLoadedPatientId: (id) => set({ loadedPatientId: id }),
     
@@ -51,7 +93,11 @@ export const usePortionsStore = create<PortionsState>((set) => ({
         targets: data.targets,
         distributions: data.distributions,
         activeMeals: data.activeMeals || [],
-        activeGroups: data.activeGroups || []
+        activeGroups: data.activeGroups || [],
+        // Restauramos libre consumo guardado (si la pauta no trae, queda vacío).
+        libreConsumoIds: data.libreConsumoIds || [],
+        customMeals: data.customMeals || [],
+        mealTimes: data.mealTimes || {},
     }),
 
     toggleMeal: (mealId) => set((state) => ({

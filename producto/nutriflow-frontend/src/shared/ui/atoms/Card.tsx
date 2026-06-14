@@ -1,15 +1,15 @@
 import React from 'react';
 
 export const Card = ({ children, className = '' }: { children: React.ReactNode, className?: string }) => (
-    <div className={`bg-white text-gray-900 flex flex-col gap-6 rounded-xl border border-gray-200 shadow-sm ${className}`}>
+    <div className={`bg-white text-ink flex flex-col gap-6 rounded-card border border-mist shadow-card ${className}`}>
         {children}
     </div>
 );
 
 export const CardHeader = ({ title, icon: Icon }: { title: string, icon?: React.ElementType }) => (
-    <div className="px-6 pt-6 border-b border-gray-100 pb-4">
-        <h4 className="leading-none flex items-center gap-2 font-semibold text-gray-900">
-            {Icon && <Icon className="w-5 h-5 text-gray-700" />}
+    <div className="px-6 pt-6 border-b border-mist pb-4">
+        <h4 className="leading-none flex items-center gap-2 font-display font-semibold text-ink text-[17px]">
+            {Icon && <Icon className="w-5 h-5 text-pine-soft" />}
             {title}
         </h4>
     </div>

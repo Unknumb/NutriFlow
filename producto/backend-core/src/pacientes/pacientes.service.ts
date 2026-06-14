@@ -1,8 +1,17 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { CreatePacienteDto } from './dto/create-paciente.dto';
 import { UpdatePacienteDto } from './dto/update-paciente.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { RedisService } from 'src/redis/redis.service';
+
+/** Detecta violación del índice único parcial (nutricionista_id, rut). */
+function esConflictoRut(error: unknown): boolean {
+  return (
+    error instanceof Prisma.PrismaClientKnownRequestError &&
+    error.code === 'P2002'
+  );
+}
 
 @Injectable()
 export class PacientesService {
@@ -13,7 +22,7 @@ export class PacientesService {
 
   async create(createPacienteDto: CreatePacienteDto, nutricionista_id: string) {
     const { talla_cm, peso_kg, ...pacienteData } = createPacienteDto;
-    
+
     const result = await this.prisma.$transaction(async (prisma) => {
       const paciente = await prisma.pacientes.create({
         data: {
@@ -91,20 +100,60 @@ export class PacientesService {
 
   async update(id: string, updatePacienteDto: UpdatePacienteDto, nutricionista_id: string) {
     await this.findOne(id, nutricionista_id); // Verificar existencia y pertenencia
-    const dataToUpdate: any = { ...updatePacienteDto };
-    
-    if (updatePacienteDto.fecha_nacimiento) {
-      dataToUpdate.fecha_nacimiento = new Date(updatePacienteDto.fecha_nacimiento);
+
+    // talla_cm y peso_kg viven en Evaluacion, no en pacientes: se separan del
+    // update del paciente y se aplican a la evaluación más reciente (o se crea una).
+    const { talla_cm, peso_kg, ...pacienteData } = updatePacienteDto;
+    const dataToUpdate: any = { ...pacienteData };
+
+    if (pacienteData.fecha_nacimiento) {
+      dataToUpdate.fecha_nacimiento = new Date(pacienteData.fecha_nacimiento);
     }
 
-    const updatedPaciente = await this.prisma.pacientes.update({
-      where: { id },
-      data: dataToUpdate,
+    const updatedPaciente = await this.prisma.$transaction(async (prisma) => {
+      const paciente = await prisma.pacientes.update({
+        where: { id },
+        data: dataToUpdate,
+      });
+
+      if (talla_cm !== undefined || peso_kg !== undefined) {
+        const ultima = await prisma.evaluacion.findFirst({
+          where: { paciente_id: id },
+          orderBy: { fecha_evaluacion: 'desc' },
+        });
+
+        if (ultima) {
+          await prisma.evaluacion.update({
+            where: { id: ultima.id },
+            data: {
+              ...(talla_cm !== undefined ? { talla_cm: Number(talla_cm) } : {}),
+              ...(peso_kg !== undefined ? { peso_actual: Number(peso_kg) } : {}),
+            },
+          });
+        } else if (talla_cm !== undefined && peso_kg !== undefined) {
+          // Sin evaluaciones previas: se crea una con los valores entregados.
+          await prisma.evaluacion.create({
+            data: {
+              paciente_id: id,
+              nutricionista_id,
+              peso_actual: Number(peso_kg),
+              talla_cm: Number(talla_cm),
+              nivel_actividad_fisica: 'Sedentario',
+              objetivo: 'Mantención',
+            },
+          });
+        }
+      }
+
+      return prisma.pacientes.findUnique({
+        where: { id },
+        include: { Evaluacion: { orderBy: { fecha_evaluacion: 'desc' }, take: 1 } },
+      });
     });
 
     await Promise.all([
       this.redisService.client.del(`paciente:${id}:${nutricionista_id}`),
-      this.redisService.client.del(`pacientes:${nutricionista_id}`)
+      this.redisService.client.del(`pacientes:${nutricionista_id}`),
     ]);
 
     return updatedPaciente;

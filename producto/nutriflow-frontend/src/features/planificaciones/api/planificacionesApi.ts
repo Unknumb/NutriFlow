@@ -2,6 +2,7 @@ import { apiClient } from '../../../shared/api/apiClient';
 
 export interface PlanificacionData {
     paciente_id: string;
+    nombre?: string;
     calorias_totales: number;
     distribucion_macros: Record<string, any>;
 }
@@ -10,6 +11,8 @@ export interface Planificacion {
     id: string;
     paciente_id: string;
     nutricionista_id: string;
+    nombre?: string | null;
+    activa: boolean;
     fecha_creacion: string;
     calorias_totales: number;
     distribucion_macros: Record<string, any>;
@@ -29,6 +32,11 @@ export const planificacionesApi = {
 
     deletePlanificacion: async (id: string) => {
         const response = await apiClient.delete(`/planificaciones/${id}`);
+        return response.data;
+    },
+
+    setActivaPlanificacion: async (id: string): Promise<Planificacion> => {
+        const response = await apiClient.patch(`/planificaciones/${id}/activa`);
         return response.data;
     }
 };

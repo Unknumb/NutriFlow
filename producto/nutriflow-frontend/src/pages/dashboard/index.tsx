@@ -1,4 +1,5 @@
 import { useDashboardClinico } from '../../features/calculos/api/dashboardApi';
+import { PageHeader } from '../../shared/ui/organisms/PageHeader';
 import { useClinicalStore } from '../../shared/store/useClinicalStore';
 import { PatientInfoCard } from '../../features/calculos/components/PatientInfoCard';
 import { TmbCalculatorCard } from '../../features/calculos/components/TmbCalculatorCard';
@@ -11,27 +12,31 @@ export const DashboardPage = () => {
   const { data, isLoading, error } = useDashboardClinico(activePatient);
 
   return (
-    <div className="p-6">
-      {/* Nuevo componente para seleccionar/ver paciente */}
+    <div className="p-8 max-w-7xl mx-auto w-full">
+      <PageHeader
+        eyebrow="Clínica"
+        title="Dashboard Clínico"
+        description="Cálculos y métricas del paciente activo"
+      />
       <PatientInfoCard />
 
       {activePatient ? (
         <>
           {isLoading ? (
-            <div className="p-4 mb-4 text-teal-600 font-medium">Calculando métricas clínicas...</div>
+            <div className="p-4 mb-4 text-pine-soft font-medium">Calculando métricas clínicas...</div>
           ) : error ? (
-            <div className="p-4 mb-4 text-red-600">Error al obtener datos del motor matemático</div>
+            <div className="p-4 mb-4 text-clinical-red">Error al obtener datos del motor matemático</div>
           ) : null}
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <TmbCalculatorCard data={data?.tmb} />
-            <MacrosCard data={data?.macros} />
+            <MacrosCard />
             <ReferenceWeightsCard data={data?.pesos} />
           </div>
         </>
       ) : (
-        <div className="text-center p-10 bg-white rounded-lg border border-gray-200 mt-6">
-          <p className="text-gray-500">Seleccione un paciente para ver sus cálculos y métricas clínicas.</p>
+        <div className="text-center p-10 bg-white rounded-card border border-mist mt-6">
+          <p className="text-ink-soft">Selecciona un paciente para ver sus cálculos y métricas clínicas.</p>
         </div>
       )}
     </div>

@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber, IsObject, IsNotEmpty, IsUUID } from 'class-validator';
+import { IsNumber, IsObject, IsNotEmpty, IsUUID, IsString, IsOptional } from 'class-validator';
 
 export class PorcentajesMacrosDto {
   @ApiProperty({ example: 20 })
@@ -20,6 +20,11 @@ export class CreatePlanificacionDto {
   @IsUUID()
   @IsNotEmpty()
   paciente_id: string;
+
+  @ApiProperty({ description: 'Nombre de la planificación. Si se omite, se autogenera "Planificación N".', required: false, example: 'Planificación 1' })
+  @IsString()
+  @IsOptional()
+  nombre?: string;
 
   @ApiProperty({ description: 'Calorías totales objetivo', example: 2000 })
   @IsNumber()

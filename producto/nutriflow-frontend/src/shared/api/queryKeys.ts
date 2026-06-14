@@ -22,4 +22,18 @@ export const pautasKeys = {
 
 export const menusKeys = {
   all: ['menus'] as const,
-};
+};
+
+export const perfilKeys = {
+  all: ['perfil'] as const,
+};
+export const preparacionesKeys = {
+  all: ['preparaciones'] as const,
+};
+
+export const alimentosKeys = {
+  all: ['alimentos'] as const,
+  busqueda: (search: string, categoria: string | null) =>
+    [...alimentosKeys.all, 'busqueda', search, categoria] as const,
+  categorias: () => [...alimentosKeys.all, 'categorias'] as const,
+};

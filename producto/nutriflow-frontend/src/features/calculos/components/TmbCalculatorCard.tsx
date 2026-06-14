@@ -47,7 +47,7 @@ export const TmbCalculatorCard = ({ data }: TmbProps) => {
             <Card className="mb-6">
                 <CardHeader title="Calculadora de Tasa Metabólica Basal (TMB)" icon={Calculator} />
                 <CardContent>
-                    <div className="p-4 text-gray-500">Esperando datos...</div>
+                    <div className="p-4 text-ink-soft">Esperando datos...</div>
                 </CardContent>
             </Card>
         );
@@ -58,7 +58,7 @@ export const TmbCalculatorCard = ({ data }: TmbProps) => {
             <CardHeader title="Calculadora de Tasa Metabólica Basal (TMB)" icon={Calculator} />
             <CardContent>
                 <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                    <label className="block text-sm font-medium text-ink-soft mb-3">
                         Seleccionar Fórmulas para Promediar
                     </label>
                     <div className="flex flex-wrap gap-2">
@@ -69,8 +69,8 @@ export const TmbCalculatorCard = ({ data }: TmbProps) => {
                                     key={formula.id}
                                     onClick={() => toggleFormula(formula.name)}
                                     className={`px-4 py-2 rounded-md text-xs font-medium transition-colors ${isSelected
-                                        ? 'bg-mist-600 text-white shadow-sm' 
-                                        : 'border border-gray-200 text-gray-600 hover:bg-gray-50' 
+                                        ? 'bg-pine text-porcelain'
+                                        : 'border border-mist text-ink-soft hover:border-pine-soft hover:text-pine-soft'
                                         }`}
                                 >
                                     {formula.name}
@@ -81,19 +81,19 @@ export const TmbCalculatorCard = ({ data }: TmbProps) => {
                 </div>
 
                 {activeData.length > 0 && (
-                    <div className="bg-gray-50 rounded-lg p-4 mb-4 transition-all">
+                    <div className="bg-porcelain rounded-md border border-mist p-4 mb-4">
                         <table className="w-full">
                             <thead>
-                                <tr className="border-b border-gray-200">
-                                    <th className="text-left py-2 text-sm font-medium text-gray-700">Fórmula</th>
-                                    <th className="text-right py-2 text-sm font-medium text-gray-700">TMB (kcal/día)</th>
+                                <tr className="border-b border-mist">
+                                    <th className="text-left py-2 text-sm font-medium text-ink-soft">Fórmula</th>
+                                    <th className="text-right py-2 text-sm font-medium text-ink-soft">TMB (kcal/día)</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {activeData.map((d) => (
-                                    <tr key={d.id} className="border-b border-gray-100 last:border-b-0">
-                                        <td className="py-2 text-sm text-gray-600">{d.name}</td>
-                                        <td className="py-2 text-sm text-gray-900 text-right font-medium">{d.kcal.toFixed(1)}</td>
+                                    <tr key={d.id} className="border-b border-mist/60 last:border-b-0">
+                                        <td className="py-2 text-sm text-ink-soft">{d.name}</td>
+                                        <td className="py-2 text-sm text-ink text-right font-medium tnum">{d.kcal.toFixed(1)}</td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -101,10 +101,10 @@ export const TmbCalculatorCard = ({ data }: TmbProps) => {
                     </div>
                 )}
 
-                <div className="bg-teal-50 border border-teal-200 rounded-lg p-4">
+                <div className="bg-pine rounded-md p-5">
                     <div className="flex items-center justify-between">
-                        <span className="font-medium text-teal-900">Promedio Tasa Metabólica Basal</span>
-                        <span className="text-2xl font-semibold text-teal-700">
+                        <span className="text-sm font-medium text-porcelain/80 uppercase tracking-wide">Promedio TMB</span>
+                        <span className="cifra-data text-[32px] font-medium text-porcelain">
                             {averageKcal > 0 ? `${averageKcal} kcal/día` : 'Seleccione al menos una fórmula'}
                         </span>
                     </div>

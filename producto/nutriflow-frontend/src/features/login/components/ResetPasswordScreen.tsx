@@ -3,7 +3,7 @@ import { Lock, ArrowRight, Eye, EyeOff, Loader2, CheckCircle2 } from "lucide-rea
 import { Link, useRouter } from "@tanstack/react-router";
 import { useAuth } from "../../../shared/hooks/useAuth";
 import { useAuthStore } from "../../../shared/store/useAuthStore";
-import { AuthLayout, authInputClass, authLabelClass, authButtonClass, authErrorClass, authLinkClass } from "./AuthLayout";
+import { AuthLayout, authInputClass, authLabelClass, authButtonClass, authErrorClass } from "./AuthLayout";
 
 /**
  * Pantalla a la que llega el usuario desde el enlace del correo de recuperación.

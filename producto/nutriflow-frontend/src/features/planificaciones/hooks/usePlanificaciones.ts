@@ -29,3 +29,14 @@ export const useDeletePlanificacion = () => {
         },
     });
 };
+
+export const useSetActivaPlanificacion = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (id: string) => planificacionesApi.setActivaPlanificacion(id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['planificaciones'] });
+        },
+    });
+};

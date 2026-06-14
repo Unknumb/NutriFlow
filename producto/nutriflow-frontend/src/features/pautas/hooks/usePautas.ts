@@ -51,6 +51,9 @@ export const useDeletePauta = (pacienteId: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: pautasKeys.all });
       queryClient.invalidateQueries({ queryKey: pacientesKeys.pautas(pacienteId) });
+      // La ficha muestra las pautas anidadas dentro de las planificaciones.
+      queryClient.invalidateQueries({ queryKey: ['planificaciones'] });
+      queryClient.invalidateQueries({ queryKey: ['pautas-lista', pacienteId] });
     },
   });
 };

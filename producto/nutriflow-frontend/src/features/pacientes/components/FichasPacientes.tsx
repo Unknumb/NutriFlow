@@ -10,7 +10,7 @@ import { useEvaluacionesByPaciente, useCreateEvaluacion } from '../../evaluacion
 import type { CreateEvaluacionPayload } from '../../evaluaciones/types/evaluacion.types';
 import { useDeletePauta } from '../../pautas/hooks/usePautas';
 import { usePlanificaciones, useDeletePlanificacion } from '../../planificaciones/hooks/usePlanificaciones';
-import { NUTRITION_GROUPS, MEALS } from '../../porciones/constants';
+import { NUTRITION_GROUPS, comidasOrdenadas } from '../../porciones/constants';
 import { PDFDownloadLink } from "@react-pdf/renderer";
 import { PautaDocumentPDF } from '../../porciones/components/PautaDocumentPDF';
 import { formatearFecha } from '../../../shared/utils/fechas';
@@ -414,7 +414,12 @@ export const FichasPacientes: React.FC = () => {
                           <div key={planificacion.id} className="p-6 border border-mist bg-white rounded-card shadow-md transition-shadow">
                             <div className="flex justify-between items-center mb-5 pb-4 border-b border-mist">
                               <div>
-                                <span className="font-semibold text-ink text-xl">Planificación Base</span>
+                                <div className="flex items-center gap-2">
+                                  <span className="font-semibold text-ink text-xl">{planificacion.nombre || 'Planificación'}</span>
+                                  {planificacion.activa && (
+                                    <span className="px-2 py-0.5 bg-pine-soft/10 text-pine-soft text-xs font-semibold border border-pine-soft/30 rounded-full">Activa</span>
+                                  )}
+                                </div>
                                 <p className="text-sm text-ink-soft mt-1">Creada el {formatearFecha(planificacion.fecha_creacion)}</p>
                               </div>
                               <div className="flex items-center gap-3">
@@ -464,7 +469,7 @@ export const FichasPacientes: React.FC = () => {
                                       <div className="flex justify-between items-center mb-3">
                                         <div>
                                           <span className="font-medium text-pine-soft text-md">
-                                            {pauta.descripcion_general || 'Pauta Regular'}
+                                            {pauta.nombre || pauta.descripcion_general || 'Pauta'}
                                           </span>
                                           <span className="text-xs text-ink-soft ml-2 block sm:inline">
                                             (Añadida el {formatearFecha(pauta.fecha_creacion)})
@@ -498,10 +503,15 @@ export const FichasPacientes: React.FC = () => {
                                                   cho_g: Math.round(((dm.carbohidratos || 0) / 100 * kcal) / 4),
                                                   fat_g: Math.round(((dm.grasa || 0) / 100 * kcal) / 9),
                                                 },
-                                                distributions: pauta.tiempos_comida || {},
+                                                distributions: pauta.estructura_grid_json?.distributions || {},
                                                 targets: pauta.estructura_grid_json?.targets || {},
+                                                comidas: comidasOrdenadas(
+                                                  pauta.estructura_grid_json?.activeMeals || [],
+                                                  pauta.estructura_grid_json?.customMeals || [],
+                                                  pauta.estructura_grid_json?.mealTimes || {},
+                                                ),
                                                 totals: NUTRITION_GROUPS.reduce((acc, g) => {
-                                                  acc[g.id] = Object.values(pauta.tiempos_comida || {}).reduce((sum: number, meal: any) => sum + (meal[g.id] || 0), 0);
+                                                  acc[g.id] = Object.values(pauta.estructura_grid_json?.distributions || {}).reduce((sum: number, meal: any) => sum + (meal[g.id] || 0), 0);
                                                   return acc;
                                                 }, {} as Record<string, number>),
                                               };
@@ -520,7 +530,7 @@ export const FichasPacientes: React.FC = () => {
                                           </PDFDownloadLink>
                                           <button 
                                             onClick={() => {
-                                              if (window.confirm(`¿Eliminar pauta "${pauta.descripcion_general || 'Regular'}"?`)) {
+                                              if (window.confirm(`¿Eliminar pauta "${pauta.nombre || pauta.descripcion_general || 'Regular'}"?`)) {
                                                 deletePauta.mutate(pauta.id);
                                               }
                                             }}
@@ -533,38 +543,44 @@ export const FichasPacientes: React.FC = () => {
                                         </div>
                                       </div>
 
-                                      {pauta.tiempos_comida && Object.keys(pauta.tiempos_comida).length > 0 && (
-                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-3">
-                                          {MEALS.map((meal) => {
-                                            const mealDist = pauta.tiempos_comida[meal.id];
-                                            if (!mealDist || Object.keys(mealDist).length === 0) return null;
-                                            
-                                            const portions = Object.entries(mealDist)
-                                              .filter(([_, qty]) => (qty as number) > 0)
-                                              .map(([groupId, qty]) => {
-                                                const groupInfo = NUTRITION_GROUPS.find(g => g.id === groupId) || 
-                                                                  pauta.estructura_grid_json?.customFoods?.find((g: any) => g.id === groupId);
-                                                return { label: groupInfo ? `${groupInfo.emoji} ${groupInfo.label}` : groupId, qty };
-                                              });
+                                      {(() => {
+                                        const grid = pauta.estructura_grid_json || {};
+                                        const dist = grid.distributions || {};
+                                        if (Object.keys(dist).length === 0) return null;
+                                        const comidas = comidasOrdenadas(grid.activeMeals || [], grid.customMeals || [], grid.mealTimes || {});
+                                        return (
+                                          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-3">
+                                            {comidas.map((meal) => {
+                                              const mealDist = dist[meal.id];
+                                              if (!mealDist || Object.keys(mealDist).length === 0) return null;
 
-                                            if (portions.length === 0) return null;
+                                              const portions = Object.entries(mealDist)
+                                                .filter(([_, qty]) => (qty as number) > 0)
+                                                .map(([groupId, qty]) => {
+                                                  const groupInfo = NUTRITION_GROUPS.find(g => g.id === groupId) ||
+                                                                    grid.customFoods?.find((g: any) => g.id === groupId);
+                                                  return { label: groupInfo ? `${groupInfo.emoji} ${groupInfo.label}` : groupId, qty };
+                                                });
 
-                                            return (
-                                              <div key={meal.id} className="bg-white p-2.5 rounded-md border border-mist">
-                                                <p className="text-[11px] font-bold text-ink-soft uppercase mb-1.5 border-b border-mist/70 pb-1 truncate">{meal.name}</p>
-                                                <ul className="space-y-0.5">
-                                                  {portions.map((p, idx) => (
-                                                    <li key={idx} className="text-xs text-ink-soft flex justify-between items-center">
-                                                      <span className="truncate mr-2">{p.label}</span>
-                                                      <span className="font-semibold text-pine-soft bg-pine-soft/5 px-1.5 rounded">{String(p.qty)}</span>
-                                                    </li>
-                                                  ))}
-                                                </ul>
-                                              </div>
-                                            );
-                                          })}
-                                        </div>
-                                      )}
+                                              if (portions.length === 0) return null;
+
+                                              return (
+                                                <div key={meal.id} className="bg-white p-2.5 rounded-md border border-mist">
+                                                  <p className="text-[11px] font-bold text-ink-soft uppercase mb-1.5 border-b border-mist/70 pb-1 truncate">{meal.name}</p>
+                                                  <ul className="space-y-0.5">
+                                                    {portions.map((p, idx) => (
+                                                      <li key={idx} className="text-xs text-ink-soft flex justify-between items-center">
+                                                        <span className="truncate mr-2">{p.label}</span>
+                                                        <span className="font-semibold text-pine-soft bg-pine-soft/5 px-1.5 rounded">{String(p.qty)}</span>
+                                                      </li>
+                                                    ))}
+                                                  </ul>
+                                                </div>
+                                              );
+                                            })}
+                                          </div>
+                                        );
+                                      })()}
                                     </div>
                                   ))}
                                 </div>

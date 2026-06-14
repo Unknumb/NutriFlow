@@ -604,6 +604,7 @@ model perfiles_nutricionistas {
 model Pauta {
   id                   String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   consulta_id          String?         @db.Uuid
+  nombre               String?
   descripcion_general  String?
   estructura_grid_json Json?           @default("{}")
   fecha_creacion       DateTime?       @default(now()) @db.Timestamptz(6)
@@ -640,6 +641,8 @@ model Planificacion {
   id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   paciente_id         String    @db.Uuid
   nutricionista_id    String    @db.Uuid
+  nombre              String?
+  activa              Boolean   @default(false)
   calorias_totales    Float
   distribucion_macros Json
   fecha_creacion      DateTime? @default(now()) @db.Timestamptz(6)

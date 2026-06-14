@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { AlertTriangle, Wand2 } from 'lucide-react';
 import type { ClinicalContext, MacronutrientTotals, MacroInputs, SliderProps, MacroMetrics } from '../types';
 
 // 1. Temas por macro: usan el lenguaje de color del sistema (ver shared/ui/macroColors.ts)
@@ -95,14 +96,16 @@ interface SetupCardProps {
     context: ClinicalContext;
     inputs: MacroInputs;
     totals: MacronutrientTotals;
+    isBalanced: boolean;
     actions: {
         setProtGkg: (val: number) => void;
         setChoPct: (val: number) => void;
         setFatPct: (val: number) => void;
+        autoBalance: () => void;
     };
 }
 
-export const MacronutrientSetupCard = ({ context, inputs, actions, totals }: SetupCardProps) => {
+export const MacronutrientSetupCard = ({ context, inputs, actions, totals, isBalanced }: SetupCardProps) => {
     const [activeTab, setActiveTab] = useState<'percentage' | 'grams' | 'gkg'>('percentage');
 
     const protProps: SliderProps = activeTab === 'percentage'
@@ -132,19 +135,34 @@ export const MacronutrientSetupCard = ({ context, inputs, actions, totals }: Set
                 <button onClick={() => setActiveTab('gkg')} className={`inline-flex items-center justify-center gap-1.5 rounded-md border border-transparent px-2 py-1.5 text-sm font-medium whitespace-nowrap transition-colors duration-150 w-full h-full ${activeTab === 'gkg' ? 'bg-white text-ink shadow-sm' : 'text-ink-soft hover:text-ink'}`}>g/kg</button>
             </div>
 
+            {/* Aviso de validación: visible justo encima del slider de proteínas.
+                Rojo clínico si la desviación es grande (>5pts), apricot si es menor. */}
+            {!isBalanced && (() => {
+                const desviacion = Math.abs(totals.summary.percent - 100);
+                const critico = desviacion > 5;
+                const palette = critico
+                    ? { bg: 'bg-clinical-red/10', border: 'border-clinical-red/40', borderL: 'border-l-clinical-red', text: 'text-clinical-red' }
+                    : { bg: 'bg-apricot/15', border: 'border-apricot/50', borderL: 'border-l-apricot', text: 'text-[#8a5a2a]' };
+                return (
+                    <div className={`p-4 ${palette.bg} border ${palette.border} rounded-card border-l-4 ${palette.borderL} flex items-center gap-3 shadow-sm`} role="alert">
+                        <AlertTriangle className={`w-5 h-5 shrink-0 ${palette.text}`} />
+                        <div className="flex-1 min-w-0">
+                            <p className={`text-sm font-semibold ${palette.text}`}>La distribución suma {totals.summary.percent}%, no 100%</p>
+                            <p className={`text-xs mt-0.5 ${palette.text}/90`}>Ajusta los deslizadores o usa el cuadre automático para llegar exactamente al 100%.</p>
+                        </div>
+                        <button
+                            onClick={actions.autoBalance}
+                            className={`shrink-0 inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition-colors ${critico ? 'bg-clinical-red text-white hover:bg-clinical-red/90' : 'bg-apricot text-white hover:bg-apricot/90'}`}
+                        >
+                            <Wand2 className="w-3.5 h-3.5" /> Cuadrar
+                        </button>
+                    </div>
+                );
+            })()}
+
             <MacroSliderCard title="Proteínas" themeKey="prot" totals={totals.prot} pesoActivo={context.pesoActivo} sliderProps={protProps} />
             <MacroSliderCard title="Carbohidratos" themeKey="cho" totals={totals.cho} pesoActivo={context.pesoActivo} sliderProps={choProps} />
             <MacroSliderCard title="Grasas" themeKey="fat" totals={totals.fat} pesoActivo={context.pesoActivo} sliderProps={fatProps} />
-
-            {totals.summary.percent !== 100 && (
-                <div className="p-4 bg-apricot/10 border border-apricot/40 rounded-card flex items-start gap-3 border-l-4 border-l-apricot">
-                    <span className="text-[#8a5a2a] mt-0.5">⚠️</span>
-                    <div>
-                        <p className="text-sm font-semibold text-[#8a5a2a]">Validación de Macronutrientes</p>
-                        <p className="text-sm text-[#8a5a2a]/90 mt-1">La distribución actual suma <strong>{totals.summary.percent}%</strong>. Ajusta los deslizadores hasta alcanzar exactamente el 100%.</p>
-                    </div>
-                </div>
-            )}
         </div>
     );
 };

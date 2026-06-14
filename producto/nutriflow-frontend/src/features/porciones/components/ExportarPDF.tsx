@@ -6,6 +6,7 @@ import { useClinicalStore } from "../../../shared/store/useClinicalStore";
 import { usePacientes } from "../../pacientes/hooks/usePacientes";
 import { usePerfilNutricionista } from "../../perfil/hooks/usePerfil";
 import { useMacronutrientsSetup } from "../../macronutrients/hooks/useMacronutrientsSetup";
+import { useObjetivosActivos } from "../../planificaciones/hooks/useObjetivosActivos";
 import { comidasOrdenadas } from "../constants";
 
 const GROUP_IDS = ["cer", "fru", "veg", "cag", "cbg", "leg", "lag", "lmg", "lbg", "ace", "arg", "gbg", "azu"];
@@ -19,6 +20,9 @@ export const ExportarPDF = () => {
   const { data: pacientes } = usePacientes();
   const { data: perfil } = usePerfilNutricionista();
   const { totals } = useMacronutrientsSetup();
+  // Objetivos desde la planificación activa (fuente única); si el paciente aún
+  // no tiene planificación guardada, caemos a los macros vivos en pantalla.
+  const { objetivos } = useObjetivosActivos();
 
   // Datos completos del paciente (RUT y demás) desde la ficha; si no hay, usamos el contexto.
   const fichaPaciente = (pacientes ?? []).find((p) => p.id === activePatient?.id);
@@ -53,12 +57,19 @@ export const ExportarPDF = () => {
       registro: perfil?.registro_profesional || "",
     },
     fechaEmision,
-    objetivos: {
-      kcal: totals.prot.kcal + totals.cho.kcal + totals.fat.kcal,
-      prot_g: totals.prot.g,
-      cho_g: totals.cho.g,
-      fat_g: totals.fat.g,
-    },
+    objetivos: objetivos
+      ? {
+          kcal: objetivos.kcal,
+          prot_g: objetivos.prot_g,
+          cho_g: objetivos.cho_g,
+          fat_g: objetivos.fat_g,
+        }
+      : {
+          kcal: totals.prot.kcal + totals.cho.kcal + totals.fat.kcal,
+          prot_g: totals.prot.g,
+          cho_g: totals.cho.g,
+          fat_g: totals.fat.g,
+        },
     distributions,
     targets,
     // Comidas activas resueltas y ordenadas por horario (predefinidas + personalizadas)

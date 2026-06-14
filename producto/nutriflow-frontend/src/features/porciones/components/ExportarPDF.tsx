@@ -6,7 +6,7 @@ import { useClinicalStore } from "../../../shared/store/useClinicalStore";
 import { usePacientes } from "../../pacientes/hooks/usePacientes";
 import { usePerfilNutricionista } from "../../perfil/hooks/usePerfil";
 import { useMacronutrientsSetup } from "../../macronutrients/hooks/useMacronutrientsSetup";
-import { resolverComida } from "../constants";
+import { comidasOrdenadas } from "../constants";
 
 const GROUP_IDS = ["cer", "fru", "veg", "cag", "cbg", "leg", "lag", "lmg", "lbg", "ace", "arg", "gbg", "azu"];
 
@@ -61,8 +61,8 @@ export const ExportarPDF = () => {
     },
     distributions,
     targets,
-    // Comidas activas resueltas (predefinidas + personalizadas, con horario)
-    comidas: activeMeals.map((id) => resolverComida(id, customMeals, mealTimes)),
+    // Comidas activas resueltas y ordenadas por horario (predefinidas + personalizadas)
+    comidas: comidasOrdenadas(activeMeals, customMeals, mealTimes),
     totals: GROUP_IDS.reduce((acc, id) => {
       acc[id] = getGroupTotal(id);
       return acc;

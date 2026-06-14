@@ -9,7 +9,7 @@ interface Props {
 
 export const DroppableMealRow = ({ mealId, idx, children }: Props) => {
     const { isOver, setNodeRef } = useDroppable({
-        id: `drop-meal-${mealId}`,
+        id: `drop::meal::${mealId}`,
         data: { mealId }
     });
 

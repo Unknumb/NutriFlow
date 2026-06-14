@@ -2,3 +2,5 @@
 
 # Memorias locales de agentes Claude
 **/.claude/
+.agents/
+skills-lock.json

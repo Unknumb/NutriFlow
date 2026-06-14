@@ -63,7 +63,10 @@ export class PautasService {
       distributions: dto.distributions,
       targets: dto.targets,
       activeMeals: dto.activeMeals || [],
-      activeGroups: dto.activeGroups || []
+      activeGroups: dto.activeGroups || [],
+      libreConsumoIds: dto.libreConsumoIds || [],
+      customMeals: dto.customMeals || [],
+      mealTimes: dto.mealTimes || {}
     };
 
     if (pautaExistente) {

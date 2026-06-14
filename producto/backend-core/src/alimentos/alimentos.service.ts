@@ -30,6 +30,29 @@ interface AlimentoBusquedaRow {
 /** Clave que cachea backend-math con el catálogo completo (TTL 7 días). */
 const CACHE_CATALOGO_MATH = 'alimentos:catalogo_completo';
 
+/**
+ * Categorías canónicas (grupos de intercambio + auxiliares). Se ofrecen siempre,
+ * aunque aún no tengan alimentos, para poder asignar el primero desde la UI.
+ * Deben calzar con MAPEO_CATEGORIAS de backend-math.
+ */
+const CATEGORIAS_CANONICAS = [
+  'Cereales',
+  'Frutas',
+  'Verduras',
+  'Carnes Bajas en Grasa',
+  'Carnes Altas en Grasa',
+  'Leguminosas',
+  'Lácteos Bajos en Grasa',
+  'Lácteos Medios en Grasa',
+  'Lácteos Altos en Grasa',
+  'Aceites y Grasas',
+  'Alimentos ricos en grasas',
+  'Galletas bajas en grasa',
+  'Azúcares',
+  'Libre Consumo',
+  'Otros',
+];
+
 function esErrorDeUnique(error: unknown): boolean {
   return (
     error instanceof Prisma.PrismaClientKnownRequestError &&
@@ -100,15 +123,20 @@ export class AlimentosService {
     };
   }
 
-  /** Categorías distintas del catálogo, para los filtros del frontend. */
+  /**
+   * Categorías para filtros y formularios: une las canónicas (siempre
+   * disponibles, aunque no tengan alimentos) con las distintas presentes en el
+   * catálogo, sin duplicar, ordenadas alfabéticamente.
+   */
   async categorias(): Promise<string[]> {
     const filas = await this.prisma.alimentos.findMany({
       where: { categoria: { not: null } },
       distinct: ['categoria'],
       select: { categoria: true },
-      orderBy: { categoria: 'asc' },
     });
-    return filas.map((f) => f.categoria as string);
+    const existentes = filas.map((f) => f.categoria as string);
+    const union = Array.from(new Set([...CATEGORIAS_CANONICAS, ...existentes]));
+    return union.sort((a, b) => a.localeCompare(b, 'es'));
   }
 
   /**

@@ -10,7 +10,6 @@
 export const GRUPO_A_MATH: Record<string, string> = {
   cer: 'cereales_papas_legumbres_frescas',
   veg: 'verduras_general',
-  vlb: 'verduras_libre_consumo',
   fru: 'frutas',
   cag: 'carnes_altas_grasa',
   cbg: 'carnes_bajas_grasa',
@@ -20,6 +19,7 @@ export const GRUPO_A_MATH: Record<string, string> = {
   lbg: 'lacteos_bajos_grasa',
   ace: 'aceites_y_grasas',
   arg: 'alimentos_ricos_en_lipidos',
+  gbg: 'galletas_bajas_grasa',
   azu: 'azucares',
 };
 

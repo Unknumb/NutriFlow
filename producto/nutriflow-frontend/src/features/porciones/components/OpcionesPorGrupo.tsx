@@ -5,8 +5,7 @@ import { GroupOptionCard, type FoodGroupOption } from "./GroupOptionCard";
 // Las equivalencias se cargan en vivo desde el catálogo (ver GroupOptionCard).
 const FOOD_GROUP_OPTIONS: FoodGroupOption[] = [
     { id: 'cer', title: 'Cereales', emoji: '🌾', headerColor: '#C98B3D', categoria: 'Cereales' },
-    { id: 'veg', title: 'Verd. General', emoji: '🥗', headerColor: '#4F7A5A', categoria: 'Verduras en general' },
-    { id: 'vlb', title: 'Verd. Libre', emoji: '🥬', headerColor: '#2E5547', categoria: 'Verduras libre consumo', fixedTargetLabel: 'Libre consumo' },
+    { id: 'veg', title: 'Verduras', emoji: '🥗', headerColor: '#4F7A5A', categoria: 'Verduras' },
     { id: 'fru', title: 'Frutas', emoji: '🍎', headerColor: '#E8A063', categoria: 'Frutas' },
     { id: 'cag', title: 'Carnes Altas', subtitle: 'Alta grasa', emoji: '🥩', headerColor: '#8C3B2E', categoria: 'Carnes Altas en Grasa' },
     { id: 'cbg', title: 'Carnes Bajas', subtitle: 'Baja grasa', emoji: '🍗', headerColor: '#B4533A', categoria: 'Carnes Bajas en Grasa' },
@@ -16,6 +15,7 @@ const FOOD_GROUP_OPTIONS: FoodGroupOption[] = [
     { id: 'lbg', title: 'Lácteos Bajos', emoji: '🍼', headerColor: '#6E94AE', categoria: 'Lácteos Bajos en Grasa' },
     { id: 'ace', title: 'Aceites y Grasas', emoji: '🫒', headerColor: '#9C7A4D', categoria: 'Aceites y Grasas' },
     { id: 'arg', title: 'ARG', subtitle: 'Alimentos ricos en grasa', emoji: '🥑', headerColor: '#7A5C8E', categoria: 'Alimentos ricos en grasas' },
+    { id: 'gbg', title: 'Galletas Bajas Grasa', emoji: '🍪', headerColor: '#B5835A', categoria: 'Galletas bajas en grasa' },
     { id: 'azu', title: 'Azúcar', emoji: '🍬', headerColor: '#B95F7E', categoria: 'Azúcares' },
 ];
 

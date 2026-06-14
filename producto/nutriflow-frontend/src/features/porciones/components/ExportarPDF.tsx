@@ -6,12 +6,13 @@ import { useClinicalStore } from "../../../shared/store/useClinicalStore";
 import { usePacientes } from "../../pacientes/hooks/usePacientes";
 import { usePerfilNutricionista } from "../../perfil/hooks/usePerfil";
 import { useMacronutrientsSetup } from "../../macronutrients/hooks/useMacronutrientsSetup";
+import { resolverComida } from "../constants";
 
-const GROUP_IDS = ["cer", "fru", "veg", "vlb", "cag", "cbg", "leg", "lag", "lmg", "lbg", "ace", "arg", "azu"];
+const GROUP_IDS = ["cer", "fru", "veg", "cag", "cbg", "leg", "lag", "lmg", "lbg", "ace", "arg", "gbg", "azu"];
 
 export const ExportarPDF = () => {
   const { state, computed } = usePortions();
-  const { patientContext, distributions, targets } = state;
+  const { patientContext, distributions, targets, activeMeals, customMeals, mealTimes } = state;
   const { getGroupTotal } = computed;
 
   const activePatient = useClinicalStore((s) => s.activePatient);
@@ -60,6 +61,8 @@ export const ExportarPDF = () => {
     },
     distributions,
     targets,
+    // Comidas activas resueltas (predefinidas + personalizadas, con horario)
+    comidas: activeMeals.map((id) => resolverComida(id, customMeals, mealTimes)),
     totals: GROUP_IDS.reduce((acc, id) => {
       acc[id] = getGroupTotal(id);
       return acc;

@@ -6,6 +6,18 @@ import { useUpdatePaciente } from '../hooks/usePacientes';
 import { ChipsInput } from './ChipsInput';
 import { esRutValido, formatearRutInput, normalizarRut } from '../utils/rut';
 import { obtenerMensajeErrorApi } from '../utils/apiError';
+import { useClinicalStore } from '../../../shared/store/useClinicalStore';
+
+// Edad a partir de la fecha de nacimiento (YYYY-MM-DD), sin desfase de zona.
+function edadDesde(fechaISO: string): number {
+  const [y, m, d] = (fechaISO || '').slice(0, 10).split('-').map(Number);
+  if (!y || !m || !d) return 0;
+  const hoy = new Date();
+  let edad = hoy.getFullYear() - y;
+  const diffMes = hoy.getMonth() + 1 - m;
+  if (diffMes < 0 || (diffMes === 0 && hoy.getDate() < d)) edad--;
+  return edad;
+}
 
 interface DatosPersonalesPacienteProps {
   paciente: Paciente;
@@ -61,6 +73,7 @@ const ListaChipsLectura: React.FC<{ label: string; values: string[]; chipClassNa
  */
 export const DatosPersonalesPaciente: React.FC<DatosPersonalesPacienteProps> = ({ paciente }) => {
   const updatePaciente = useUpdatePaciente();
+  const { activePatient, setActivePatient } = useClinicalStore();
   const [editando, setEditando] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [form, setForm] = useState<EditState>(() => construirEstado(paciente));
@@ -119,7 +132,20 @@ export const DatosPersonalesPaciente: React.FC<DatosPersonalesPacienteProps> = (
     updatePaciente.mutate(
       { id: paciente.id, payload },
       {
-        onSuccess: () => setEditando(false),
+        onSuccess: () => {
+          setEditando(false);
+          // Si es el paciente activo, sincronizamos el store clínico para que el
+          // Dashboard refleje de inmediato edad/sexo/talla/peso editados.
+          if (activePatient?.id === paciente.id) {
+            setActivePatient({
+              ...activePatient,
+              edad: form.fecha_nacimiento ? edadDesde(form.fecha_nacimiento) : activePatient.edad,
+              sexo: form.sexo_biologico || activePatient.sexo,
+              talla: form.talla.trim() ? Number(form.talla) : activePatient.talla,
+              peso: form.peso.trim() ? Number(form.peso) : activePatient.peso,
+            });
+          }
+        },
         onError: (error: unknown) => {
           setErrorMsg(obtenerMensajeErrorApi(error, 'No se pudieron guardar los cambios.'));
         },

@@ -98,8 +98,7 @@ const styles = StyleSheet.create({
 const ALL_GROUPS = [
   { id: "cer", label: "Cereales", pdfBg: "#F0E2CC", pdfText: "#7a5526", options: "Arroz / Fideos / Pasta / Papa cocida / Pan" },
   { id: "fru", label: "Frutas", pdfBg: "#FBE6D3", pdfText: "#8a5a2a", options: "Manzana / Plátano / Naranja / Uvas / Pera" },
-  { id: "veg", label: "Verduras", pdfBg: "#DEE7E0", pdfText: "#2E5547", options: "Zanahoria / Brócoli / Zapallo / Betarraga" },
-  { id: "vlb", label: "Verd. libre", pdfBg: "#D6E0DA", pdfText: "#1F3D33", options: "Lechuga / Apio / Pepino / Acelga / Espinaca" },
+  { id: "veg", label: "Verduras", pdfBg: "#DEE7E0", pdfText: "#2E5547", options: "Lechuga / Tomate / Zanahoria / Brócoli / Zapallo / Espinaca" },
   { id: "cag", label: "Carnes altas", pdfBg: "#EAD6D2", pdfText: "#8C3B2E", options: "Cerdo / Cordero / Carne molida corriente" },
   { id: "cbg", label: "Carnes bajas", pdfBg: "#EFDDD8", pdfText: "#B4533A", options: "Pollo / Pavo / Pescado blanco / Atún al agua" },
   { id: "leg", label: "Leguminosas", pdfBg: "#EBDFCB", pdfText: "#7a5526", options: "Lentejas / Porotos / Garbanzos / Arvejas" },
@@ -108,6 +107,7 @@ const ALL_GROUPS = [
   { id: "lbg", label: "Lác. bajos", pdfBg: "#E2EAF0", pdfText: "#2F5570", options: "Leche descremada / Quesillo / Yogurt diet" },
   { id: "ace", label: "Aceites", pdfBg: "#E6DECF", pdfText: "#6b5436", options: "Aceite de oliva / Aceite vegetal" },
   { id: "arg", label: "Ricos en grasa", pdfBg: "#E2DAE8", pdfText: "#5f4671", options: "Palta / Almendras / Nueces / Maní" },
+  { id: "gbg", label: "Galletas bajas", pdfBg: "#EADBC8", pdfText: "#6e4f30", options: "Galletas de agua / soda / Champaña" },
   { id: "azu", label: "Azúcar", pdfBg: "#EDD9E0", pdfText: "#964a64", options: "Azúcar / Miel / Mermelada" },
 ];
 
@@ -128,7 +128,7 @@ export interface PautaPdfData {
   distributions?: Record<string, Record<string, number>>;
   targets?: Record<string, number>;
   totals?: Record<string, number>;
-  incluirVlb?: boolean;
+  comidas?: { id: string; name: string; time: string }[];
 }
 
 export const PautaDocumentPDF = ({ data }: { data: PautaPdfData }) => {
@@ -140,13 +140,14 @@ export const PautaDocumentPDF = ({ data }: { data: PautaPdfData }) => {
     distributions = {},
     targets = {},
     totals = {},
-    incluirVlb = true,
   } = data ?? {};
 
-  const grupos = incluirVlb ? ALL_GROUPS : ALL_GROUPS.filter((g) => g.id !== "vlb");
+  const grupos = ALL_GROUPS;
   const visibleGroups = grupos.filter((g) => (targets[g.id] || 0) > 0 || (totals[g.id] || 0) > 0);
-  const mealsConPorciones = MEALS.filter((m) => grupos.some((g) => (distributions[m.id]?.[g.id] || 0) > 0));
-  const mealsAMostrar = mealsConPorciones.length > 0 ? mealsConPorciones : MEALS.slice(0, 5);
+  // Comidas: usa las resueltas (predefinidas + personalizadas) si vienen; si no, las default.
+  const comidasBase = (data?.comidas && data.comidas.length > 0) ? data.comidas : MEALS;
+  const mealsConPorciones = comidasBase.filter((m) => grupos.some((g) => (distributions[m.id]?.[g.id] || 0) > 0));
+  const mealsAMostrar = mealsConPorciones.length > 0 ? mealsConPorciones : comidasBase.slice(0, 5);
 
   return (
     <Document>

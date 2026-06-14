@@ -13,11 +13,11 @@ import { PortionCell } from "./PortionCell";
 import { DraggableGroupHeader } from "./DraggableGroupHeader";
 import { DroppableMealRow } from "./DroppableMealRow";
 import { usePortions } from "../hooks/usePortions";
-import { NUTRITION_GROUPS, MEALS } from "../constants";
+import { NUTRITION_GROUPS, resolverComida } from "../constants";
 
 export const PortionsTable = () => {
   const { state, actions, computed } = usePortions();
-  const { targets, distributions, activeMeals, customFoods } = state;
+  const { targets, distributions, activeMeals, customFoods, customMeals, mealTimes } = state;
   const { incrementPortion, decrementPortion, setPortion } = actions;
   const { getGroupTotal, getGroupBalance } = computed;
 
@@ -31,16 +31,8 @@ export const PortionsTable = () => {
     (g) => targets[g.id] && targets[g.id] > 0,
   );
 
-  // Filtrar Comidas: Solo activas
-  const visibleMeals = activeMeals.map(
-    (mealId) =>
-      MEALS.find((m) => m.id === mealId) || {
-        id: mealId,
-        time: "--:--",
-        name:
-          mealId.charAt(0).toUpperCase() + mealId.slice(1).replace("_", " "),
-      },
-  );
+  // Comidas activas resueltas (predefinidas + personalizadas, con horario editable)
+  const visibleMeals = activeMeals.map((mealId) => resolverComida(mealId, customMeals, mealTimes));
 
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
@@ -87,7 +79,8 @@ export const PortionsTable = () => {
     ) {
       const groupId = activeData[2];
       const mealId = overData[2];
-      incrementPortion(mealId, groupId);
+      // Al arrastrar un grupo a una comida, sumamos una porción completa (1).
+      setPortion(mealId, groupId, (distributions[mealId]?.[groupId] || 0) + 1);
     }
 
     // active: drag-portion-[mealId]-[groupId]
@@ -113,10 +106,12 @@ export const PortionsTable = () => {
       const sourceMealId = activeData[2];
       const groupId = activeData[3];
       const targetMealId = overData[2];
-      
+
       if (sourceMealId !== targetMealId) {
-        decrementPortion(sourceMealId, groupId);
-        incrementPortion(targetMealId, groupId);
+        // Mover la porción completa de una comida a otra.
+        const val = distributions[sourceMealId]?.[groupId] || 0;
+        setPortion(sourceMealId, groupId, 0);
+        setPortion(targetMealId, groupId, (distributions[targetMealId]?.[groupId] || 0) + val);
       }
     }
   };
@@ -341,18 +336,8 @@ export const PortionsTable = () => {
           <span className="font-medium">Excede meta</span>
         </div>
         <span className="text-ink-soft/60 ml-auto">
-          · Haz click en horas o metas para editarlas
+          · Haz click en horas o metas para editarlas · Usa "Guardar pauta" arriba para guardar
         </span>
-      </div>
-
-      <div className="mt-6 flex justify-end">
-        <button
-          onClick={actions.handleSavePauta}
-          disabled={state.isSaving}
-          className="bg-pine hover:bg-pine-soft text-white font-medium px-6 py-2.5 rounded-lg transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-        >
-          {state.isSaving ? "Guardando..." : "Guardar Pauta"}
-        </button>
       </div>
     </div>
   );

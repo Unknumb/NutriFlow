@@ -4,17 +4,16 @@ import { apiClient } from '../../../shared/api/apiClient';
 import { usePortionsStore } from '../store/usePortionsStore';
 import { useClinicalStore } from '../../../shared/store/useClinicalStore';
 import { usePaciente } from '../../pacientes/hooks/usePacientes';
-import { useCreatePauta } from '../../pautas/hooks/usePautas';
 
 export const usePortions = () => {
     // 1. Estado de Navegación UI
     const [activeTab, setActiveTab] = useState<'tabla' | 'pauta' | 'opciones' | 'pdf'>('tabla');
 
     // 2. Estado Global de Zustand
-    const { targets, distributions, activeMeals, activeGroups, customFoods, incrementPortion, decrementPortion, setPortion, removeTargetGroup, setInitialPortions, toggleMeal, toggleGroup, resetDistributions } = usePortionsStore();
+    const { targets, distributions, activeMeals, activeGroups, customFoods, libreConsumoIds, customMeals, mealTimes, addCustomMeal, removeCustomMeal, setMealTime, incrementPortion, decrementPortion, setPortion, removeTargetGroup, setInitialPortions, toggleMeal, toggleGroup, resetDistributions } = usePortionsStore();
 
     // 3. Datos del paciente conectado con backend
-    const { activePatient, activePlanificacionId } = useClinicalStore();
+    const { activePatient } = useClinicalStore();
     usePaciente(activePatient?.id || '');
 
     // Transformamos los datos del backend al formato que necesita la UI
@@ -45,7 +44,10 @@ export const usePortions = () => {
                 targets: armadorData.targets,
                 distributions: armadorData.distributions || {},
                 activeMeals: armadorData.activeMeals || [],
-                activeGroups: armadorData.activeGroups || []
+                activeGroups: armadorData.activeGroups || [],
+                libreConsumoIds: armadorData.libreConsumoIds || [],
+                customMeals: armadorData.customMeals || [],
+                mealTimes: armadorData.mealTimes || {}
             });
             setLoadedPatientId(activePatient.id);
         }
@@ -68,55 +70,47 @@ export const usePortions = () => {
         return 'under';
     };
 
-    const createPauta = useCreatePauta();
-    const handleSavePauta = () => {
+    const [isSaving, setIsSaving] = useState(false);
+
+    // Guarda la pauta (distribución de porciones por comida + targets + libre
+    // consumo) en el paciente activo. Persiste vía /pautas/guardar-distribucion,
+    // que hace upsert de la última pauta — así sobrevive a recargas y se recarga
+    // al volver a seleccionar al paciente. Devuelve {ok, message} para la UI.
+    const guardarPauta = async (): Promise<{ ok: boolean; message: string }> => {
         if (!activePatient?.id) {
-            alert('Selecciona un paciente primero para poder guardar la pauta.');
-            return;
+            return { ok: false, message: 'Selecciona un paciente activo antes de guardar la pauta.' };
+        }
+        const hayPorciones = Object.values(distributions).some(
+            (meal) => Object.values(meal || {}).some((v) => v > 0),
+        );
+        if (!hayPorciones) {
+            return { ok: false, message: 'Asigna porciones por comida antes de guardar la pauta.' };
         }
 
-        if (!activePlanificacionId) {
-            alert('Primero debes crear y guardar una Planificación (Metas de Macronutrientes).');
-            return;
+        setIsSaving(true);
+        try {
+            await apiClient.post('/pautas/guardar-distribucion', {
+                paciente_id: activePatient.id,
+                distributions,
+                targets,
+                activeMeals,
+                activeGroups,
+                libreConsumoIds,
+                customMeals,
+                mealTimes,
+            });
+            return { ok: true, message: 'Pauta guardada en la ficha del paciente.' };
+        } catch (error) {
+            console.error('Error guardando la pauta:', error);
+            return { ok: false, message: 'No se pudo guardar la pauta. Intenta nuevamente.' };
+        } finally {
+            setIsSaving(false);
         }
-
-        const descripcion = window.prompt("Ingresa un nombre para esta Pauta (ej: Día de entrenamiento, Día de descanso):", "Pauta Regular");
-        if (descripcion === null) {
-            // Usuario canceló el prompt
-            return;
-        }
-
-        createPauta.mutate({
-            paciente_id: activePatient.id,
-            planificacion_id: activePlanificacionId,
-            descripcion_general: descripcion,
-            tiempos_comida: distributions,
-        }, {
-            onSuccess: async () => {
-                try {
-                    await apiClient.post('/pautas/guardar-distribucion', {
-                        paciente_id: activePatient.id,
-                        distributions,
-                        targets,
-                        activeMeals,
-                        activeGroups
-                    });
-                    alert("¡Pauta guardada con éxito en la base de datos!");
-                } catch (error) {
-                    console.error('Error guardando distribución:', error);
-                    alert("La pauta se creó pero falló al guardar la distribución.");
-                }
-            },
-            onError: (err) => {
-                alert("Hubo un error al guardar la pauta");
-                console.error(err);
-            }
-        });
     };
 
     return {
-        state: { activeTab, patientContext, targets, distributions, activeMeals, activeGroups, customFoods, isSaving: createPauta.isPending },
-        actions: { setActiveTab, incrementPortion, decrementPortion, setPortion, handleSavePauta, removeTargetGroup, toggleMeal, toggleGroup, resetDistributions },
+        state: { activeTab, patientContext, targets, distributions, activeMeals, activeGroups, customFoods, customMeals, mealTimes, libreConsumoIds, isSaving, hayPacienteActivo: !!activePatient?.id },
+        actions: { setActiveTab, incrementPortion, decrementPortion, setPortion, guardarPauta, removeTargetGroup, toggleMeal, toggleGroup, resetDistributions, addCustomMeal, removeCustomMeal, setMealTime },
         computed: { getGroupTotal, getGroupBalance }
     };
 };

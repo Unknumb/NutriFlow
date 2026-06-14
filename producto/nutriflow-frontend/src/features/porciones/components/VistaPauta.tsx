@@ -1,13 +1,13 @@
 import React from 'react';
 import { usePortions } from '../hooks/usePortions';
-import { MEALS, NUTRITION_GROUPS } from '../constants';
+import { NUTRITION_GROUPS, resolverComida } from '../constants';
 
 export const VistaPauta = () => {
     const { state, computed } = usePortions();
-    const { patientContext, distributions, targets, activeMeals, customFoods } = state;
+    const { patientContext, distributions, targets, activeMeals, customFoods, customMeals, mealTimes } = state;
     const { getGroupTotal } = computed;
 
-    const visibleMeals = MEALS.filter(m => activeMeals.includes(m.id));
+    const visibleMeals = activeMeals.map(id => resolverComida(id, customMeals, mealTimes));
     
     const COMBINED_GROUPS = [...NUTRITION_GROUPS, ...(customFoods || [])];
     const visibleGroups = COMBINED_GROUPS.filter(g => targets[g.id] && targets[g.id] > 0);

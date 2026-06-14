@@ -20,4 +20,20 @@ export class GuardarDistribucionDto {
   @IsString({ each: true })
   @IsOptional()
   activeGroups?: string[];
+
+  /** Grupos marcados como libre consumo (ad libitum). */
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  libreConsumoIds?: string[];
+
+  /** Tiempos de comida personalizados ({id, name, time}). */
+  @IsArray()
+  @IsOptional()
+  customMeals?: { id: string; name: string; time: string }[];
+
+  /** Override de horario por comida. */
+  @IsObject()
+  @IsOptional()
+  mealTimes?: Record<string, string>;
 }

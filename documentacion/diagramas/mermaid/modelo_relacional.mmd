@@ -1,0 +1,113 @@
+erDiagram
+    perfiles_nutricionistas ||--o{ pacientes : "atiende"
+    perfiles_nutricionistas ||--o{ preparaciones : "crea"
+    pacientes ||--o{ "Evaluacion" : "registra"
+    pacientes ||--o{ consultas : "tiene"
+    pacientes ||--o{ planificaciones : "tiene"
+    pacientes ||--o{ pautas : "tiene"
+    consultas ||--o{ antropometria : "mide"
+    consultas ||--o{ pautas : "contiene"
+    planificaciones ||--o{ pautas : "agrupa (separacion macros/pauta)"
+    pautas ||--o{ detalle_pauta : "compone"
+    alimentos ||--o{ detalle_pauta : "usado_en"
+    preparaciones ||--o{ ingredientes_preparacion : "compone"
+    alimentos ||--o{ ingredientes_preparacion : "usado_en"
+
+    perfiles_nutricionistas {
+        uuid id PK
+        text nombre
+        text apellido
+        text registro_profesional UK
+        text email UK
+    }
+
+    pacientes {
+        uuid id PK
+        uuid nutricionista_id FK
+        text nombre
+        text apellido
+        date fecha_nacimiento
+        char sexo_biologico
+        text rut "UNIQUE parcial por nutricionista"
+        text[] enfermedades
+        text[] alergias
+    }
+
+    Evaluacion {
+        uuid id PK
+        uuid paciente_id FK
+        timestamptz fecha_evaluacion
+        float peso_actual
+        float talla_cm
+        text nivel_actividad_fisica
+        text objetivo
+    }
+
+    consultas {
+        uuid id PK
+        uuid paciente_id FK
+        timestamptz fecha_consulta
+        text notas_evolucion
+    }
+
+    antropometria {
+        uuid id PK
+        uuid consulta_id FK
+        numeric peso_kg
+        numeric talla_cm
+        numeric circunferencia_cintura_cm
+        numeric porcentaje_grasa_estimado
+    }
+
+    planificaciones {
+        uuid id PK
+        uuid paciente_id FK
+        text nombre
+        boolean activa "1 activa por paciente"
+        float calorias_totales
+        jsonb distribucion_macros
+    }
+
+    pautas {
+        uuid id PK
+        uuid paciente_id FK
+        uuid planificacion_id FK
+        uuid consulta_id FK
+        text nombre
+        jsonb tiempos_comida
+        jsonb estructura_grid_json
+    }
+
+    detalle_pauta {
+        uuid id PK
+        uuid pauta_id FK
+        uuid alimento_id FK
+        numeric cantidad_g
+        text momento_dia
+    }
+
+    alimentos {
+        uuid id PK
+        text nombre
+        text categoria
+        numeric calorias_100g
+        numeric proteinas_100g
+        numeric carbohidratos_100g
+        numeric grasas_100g
+        text marca
+        text[] restricciones
+    }
+
+    preparaciones {
+        uuid id PK
+        uuid nutricionista_id FK
+        text nombre
+        text tipo_comida
+    }
+
+    ingredientes_preparacion {
+        uuid id PK
+        uuid preparacion_id FK
+        uuid alimento_id FK
+        numeric cantidad_g
+    }

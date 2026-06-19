@@ -244,14 +244,7 @@ export const FichasPacientes: React.FC = () => {
                   >
                     Pautas Nutricionales
                   </button>
-                  {/* HIDDEN FOR EVALUATION — tab triggers re-enabled post-freeze
-                  <button
-                    onClick={() => setActiveTab('sintomas')}
-                    className={`py-1.5 px-3 text-sm font-medium rounded-lg transition-all flex items-center justify-center gap-2 ${activeTab === 'sintomas' ? 'bg-white text-ink shadow-sm' : 'text-ink-soft hover:text-ink-soft'}`}
-                  >
-                    Síntomas Reportados
-                    <span className="bg-mist text-ink-soft px-1.5 py-0.5 rounded-md text-[10px]">0</span>
-                  </button>
+                  {/* HIDDEN FOR EVALUATION — tab trigger re-enabled post-freeze
                   <button
                     onClick={() => setActiveTab('progreso')}
                     className={`py-1.5 px-3 text-sm font-medium rounded-lg transition-all ${activeTab === 'progreso' ? 'bg-white text-ink shadow-sm' : 'text-ink-soft hover:text-ink-soft'}`}
@@ -599,72 +592,7 @@ export const FichasPacientes: React.FC = () => {
                   </div>
                 )}
 
-                {/* --- TAB 2: SÍNTOMAS — HIDDEN FOR EVALUATION (datos hardcodeados) — re-enable post-freeze
-                {activeTab === 'sintomas' && (
-                  <div className="space-y-6 animate-in fade-in duration-300">
-                    <div className="mb-2 mt-2">
-                      <h4 className="font-semibold text-ink">Síntomas y Observaciones</h4>
-                      <p className="text-sm text-ink-soft">Registro de síntomas reportados por el paciente</p>
-                    </div>
-
-                    <div className="p-4 bg-porcelain rounded-card border border-mist">
-                      <label className="text-sm font-semibold text-ink mb-2 block">Reportar Nuevo Síntoma</label>
-                      <textarea
-                        className="w-full min-h-20 p-3 text-sm border border-mist rounded-lg focus:ring-2 focus:ring-pine-soft focus:border-transparent outline-none resize-none mb-3"
-                        placeholder="Describe el síntoma o sensación..."
-                      ></textarea>
-                      <div className="flex gap-3 mb-4">
-                        <div className="flex-1">
-                          <label className="text-xs font-medium text-ink-soft mb-1 block">Tipo</label>
-                          <select className="w-full p-2 text-sm border border-mist rounded-md outline-none focus:ring-2 focus:ring-pine-soft">
-                            <option>Digestivo</option>
-                            <option>Energía</option>
-                            <option>Peso</option>
-                            <option>Otro</option>
-                          </select>
-                        </div>
-                        <div className="flex-1">
-                          <label className="text-xs font-medium text-ink-soft mb-1 block">Severidad</label>
-                          <select className="w-full p-2 text-sm border border-mist rounded-md outline-none focus:ring-2 focus:ring-pine-soft">
-                            <option>Leve</option>
-                            <option>Moderado</option>
-                            <option>Severo</option>
-                          </select>
-                        </div>
-                      </div>
-                      <button className="w-full py-2 bg-pine hover:bg-pine-soft text-white text-sm font-medium rounded-md transition-colors shadow-sm">
-                        Agregar Síntoma
-                      </button>
-                    </div>
-
-                    <div className="space-y-3">
-                      <div className="p-4 border border-mist rounded-card bg-white shadow-sm">
-                        <div className="flex justify-between items-start mb-2">
-                          <div className="flex gap-2">
-                            <span className="px-2 py-0.5 bg-mist/60 text-ink-soft text-xs font-medium rounded-md">Energía</span>
-                            <span className="px-2 py-0.5 bg-green-100 text-green-800 border border-green-200 text-xs font-medium rounded-md">Leve</span>
-                          </div>
-                          <span className="text-xs text-ink-soft">19-03-2026</span>
-                        </div>
-                        <p className="text-sm text-ink-soft">He notado más energía durante las mañanas y menos ansiedad por comer entre comidas</p>
-                      </div>
-
-                      <div className="p-4 border border-mist rounded-card bg-white shadow-sm">
-                        <div className="flex justify-between items-start mb-2">
-                          <div className="flex gap-2">
-                            <span className="px-2 py-0.5 bg-mist/60 text-ink-soft text-xs font-medium rounded-md">Digestivo</span>
-                            <span className="px-2 py-0.5 bg-yellow-100 text-yellow-800 border border-yellow-200 text-xs font-medium rounded-md">Moderado</span>
-                          </div>
-                          <span className="text-xs text-ink-soft">14-03-2026</span>
-                        </div>
-                        <p className="text-sm text-ink-soft">Tuve distensión abdominal después del almuerzo del domingo, creo que comí demasiado rápido</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                */}
-
-                {/* --- TAB 3: PROGRESO — HIDDEN FOR EVALUATION (métricas hardcodeadas) — re-enable post-freeze
+                {/* --- TAB 2: PROGRESO — HIDDEN FOR EVALUATION (métricas hardcodeadas) — re-enable post-freeze
                 {activeTab === 'progreso' && (
                   <div className="space-y-6 animate-in fade-in duration-300">
                     <div className="flex items-center gap-2 mb-2 mt-2">

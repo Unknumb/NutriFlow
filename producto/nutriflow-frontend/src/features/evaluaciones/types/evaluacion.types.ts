@@ -25,3 +25,13 @@ export interface EvaluacionConCalculos extends Evaluacion {
     gasto_energetico_total: number;
   };
 }
+
+// Respuesta del POST /evaluaciones — el backend devuelve la evaluación
+// persistida junto al desglose de cálculos del motor matemático.
+export interface CreateEvaluacionResponse {
+  evaluacion: Evaluacion;
+  calculos: {
+    tmb: Record<string, number>;
+    gasto_energetico_total: number;
+  };
+}

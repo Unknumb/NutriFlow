@@ -1,5 +1,5 @@
 import { apiClient } from '../../../shared/api/apiClient';
-import type { CreateEvaluacionPayload, EvaluacionConCalculos } from '../types/evaluacion.types';
+import type { CreateEvaluacionPayload, EvaluacionConCalculos, CreateEvaluacionResponse } from '../types/evaluacion.types';
 
 export const evaluacionesApi = {
   fetchEvaluacionesByPaciente: async (pacienteId: string): Promise<EvaluacionConCalculos[]> => {
@@ -12,7 +12,7 @@ export const evaluacionesApi = {
     return data;
   },
 
-  createEvaluacion: async (payload: CreateEvaluacionPayload): Promise<EvaluacionConCalculos> => {
+  createEvaluacion: async (payload: CreateEvaluacionPayload): Promise<CreateEvaluacionResponse> => {
     const { data } = await apiClient.post('/evaluaciones', payload);
     return data;
   },

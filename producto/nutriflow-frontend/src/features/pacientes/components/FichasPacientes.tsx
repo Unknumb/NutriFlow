@@ -43,7 +43,7 @@ export const FichasPacientes: React.FC = () => {
   const { user } = useAuthStore();
   const { data: perfil } = usePerfilNutricionista();
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'datos' | 'pautas' | 'sintomas' | 'progreso'>('datos');
+  const [activeTab, setActiveTab] = useState<'datos' | 'pautas'>('datos');
   const [showNuevoPaciente, setShowNuevoPaciente] = useState(false);
 
   const { data: evaluaciones, isLoading: loadingEvals } = useEvaluacionesByPaciente(selectedPatientId || '');
@@ -92,7 +92,7 @@ export const FichasPacientes: React.FC = () => {
 
   return (
     <div className="flex flex-col h-full bg-porcelain flex-1 overflow-hidden w-full">
-      <div className="p-8 max-w-7xl mx-auto w-full h-full flex flex-col">
+      <div className="p-4 md:p-8 max-w-7xl mx-auto w-full lg:h-full flex flex-col">
         
         {/* Encabezado Principal */}
         <div className="mb-8">
@@ -100,10 +100,10 @@ export const FichasPacientes: React.FC = () => {
           <p className="text-ink-soft mt-1">Gestión y seguimiento clínico</p>
         </div>
 
-        <div className="grid grid-cols-12 gap-6 flex-1 min-h-0">
-          
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:flex-1 lg:min-h-0">
+
           {/* PANEL IZQUIERDO: LISTA DE PACIENTES */}
-          <div className="col-span-4 flex flex-col min-h-0">
+          <div className="lg:col-span-4 flex flex-col h-72 lg:h-auto lg:min-h-0">
             <div className="bg-white text-ink flex flex-col rounded-card border border-mist h-full overflow-hidden shadow-sm">
               <div className="px-6 pt-6 pb-4 border-b border-mist/70 flex items-start justify-between gap-3">
                 <div>
@@ -174,8 +174,8 @@ export const FichasPacientes: React.FC = () => {
           </div>
 
           {/* PANEL DERECHO: DETALLES DEL PACIENTE */}
-          <div className="col-span-8 flex flex-col min-h-0">
-            <div className="bg-white text-ink flex flex-col rounded-card border border-mist h-full overflow-hidden shadow-sm">
+          <div className="lg:col-span-8 flex flex-col lg:min-h-0">
+            <div className="bg-white text-ink flex flex-col rounded-card border border-mist min-h-[400px] lg:h-full lg:min-h-0 overflow-hidden shadow-sm">
               
               {!pacienteSeleccionado ? (
                 <div className="flex items-center justify-center h-full text-ink-soft">
@@ -231,32 +231,34 @@ export const FichasPacientes: React.FC = () => {
                 </div>
 
                 {/* MENÚ PESTAÑAS */}
-                <div className="bg-mist/60 p-1 rounded-card grid grid-cols-4 gap-1 mb-4">
-                  <button 
+                <div className="bg-mist/60 p-1 rounded-card grid grid-cols-2 gap-1 mb-4">
+                  <button
                     onClick={() => setActiveTab('datos')}
                     className={`py-1.5 px-3 text-sm font-medium rounded-lg transition-all ${activeTab === 'datos' ? 'bg-white text-ink shadow-sm' : 'text-ink-soft hover:text-ink-soft'}`}
                   >
                     Datos Clínicos
                   </button>
-                  <button 
+                  <button
                     onClick={() => setActiveTab('pautas')}
                     className={`py-1.5 px-3 text-sm font-medium rounded-lg transition-all ${activeTab === 'pautas' ? 'bg-white text-ink shadow-sm' : 'text-ink-soft hover:text-ink-soft'}`}
                   >
                     Pautas Nutricionales
                   </button>
-                  <button 
+                  {/* HIDDEN FOR EVALUATION — tab triggers re-enabled post-freeze
+                  <button
                     onClick={() => setActiveTab('sintomas')}
                     className={`py-1.5 px-3 text-sm font-medium rounded-lg transition-all flex items-center justify-center gap-2 ${activeTab === 'sintomas' ? 'bg-white text-ink shadow-sm' : 'text-ink-soft hover:text-ink-soft'}`}
                   >
                     Síntomas Reportados
                     <span className="bg-mist text-ink-soft px-1.5 py-0.5 rounded-md text-[10px]">0</span>
                   </button>
-                  <button 
+                  <button
                     onClick={() => setActiveTab('progreso')}
                     className={`py-1.5 px-3 text-sm font-medium rounded-lg transition-all ${activeTab === 'progreso' ? 'bg-white text-ink shadow-sm' : 'text-ink-soft hover:text-ink-soft'}`}
                   >
                     Progreso
                   </button>
+                  */}
                 </div>
               </div>
 
@@ -281,7 +283,7 @@ export const FichasPacientes: React.FC = () => {
                     {showNuevaEval && (
                       <div className="p-5 border border-pine-soft/30 bg-pine-soft/5 rounded-card mb-6 shadow-sm">
                         <h5 className="font-semibold text-pine-soft mb-4">Registrar Nueva Evaluación</h5>
-                        <div className="grid grid-cols-2 gap-4 mb-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                           <div>
                             <label className="text-xs font-medium text-ink-soft mb-1 block">Peso Actual (kg)</label>
                             <input 
@@ -581,7 +583,7 @@ export const FichasPacientes: React.FC = () => {
                   </div>
                 )}
 
-                {/* --- TAB 2: SÍNTOMAS --- */}
+                {/* --- TAB 2: SÍNTOMAS — HIDDEN FOR EVALUATION (datos hardcodeados) — re-enable post-freeze
                 {activeTab === 'sintomas' && (
                   <div className="space-y-6 animate-in fade-in duration-300">
                     <div className="mb-2 mt-2">
@@ -591,8 +593,8 @@ export const FichasPacientes: React.FC = () => {
 
                     <div className="p-4 bg-porcelain rounded-card border border-mist">
                       <label className="text-sm font-semibold text-ink mb-2 block">Reportar Nuevo Síntoma</label>
-                      <textarea 
-                        className="w-full min-h-20 p-3 text-sm border border-mist rounded-lg focus:ring-2 focus:ring-pine-soft focus:border-transparent outline-none resize-none mb-3" 
+                      <textarea
+                        className="w-full min-h-20 p-3 text-sm border border-mist rounded-lg focus:ring-2 focus:ring-pine-soft focus:border-transparent outline-none resize-none mb-3"
                         placeholder="Describe el síntoma o sensación..."
                       ></textarea>
                       <div className="flex gap-3 mb-4">
@@ -644,8 +646,9 @@ export const FichasPacientes: React.FC = () => {
                     </div>
                   </div>
                 )}
+                */}
 
-                {/* --- TAB 3: PROGRESO --- */}
+                {/* --- TAB 3: PROGRESO — HIDDEN FOR EVALUATION (métricas hardcodeadas) — re-enable post-freeze
                 {activeTab === 'progreso' && (
                   <div className="space-y-6 animate-in fade-in duration-300">
                     <div className="flex items-center gap-2 mb-2 mt-2">
@@ -692,6 +695,7 @@ export const FichasPacientes: React.FC = () => {
                     </div>
                   </div>
                 )}
+                */}
 
               </div>
               </>

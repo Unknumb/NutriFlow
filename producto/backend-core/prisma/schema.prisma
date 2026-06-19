@@ -631,6 +631,8 @@ model Evaluacion {
   talla_cm               Float
   nivel_actividad_fisica String
   objetivo               String
+  tmb                    Float?
+  gasto_energetico_total Float?
   paciente               pacientes @relation(fields: [paciente_id], references: [id], onDelete: Cascade)
 
   @@schema("public")

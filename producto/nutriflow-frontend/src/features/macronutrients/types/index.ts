@@ -25,6 +25,7 @@ export interface ClinicalContext {
 // Contrato para los inputs manuales del usuario
 export interface MacroInputs {
     protGkg: number;
+    protPct: number;
     choPct: number;
     fatPct: number;
 }

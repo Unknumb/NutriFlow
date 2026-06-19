@@ -7,6 +7,8 @@ export interface Evaluacion {
   talla_cm: number;
   nivel_actividad_fisica: string;
   objetivo: string;
+  tmb?: number;
+  gasto_energetico_total?: number;
 }
 
 export interface CreateEvaluacionPayload {
@@ -18,6 +20,8 @@ export interface CreateEvaluacionPayload {
 }
 
 export interface EvaluacionConCalculos extends Evaluacion {
-  tmb?: number;
-  gasto_energetico_total?: number;
+  calculos?: {
+    tmb: Record<string, number>;
+    gasto_energetico_total: number;
+  };
 }

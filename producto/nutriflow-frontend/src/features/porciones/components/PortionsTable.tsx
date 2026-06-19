@@ -161,7 +161,7 @@ export const PortionsTable = () => {
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="overflow-x-auto pb-4">
+        <div className="overflow-x-auto w-full pb-4">
           <table className="border-collapse bg-white shadow-sm rounded-xl overflow-hidden w-full text-sm min-w-[800px]">
             <thead
               ref={setHeaderRef}

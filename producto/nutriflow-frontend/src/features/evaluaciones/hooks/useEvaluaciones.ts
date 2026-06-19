@@ -17,9 +17,9 @@ export const useCreateEvaluacion = () => {
   return useMutation({
     mutationFn: (payload: CreateEvaluacionPayload) => evaluacionesApi.createEvaluacion(payload),
     onSuccess: (data) => {
-      // Invalidar historial del paciente
+      // Invalidar historial del paciente — el backend devuelve { evaluacion, calculos }
       queryClient.invalidateQueries({
-        queryKey: pacientesKeys.evaluaciones(data.paciente_id),
+        queryKey: pacientesKeys.evaluaciones(data.evaluacion.paciente_id),
       });
     },
   });

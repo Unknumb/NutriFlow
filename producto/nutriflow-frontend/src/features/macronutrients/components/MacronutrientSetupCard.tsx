@@ -9,7 +9,6 @@ const MACRO_THEMES = {
         badgeBg: 'bg-macro-prot/10',
         badgeBorder: 'border-macro-prot/30',
         badgeText: 'text-macro-prot',
-        // Clases nativas inyectadas directamente al Thumb
         thumbClasses: '[&::-webkit-slider-thumb]:bg-macro-prot [&::-moz-range-thumb]:bg-macro-prot focus:ring-macro-prot',
     },
     cho: {
@@ -38,7 +37,7 @@ interface MacroSliderCardProps {
     sliderProps: SliderProps;
 }
 
-// 2. SUB-COMPONENTE CON SLIDER NATIVO (Adiós al bug del mouse)
+// 2. SUB-COMPONENTE CON SLIDER NATIVO
 const MacroSliderCard = ({ title, themeKey, totals, pesoActivo, sliderProps }: MacroSliderCardProps) => {
     const theme = MACRO_THEMES[themeKey];
 
@@ -60,7 +59,6 @@ const MacroSliderCard = ({ title, themeKey, totals, pesoActivo, sliderProps }: M
 
             {/* Cuerpo y Slider Nativo */}
             <div className="px-6 pb-6 space-y-5">
-                
                 <div className="relative flex items-center h-5">
                     <input
                         type="range"
@@ -69,21 +67,19 @@ const MacroSliderCard = ({ title, themeKey, totals, pesoActivo, sliderProps }: M
                         step={sliderProps.step}
                         value={sliderProps.val}
                         onChange={(e) => sliderProps.onChange(Number(e.target.value))}
-                        // Estilos base y la inyección del color dinámico del Thumb
                         className={`w-full h-4 rounded-full appearance-none cursor-pointer outline-none focus:ring-2 focus:ring-offset-1 transition-all [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-none ${theme.thumbClasses}`}
                         style={{
-                            // La barra negra que crece matemáticamente sincronizada con el thumb
                             background: `linear-gradient(to right, #1F3D33 ${(sliderProps.val / sliderProps.max) * 100}%, #E8EAE3 ${(sliderProps.val / sliderProps.max) * 100}%)`
                         }}
                     />
                 </div>
 
                 {/* Cuadrícula de Métricas */}
-                <div className="grid grid-cols-4 gap-3 text-sm">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
                     <div className="p-3 bg-porcelain border border-mist rounded-md text-center"><p className="text-xs text-ink-soft mb-1">Calorías</p><p className="font-semibold text-ink tnum">{totals.kcal} kcal</p></div>
                     <div className="p-3 bg-porcelain border border-mist rounded-md text-center"><p className="text-xs text-ink-soft mb-1">Porcentaje</p><p className="font-semibold text-ink tnum">{totals.pct}%</p></div>
                     <div className="p-3 bg-porcelain border border-mist rounded-md text-center"><p className="text-xs text-ink-soft mb-1">Gramos</p><p className="font-semibold text-ink tnum">{totals.g}g</p></div>
-                    <div className="p-3 bg-porcelain border border-mist rounded-md text-center"><p className="text-xs text-ink-soft mb-1">g/kg</p><p className="font-semibold text-ink tnum">{(totals.g / pesoActivo).toFixed(1)}</p></div>
+                    <div className="p-3 bg-porcelain border border-mist rounded-md text-center"><p className="text-xs text-ink-soft mb-1">g/kg</p><p className="font-semibold text-ink tnum">{pesoActivo > 0 ? (totals.g / pesoActivo).toFixed(1) : '—'}</p></div>
                 </div>
             </div>
         </div>
@@ -93,9 +89,10 @@ const MacroSliderCard = ({ title, themeKey, totals, pesoActivo, sliderProps }: M
 // 3. COMPONENTE ORQUESTADOR
 interface SetupCardProps {
     context: ClinicalContext;
-    inputs: MacroInputs;
+    inputs: MacroInputs & { protPct: number };
     totals: MacronutrientTotals;
     actions: {
+        setMacro: (key: 'prot' | 'cho' | 'fat', val: number) => void;
         setProtGkg: (val: number) => void;
         setChoPct: (val: number) => void;
         setFatPct: (val: number) => void;
@@ -105,23 +102,24 @@ interface SetupCardProps {
 export const MacronutrientSetupCard = ({ context, inputs, actions, totals }: SetupCardProps) => {
     const [activeTab, setActiveTab] = useState<'percentage' | 'grams' | 'gkg'>('percentage');
 
+    // En modo Porcentaje usamos setMacro directo (sin conversión intermedia) → garantiza el 100%
     const protProps: SliderProps = activeTab === 'percentage'
-        ? { val: totals.prot.pct, max: 100, step: 1, onChange: (v: number) => actions.setProtGkg(((v / 100) * context.tmbPromedio / 4) / context.pesoActivo) }
+        ? { val: totals.prot.pct, max: 100, step: 1, onChange: (v) => actions.setMacro('prot', v) }
         : activeTab === 'grams'
-            ? { val: totals.prot.g, max: 400, step: 1, onChange: (v: number) => actions.setProtGkg(v / context.pesoActivo) }
-            : { val: inputs.protGkg, max: 4, step: 0.1, onChange: (v: number) => actions.setProtGkg(v) };
+            ? { val: totals.prot.g, max: 400, step: 1, onChange: (v) => actions.setProtGkg(v / context.pesoActivo) }
+            : { val: inputs.protGkg, max: 4, step: 0.1, onChange: (v) => actions.setProtGkg(v) };
 
     const choProps: SliderProps = activeTab === 'percentage'
-        ? { val: inputs.choPct, max: 100, step: 1, onChange: (v: number) => actions.setChoPct(v) }
+        ? { val: inputs.choPct, max: 100, step: 1, onChange: (v) => actions.setMacro('cho', v) }
         : activeTab === 'grams'
-            ? { val: totals.cho.g, max: 600, step: 1, onChange: (v: number) => actions.setChoPct(((v * 4) / context.tmbPromedio) * 100) }
-            : { val: totals.cho.g / context.pesoActivo, max: 10, step: 0.1, onChange: (v: number) => actions.setChoPct((((v * context.pesoActivo) * 4) / context.tmbPromedio) * 100) };
+            ? { val: totals.cho.g, max: 600, step: 1, onChange: (v) => actions.setChoPct(((v * 4) / context.tmbPromedio) * 100) }
+            : { val: context.tmbPromedio > 0 ? totals.cho.g / context.pesoActivo : 0, max: 10, step: 0.1, onChange: (v) => actions.setChoPct((((v * context.pesoActivo) * 4) / context.tmbPromedio) * 100) };
 
     const fatProps: SliderProps = activeTab === 'percentage'
-        ? { val: inputs.fatPct, max: 100, step: 1, onChange: (v: number) => actions.setFatPct(v) }
+        ? { val: inputs.fatPct, max: 100, step: 1, onChange: (v) => actions.setMacro('fat', v) }
         : activeTab === 'grams'
-            ? { val: totals.fat.g, max: 200, step: 1, onChange: (v: number) => actions.setFatPct(((v * 9) / context.tmbPromedio) * 100) }
-            : { val: totals.fat.g / context.pesoActivo, max: 4, step: 0.1, onChange: (v: number) => actions.setFatPct((((v * context.pesoActivo) * 9) / context.tmbPromedio) * 100) };
+            ? { val: totals.fat.g, max: 200, step: 1, onChange: (v) => actions.setFatPct(((v * 9) / context.tmbPromedio) * 100) }
+            : { val: context.tmbPromedio > 0 ? totals.fat.g / context.pesoActivo : 0, max: 4, step: 0.1, onChange: (v) => actions.setFatPct((((v * context.pesoActivo) * 9) / context.tmbPromedio) * 100) };
 
     return (
         <div className="col-span-7 flex flex-col h-full gap-6">
@@ -132,19 +130,24 @@ export const MacronutrientSetupCard = ({ context, inputs, actions, totals }: Set
                 <button onClick={() => setActiveTab('gkg')} className={`inline-flex items-center justify-center gap-1.5 rounded-md border border-transparent px-2 py-1.5 text-sm font-medium whitespace-nowrap transition-colors duration-150 w-full h-full ${activeTab === 'gkg' ? 'bg-white text-ink shadow-sm' : 'text-ink-soft hover:text-ink'}`}>g/kg</button>
             </div>
 
-            <MacroSliderCard title="Proteínas" themeKey="prot" totals={totals.prot} pesoActivo={context.pesoActivo} sliderProps={protProps} />
-            <MacroSliderCard title="Carbohidratos" themeKey="cho" totals={totals.cho} pesoActivo={context.pesoActivo} sliderProps={choProps} />
-            <MacroSliderCard title="Grasas" themeKey="fat" totals={totals.fat} pesoActivo={context.pesoActivo} sliderProps={fatProps} />
+            <MacroSliderCard title="Proteínas"     themeKey="prot" totals={totals.prot} pesoActivo={context.pesoActivo} sliderProps={protProps} />
+            <MacroSliderCard title="Carbohidratos" themeKey="cho"  totals={totals.cho}  pesoActivo={context.pesoActivo} sliderProps={choProps} />
+            <MacroSliderCard title="Grasas"        themeKey="fat"  totals={totals.fat}  pesoActivo={context.pesoActivo} sliderProps={fatProps} />
 
-            {totals.summary.percent !== 100 && (
-                <div className="p-4 bg-apricot/10 border border-apricot/40 rounded-card flex items-start gap-3 border-l-4 border-l-apricot">
-                    <span className="text-[#8a5a2a] mt-0.5">⚠️</span>
-                    <div>
-                        <p className="text-sm font-semibold text-[#8a5a2a]">Validación de Macronutrientes</p>
-                        <p className="text-sm text-[#8a5a2a]/90 mt-1">La distribución actual suma <strong>{totals.summary.percent}%</strong>. Ajusta los deslizadores hasta alcanzar exactamente el 100%.</p>
-                    </div>
-                </div>
-            )}
+            {/* Indicador de balance — siempre muestra 100% con el nuevo algoritmo */}
+            <div className={`p-3 rounded-card flex items-center gap-3 border text-sm font-medium ${
+                totals.summary.percent === 100
+                    ? 'bg-pine-soft/5 border-pine-soft/30 text-pine-soft'
+                    : 'bg-apricot/10 border-apricot/40 text-[#8a5a2a] border-l-4 border-l-apricot'
+            }`}>
+                <span>{totals.summary.percent === 100 ? '✓' : '⚠️'}</span>
+                <span>
+                    Distribución total: <strong>{totals.summary.percent}%</strong>
+                    {totals.summary.percent === 100
+                        ? ' — Balance perfecto'
+                        : ' — Ajusta los deslizadores hasta alcanzar exactamente el 100%'}
+                </span>
+            </div>
         </div>
     );
 };

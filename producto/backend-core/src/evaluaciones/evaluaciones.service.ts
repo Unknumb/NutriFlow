@@ -83,6 +83,8 @@ export class EvaluacionesService {
       data: {
         ...createEvaluacionDto,
         nutricionista_id: nutricionistaId,
+        tmb: tmbPromedio,
+        gasto_energetico_total: gastoEnergeticoTotal,
       },
     });
 

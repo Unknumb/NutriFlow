@@ -1,0 +1,117 @@
+classDiagram
+    direction LR
+
+    class PerfilNutricionista {
+        +UUID id
+        +string nombre
+        +string apellido
+        +string registro_profesional
+        +string email
+    }
+
+    class Paciente {
+        +UUID id
+        +UUID nutricionista_id
+        +string nombre
+        +string apellido
+        +date fecha_nacimiento
+        +char sexo_biologico
+        +string rut
+        +string[] enfermedades
+        +string[] alergias
+    }
+
+    class Evaluacion {
+        +UUID id
+        +UUID paciente_id
+        +datetime fecha_evaluacion
+        +float peso_actual
+        +float talla_cm
+        +string nivel_actividad_fisica
+        +string objetivo
+    }
+
+    class Consulta {
+        +UUID id
+        +UUID paciente_id
+        +datetime fecha_consulta
+        +string notas_evolucion
+    }
+
+    class Antropometria {
+        +UUID id
+        +UUID consulta_id
+        +decimal peso_kg
+        +decimal talla_cm
+        +decimal circunferencia_cintura_cm
+        +decimal porcentaje_grasa_estimado
+    }
+
+    class Planificacion {
+        +UUID id
+        +UUID paciente_id
+        +string nombre
+        +bool activa
+        +float calorias_totales
+        +json distribucion_macros
+    }
+
+    class Pauta {
+        +UUID id
+        +UUID paciente_id
+        +UUID planificacion_id
+        +UUID consulta_id
+        +string nombre
+        +json tiempos_comida
+        +json estructura_grid_json
+    }
+
+    class DetallePauta {
+        +UUID id
+        +UUID pauta_id
+        +UUID alimento_id
+        +decimal cantidad_g
+        +string momento_dia
+    }
+
+    class Alimento {
+        +UUID id
+        +string nombre
+        +string categoria
+        +decimal calorias_100g
+        +decimal proteinas_100g
+        +decimal carbohidratos_100g
+        +decimal grasas_100g
+        +string marca
+        +string[] restricciones
+    }
+
+    class Preparacion {
+        +UUID id
+        +UUID nutricionista_id
+        +string nombre
+        +string tipo_comida
+    }
+
+    class IngredientePreparacion {
+        +UUID id
+        +UUID preparacion_id
+        +UUID alimento_id
+        +decimal cantidad_g
+    }
+
+    PerfilNutricionista "1" --> "0..*" Paciente : atiende
+    PerfilNutricionista "1" --> "0..*" Preparacion : crea
+    Paciente "1" --> "0..*" Evaluacion : registra
+    Paciente "1" --> "0..*" Consulta : tiene
+    Paciente "1" --> "0..*" Planificacion : tiene
+    Paciente "1" --> "0..*" Pauta : tiene
+    Consulta "1" --> "0..*" Antropometria : mide
+    Consulta "1" --> "0..*" Pauta : contiene
+    Planificacion "1" --> "0..*" Pauta : agrupa
+    Pauta "1" --> "0..*" DetallePauta : compone
+    Alimento "1" --> "0..*" DetallePauta : usado_en
+    Preparacion "1" --> "0..*" IngredientePreparacion : compone
+    Alimento "1" --> "0..*" IngredientePreparacion : usado_en
+
+    note for Planificacion "MEJORA: objetivo nutricional (macros/kcal)\nseparado de la materialización en Pauta.\nUna Planificacion agrupa varias Pautas."

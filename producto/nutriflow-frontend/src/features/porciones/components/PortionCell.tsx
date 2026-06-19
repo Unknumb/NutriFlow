@@ -25,7 +25,7 @@ interface PortionCellProps {
 
 export const PortionCell = ({ value, cellBg, textBtn, mealId, groupId, onIncrement, onDecrement, onSetPortion }: PortionCellProps) => {
     const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
-        id: `drag-portion-${mealId}-${groupId}`,
+        id: `drag::portion::${mealId}::${groupId}`,
         data: { mealId, groupId, type: 'portion' },
         disabled: value <= 0
     });

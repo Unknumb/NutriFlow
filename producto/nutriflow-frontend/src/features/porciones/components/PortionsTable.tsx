@@ -13,7 +13,7 @@ import { PortionCell } from "./PortionCell";
 import { DraggableGroupHeader } from "./DraggableGroupHeader";
 import { DroppableMealRow } from "./DroppableMealRow";
 import { usePortions } from "../hooks/usePortions";
-import { NUTRITION_GROUPS, resolverComida } from "../constants";
+import { NUTRITION_GROUPS, comidasOrdenadas } from "../constants";
 
 export const PortionsTable = () => {
   const { state, actions, computed } = usePortions();
@@ -31,8 +31,8 @@ export const PortionsTable = () => {
     (g) => targets[g.id] && targets[g.id] > 0,
   );
 
-  // Comidas activas resueltas (predefinidas + personalizadas, con horario editable)
-  const visibleMeals = activeMeals.map((mealId) => resolverComida(mealId, customMeals, mealTimes));
+  // Comidas activas resueltas y ORDENADAS por horario (predefinidas + personalizadas)
+  const visibleMeals = comidasOrdenadas(activeMeals, customMeals, mealTimes);
 
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
@@ -43,7 +43,7 @@ export const PortionsTable = () => {
 
   const handleDragStart = (event: any) => {
     const { active } = event;
-    const activeData = String(active.id).split("-");
+    const activeData = String(active.id).split("::");
     if (activeData[0] === "drag" && activeData[1] === "group") {
       setActiveDragGroupId(activeData[2]);
     } else if (activeData[0] === "drag" && activeData[1] === "portion") {
@@ -57,7 +57,7 @@ export const PortionsTable = () => {
     const { active, over } = event;
     if (!over) {
       // Drop fuera de todo (zona nula) -> Si es una porción, la restamos
-      const activeData = String(active.id).split("-");
+      const activeData = String(active.id).split("::");
       if (activeData[0] === "drag" && activeData[1] === "portion") {
         const mealId = activeData[2];
         const groupId = activeData[3];
@@ -66,8 +66,8 @@ export const PortionsTable = () => {
       return;
     }
 
-    const activeData = String(active.id).split("-");
-    const overData = String(over.id).split("-");
+    const activeData = String(active.id).split("::");
+    const overData = String(over.id).split("::");
 
     // active: drag-group-[groupId]
     // over: drop-meal-[mealId]

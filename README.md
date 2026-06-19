@@ -1,3 +1,6 @@
+<<<<<<< HEAD
+# NutriFlow
+=======
 # 🍏 NutriFlow
 
 Plataforma SaaS Cloud para la Gestión Integral de Consultas Nutricionales.
@@ -97,3 +100,4 @@ Para levantar este proyecto en tu entorno local, asegúrate de tener instalado [
 
 * **Alvaro Uribe:** Backend y Base de Datos.
 * **Benjamin Gonzalez:** Frontend y otros componentes.
+>>>>>>> develop

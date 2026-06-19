@@ -11,7 +11,7 @@ interface Props {
 
 export const DraggableGroupHeader = ({ group }: Props) => {
     const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
-        id: `drag-group-${group.id}`,
+        id: `drag::group::${group.id}`,
         data: { groupId: group.id }
     });
 

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, Param, Delete, UseGuards } from '@nestjs/common';
 import { PlanificacionesService } from './planificaciones.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -18,6 +18,11 @@ export class PlanificacionesController {
   @Get()
   findAll(@CurrentUser() user: any) {
     return this.planificacionesService.findAll(user.userId);
+  }
+
+  @Patch(':id/activa')
+  setActiva(@Param('id') id: string, @CurrentUser() user: any) {
+    return this.planificacionesService.setActiva(id, user.userId);
   }
 
   @Delete(':id')

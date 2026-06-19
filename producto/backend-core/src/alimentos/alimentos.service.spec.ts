@@ -77,12 +77,20 @@ describe('AlimentosService', () => {
   });
 
   describe('categorias', () => {
-    it('devuelve la lista plana de categorías distintas', async () => {
+    it('une las categorías canónicas con las del catálogo, sin duplicar y ordenadas', async () => {
+      // 'Cereales' ya es canónica (no debe duplicarse); 'Suplementos' no lo es (se agrega).
       prismaMock.alimentos.findMany.mockResolvedValue([
         { categoria: 'Cereales' },
-        { categoria: 'Frutas' },
+        { categoria: 'Suplementos' },
       ]);
-      await expect(service.categorias()).resolves.toEqual(['Cereales', 'Frutas']);
+
+      const cats = await service.categorias();
+
+      expect(cats.filter((c) => c === 'Cereales')).toHaveLength(1); // sin duplicados
+      expect(cats).toEqual(expect.arrayContaining(['Cereales', 'Frutas', 'Suplementos']));
+      // El resultado viene ordenado alfabéticamente (locale es).
+      const ordenada = [...cats].sort((a, b) => a.localeCompare(b, 'es'));
+      expect(cats).toEqual(ordenada);
     });
   });
 
@@ -97,8 +105,11 @@ describe('AlimentosService', () => {
     };
 
     it('rechaza con 400 una categoría inexistente', async () => {
+      // 'Cereales' es canónica y sería válida; usamos una categoría realmente inexistente.
       prismaMock.alimentos.findMany.mockResolvedValue([{ categoria: 'Frutas' }]);
-      await expect(service.crear(dto)).rejects.toBeInstanceOf(BadRequestException);
+      await expect(
+        service.crear({ ...dto, categoria: 'CategoríaInventada' }),
+      ).rejects.toBeInstanceOf(BadRequestException);
       expect(prismaMock.alimentos.create).not.toHaveBeenCalled();
     });
 

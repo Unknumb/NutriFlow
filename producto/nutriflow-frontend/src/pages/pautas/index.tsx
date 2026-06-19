@@ -8,6 +8,8 @@ import { FOOD_GROUPS } from '../../features/diet-plan/constants/foodGroups';
 import { useMacronutrientsSetup } from '../../features/macronutrients/hooks/useMacronutrientsSetup';
 import { useClinicalStore } from '../../shared/store/useClinicalStore';
 import { usePortionsStore } from '../../features/porciones/store/usePortionsStore';
+import { FlowStepper } from '../../shared/ui/organisms/FlowStepper';
+import { PlanificacionSelector } from '../../features/planificaciones/components/PlanificacionSelector';
 
 // THEMES removed
 
@@ -70,10 +72,14 @@ export const PautasPage = () => {
 
     return (
         <div className="p-4 max-w-[1400px] mx-auto w-full">
+            <FlowStepper current={2} />
             <div className="mb-6 flex items-start justify-between">
                 <div>
                     <h1 className="text-3xl font-bold text-ink tracking-tight">Armador de Pautas Alimentarias</h1>
                     <p className="text-ink-soft mt-1 font-medium">{ALL_GROUPS.length} grupos de alimentos · Sistema de intercambio por porciones</p>
+                    <div className="mt-3">
+                        <PlanificacionSelector />
+                    </div>
                 </div>
                 <div className="flex items-center gap-3">
                     <button

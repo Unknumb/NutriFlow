@@ -13,7 +13,7 @@ const MACRO_CHO = "#C98B3D";
 const MACRO_GRA = "#7A5C8E";
 
 const styles = StyleSheet.create({
-  page: { padding: 36, fontFamily: "Helvetica", backgroundColor: "#ffffff", color: INK },
+  page: { paddingTop: 36, paddingHorizontal: 36, paddingBottom: 54, fontFamily: "Helvetica", backgroundColor: "#ffffff", color: INK },
 
   // Encabezado
   header: {
@@ -226,7 +226,7 @@ export const PautaDocumentPDF = ({ data }: { data: PautaPdfData }) => {
         {/* Tabla de comidas */}
         <Text style={styles.sectionTitle}>Distribución por tiempo de comida</Text>
         <View style={styles.table}>
-          <View style={styles.tableHeader}>
+          <View style={styles.tableHeader} fixed>
             <Text style={[styles.headerText, { width: "12%" }]}>Horario</Text>
             <Text style={[styles.headerText, { width: "18%" }]}>Comida</Text>
             <Text style={[styles.headerText, { width: "25%" }]}>Porción</Text>
@@ -236,7 +236,7 @@ export const PautaDocumentPDF = ({ data }: { data: PautaPdfData }) => {
           {mealsAMostrar.map((meal, idx) => {
             const activeGroups = grupos.filter((g) => (distributions[meal.id]?.[g.id] || 0) > 0);
             return (
-              <View key={meal.id} style={[styles.mealRow, idx % 2 !== 0 ? { backgroundColor: PORCELAIN } : {}]}>
+              <View key={meal.id} style={[styles.mealRow, idx % 2 !== 0 ? { backgroundColor: PORCELAIN } : {}]} wrap={false}>
                 <View style={styles.timeCol}>
                   <Text style={styles.timeText}>{meal.time}</Text>
                 </View>
@@ -273,7 +273,7 @@ export const PautaDocumentPDF = ({ data }: { data: PautaPdfData }) => {
         {visibleGroups.length > 0 && (
           <>
             <Text style={[styles.sectionTitle, { marginTop: 12 }]}>Resumen de porciones diarias</Text>
-            <View style={styles.summaryGrid}>
+            <View style={styles.summaryGrid} wrap={false}>
               {visibleGroups.map((g) => (
                 <View key={g.id} style={styles.summaryBadge}>
                   <Text style={{ fontSize: 7, color: INK_SOFT, fontWeight: "bold", textTransform: "uppercase", textAlign: "center" }}>{g.label}</Text>
@@ -285,7 +285,7 @@ export const PautaDocumentPDF = ({ data }: { data: PautaPdfData }) => {
         )}
 
         {/* Indicaciones generales */}
-        <View style={styles.notesBox}>
+        <View style={styles.notesBox} wrap={false}>
           <Text style={[styles.sectionTitle, { marginBottom: 5 }]}>Indicaciones generales</Text>
           <Text style={styles.noteLine}>- Respeta los horarios de cada comida y evita saltarte tiempos.</Text>
           <Text style={styles.noteLine}>- Dentro de cada grupo puedes elegir cualquiera de las opciones equivalentes indicadas.</Text>

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, NotFoundException, InternalServerErrorException, BadRequestException } from '@nestjs/common';
 import { CreatePautaDto } from './dto/create-pauta.dto';
 import { UpdatePautaDto } from './dto/update-pauta.dto';
 import { PrismaService } from '../prisma/prisma.service';
@@ -54,10 +54,24 @@ export class PautasService {
   }
 
   async guardarDistribucion(dto: any, nutricionista_id: string) {
-    const pautaExistente = await this.prisma.pauta.findFirst({
-      where: { paciente_id: dto.paciente_id, nutricionista_id },
-      orderBy: { fecha_creacion: 'desc' },
+    // P7: la pauta DEBE pertenecer a una planificación válida del paciente.
+    if (!dto.planificacion_id) {
+      throw new BadRequestException(
+        'Debes asignar una planificación de macronutrientes antes de guardar la pauta.',
+      );
+    }
+    const planificacion = await this.prisma.planificacion.findFirst({
+      where: {
+        id: dto.planificacion_id,
+        nutricionista_id,
+        paciente_id: dto.paciente_id,
+      },
     });
+    if (!planificacion) {
+      throw new NotFoundException(
+        'La planificación indicada no existe o no corresponde a este paciente.',
+      );
+    }
 
     const estructuraGrid = {
       distributions: dto.distributions,
@@ -69,41 +83,74 @@ export class PautasService {
       mealTimes: dto.mealTimes || {}
     };
 
-    if (pautaExistente) {
-      const updated = await this.prisma.pauta.update({
-        where: { id: pautaExistente.id },
-        data: { estructura_grid_json: estructuraGrid as any },
+    // P6: si viene pauta_id se actualiza esa pauta; si no, se crea una nueva
+    // dentro de la planificación, con nombre autosugerido "Pauta N".
+    if (dto.pauta_id) {
+      const existente = await this.prisma.pauta.findFirst({
+        where: { id: dto.pauta_id, nutricionista_id },
       });
-      await this.redisService.client.del(`distribucion:${dto.paciente_id}:${nutricionista_id}`);
-      return updated;
-    } else {
-      const calorias_totales = dto.targets?.kcal || 2000;
-      const created = await this.prisma.pauta.create({
+      if (!existente) {
+        throw new NotFoundException('Pauta no encontrada o no tienes permisos.');
+      }
+      const updated = await this.prisma.pauta.update({
+        where: { id: dto.pauta_id },
         data: {
-          paciente_id: dto.paciente_id,
-          nutricionista_id,
-          tiempos_comida: dto.activeMeals || [],
           estructura_grid_json: estructuraGrid as any,
+          planificacion_id: dto.planificacion_id,
+          tiempos_comida: dto.activeMeals || [],
+          ...(dto.nombre?.trim() ? { nombre: dto.nombre.trim() } : {}),
         },
       });
-      await this.redisService.client.del(`distribucion:${dto.paciente_id}:${nutricionista_id}`);
-      return created;
+      // Las pautas van anidadas en planificaciones (findAll), así que su caché
+      // queda obsoleta al cambiar una pauta.
+      await this.redisService.client.del(`planificaciones:${nutricionista_id}`);
+      return updated;
     }
+
+    let nombre = dto.nombre?.trim();
+    if (!nombre) {
+      const existentes = await this.prisma.pauta.count({
+        where: { planificacion_id: dto.planificacion_id, nutricionista_id },
+      });
+      nombre = `Pauta ${existentes + 1}`;
+    }
+
+    const created = await this.prisma.pauta.create({
+      data: {
+        paciente_id: dto.paciente_id,
+        nutricionista_id,
+        planificacion_id: dto.planificacion_id,
+        nombre,
+        tiempos_comida: dto.activeMeals || [],
+        estructura_grid_json: estructuraGrid as any,
+      },
+    });
+    await this.redisService.client.del(`planificaciones:${nutricionista_id}`);
+    return created;
+  }
+
+  /** Lista las pautas (distribuciones) de un paciente para el selector. */
+  async listarPorPaciente(paciente_id: string, nutricionista_id: string) {
+    return this.prisma.pauta.findMany({
+      where: { paciente_id, nutricionista_id },
+      orderBy: { fecha_creacion: 'desc' },
+      select: {
+        id: true,
+        nombre: true,
+        planificacion_id: true,
+        fecha_creacion: true,
+      },
+    });
   }
 
   async obtenerDistribucionPorPaciente(paciente_id: string, nutricionista_id: string) {
-    const cacheKey = `distribucion:${paciente_id}:${nutricionista_id}`;
-    const cached = await this.redisService.client.get(cacheKey);
-    if (cached) return cached;
-
     const pauta = await this.prisma.pauta.findFirst({
       where: { paciente_id, nutricionista_id },
       orderBy: { fecha_creacion: 'desc' },
     });
 
     if (pauta && pauta.estructura_grid_json && Object.keys(pauta.estructura_grid_json).length > 0) {
-      await this.redisService.client.set(cacheKey, pauta.estructura_grid_json, { ex: 3600 });
-      return pauta.estructura_grid_json;
+      return { id: pauta.id, nombre: pauta.nombre, planificacion_id: pauta.planificacion_id, estructura: pauta.estructura_grid_json };
     }
 
     // Si no hay guardado, devolvemos null en vez de un mock
@@ -140,9 +187,11 @@ export class PautasService {
 
   async remove(id: string, nutricionista_id: string) {
     await this.findOne(id, nutricionista_id); // Verificar existencia y pertenencia
-    
-    return this.prisma.pauta.delete({
+
+    const deleted = await this.prisma.pauta.delete({
       where: { id },
     });
+    await this.redisService.client.del(`planificaciones:${nutricionista_id}`);
+    return deleted;
   }
 }

@@ -14,13 +14,14 @@ export const NUTRITION_GROUPS = [
     { id: 'azu', label: 'Azúcar', emoji: '🍬', headerBg: 'bg-[#B95F7E]', targetBg: 'bg-[#B95F7E] border-[#964a64]', cellBg: 'bg-[#B95F7E]/12', textBtn: 'text-[#964a64]', options: 'Azúcar rubia / Miel / Mermelada normal' },
 ];
 
+// Horario en formato HH:MM (input type="time"). Las comidas se ordenan por hora.
 export const MEALS = [
-    { id: 'desayuno', time: '07:00 - 08:30', name: 'Desayuno' },
-    { id: 'colacion_am', time: '10:30 - 11:30', name: 'Colación AM' },
-    { id: 'almuerzo', time: '13:00 - 14:30', name: 'Almuerzo' },
-    { id: 'colacion_pm', time: '16:00 - 17:30', name: 'Colación PM' },
-    { id: 'once', time: '18:30 - 20:00', name: 'Once' },
-    { id: 'cena', time: '21:00 - 22:00', name: 'Cena' },
+    { id: 'desayuno', time: '07:00', name: 'Desayuno' },
+    { id: 'colacion_am', time: '10:30', name: 'Colación AM' },
+    { id: 'almuerzo', time: '13:00', name: 'Almuerzo' },
+    { id: 'colacion_pm', time: '16:00', name: 'Colación PM' },
+    { id: 'once', time: '18:30', name: 'Once' },
+    { id: 'cena', time: '21:00', name: 'Cena' },
 ];
 
 export interface ComidaDef { id: string; name: string; time: string }
@@ -40,4 +41,22 @@ export function resolverComida(
     const name = base?.name || mealId.charAt(0).toUpperCase() + mealId.slice(1).replace(/_/g, ' ');
     const time = mealTimes[mealId] ?? base?.time ?? '';
     return { id: mealId, name, time };
+}
+
+/**
+ * Resuelve y ORDENA por horario (HH:MM) los ids de comida dados. Las comidas sin
+ * horario quedan al final, en su orden original.
+ */
+export function comidasOrdenadas(
+    mealIds: string[],
+    customMeals: ComidaDef[] = [],
+    mealTimes: Record<string, string> = {},
+): ComidaDef[] {
+    return mealIds
+        .map((id) => resolverComida(id, customMeals, mealTimes))
+        .sort((a, b) => {
+            const ta = a.time || '99:99';
+            const tb = b.time || '99:99';
+            return ta.localeCompare(tb);
+        });
 }

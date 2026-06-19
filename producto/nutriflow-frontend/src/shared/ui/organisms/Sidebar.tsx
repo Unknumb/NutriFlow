@@ -21,8 +21,8 @@ const MENU_GROUPS = [
         label: 'Planificación',
         items: [
             { path: '/macronutrientes', label: 'Macronutrientes', icon: PieChart },
-            { path: '/porciones', label: 'Distribución de Porciones', icon: Grid3x3 },
             { path: '/pautas', label: 'Armador de Pautas', icon: FileText },
+            { path: '/porciones', label: 'Distribución de Porciones', icon: Grid3x3 },
         ],
     },
     {

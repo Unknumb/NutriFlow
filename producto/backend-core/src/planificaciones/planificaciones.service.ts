@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { RedisService } from 'src/redis/redis.service';
 
@@ -13,14 +13,41 @@ export class PlanificacionesService {
 
   async create(createPlanificacionDto: CreatePlanificacionDto, userId: string) {
     try {
-      const planificacion = await this.prisma.planificacion.create({
-        data: {
-          paciente_id: createPlanificacionDto.paciente_id,
-          nutricionista_id: userId,
-          calorias_totales: createPlanificacionDto.calorias_totales,
-          distribucion_macros: createPlanificacionDto.distribucion_macros as any,
-        },
-      });
+      // Si no se envía nombre, autosugerir "Planificación N" según las que ya
+      // tiene el paciente (no global del nutricionista).
+      let nombre = createPlanificacionDto.nombre?.trim();
+      if (!nombre) {
+        const existentes = await this.prisma.planificacion.count({
+          where: {
+            paciente_id: createPlanificacionDto.paciente_id,
+            nutricionista_id: userId,
+          },
+        });
+        nombre = `Planificación ${existentes + 1}`;
+      }
+
+      // La nueva planificación pasa a ser la activa del paciente; las demás se
+      // desactivan en la misma transacción para respetar el índice único.
+      const [, planificacion] = await this.prisma.$transaction([
+        this.prisma.planificacion.updateMany({
+          where: {
+            paciente_id: createPlanificacionDto.paciente_id,
+            nutricionista_id: userId,
+            activa: true,
+          },
+          data: { activa: false },
+        }),
+        this.prisma.planificacion.create({
+          data: {
+            paciente_id: createPlanificacionDto.paciente_id,
+            nutricionista_id: userId,
+            nombre,
+            activa: true,
+            calorias_totales: createPlanificacionDto.calorias_totales,
+            distribucion_macros: createPlanificacionDto.distribucion_macros as any,
+          },
+        }),
+      ]);
 
       await this.redisService.client.del(`planificaciones:${userId}`);
 
@@ -28,6 +55,40 @@ export class PlanificacionesService {
     } catch (error) {
       console.error('Error al crear la planificación:', error);
       throw new InternalServerErrorException('Error al crear la planificación');
+    }
+  }
+
+  /** Marca una planificación como la activa del paciente, desactivando las demás. */
+  async setActiva(id: string, userId: string) {
+    const planificacion = await this.prisma.planificacion.findFirst({
+      where: { id, nutricionista_id: userId },
+    });
+    if (!planificacion) {
+      throw new NotFoundException('Planificación no encontrada o no tienes permisos');
+    }
+
+    try {
+      const [, updated] = await this.prisma.$transaction([
+        this.prisma.planificacion.updateMany({
+          where: {
+            paciente_id: planificacion.paciente_id,
+            nutricionista_id: userId,
+            activa: true,
+            id: { not: id },
+          },
+          data: { activa: false },
+        }),
+        this.prisma.planificacion.update({
+          where: { id },
+          data: { activa: true },
+        }),
+      ]);
+
+      await this.redisService.client.del(`planificaciones:${userId}`);
+      return updated;
+    } catch (error) {
+      console.error('Error al activar la planificación:', error);
+      throw new InternalServerErrorException('Error al activar la planificación');
     }
   }
 

@@ -75,10 +75,9 @@ export const PortionsConfigPanel = () => {
                                         <div className="flex-1 min-w-0">
                                             <p className="text-sm font-medium text-ink truncate">{meal.name}</p>
                                             <input
-                                                type="text"
+                                                type="time"
                                                 value={horario}
                                                 onChange={(e) => setMealTime(meal.id, e.target.value)}
-                                                placeholder="Ej: 16:00 - 17:00"
                                                 className="mt-1 w-full text-xs font-mono text-ink-soft border border-mist rounded-md px-2 py-1 outline-none focus:border-pine-soft focus:ring-1 focus:ring-pine-soft"
                                             />
                                         </div>
@@ -109,10 +108,10 @@ export const PortionsConfigPanel = () => {
                                 />
                                 <div className="flex gap-2">
                                     <input
-                                        type="text"
+                                        type="time"
                                         value={nuevoHorario}
                                         onChange={(e) => setNuevoHorario(e.target.value)}
-                                        placeholder="Horario (ej: 16:00 - 17:00)"
+                                        aria-label="Horario"
                                         className="flex-1 text-sm font-mono border border-mist rounded-md px-2.5 py-1.5 outline-none focus:border-pine-soft focus:ring-1 focus:ring-pine-soft"
                                     />
                                     <button

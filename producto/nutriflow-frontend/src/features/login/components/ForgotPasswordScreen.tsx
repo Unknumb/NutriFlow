@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Mail, ArrowRight, Loader2, MailCheck } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { useAuth } from "../../../shared/hooks/useAuth";
-import { AuthLayout, authInputClass, authLabelClass, authButtonClass, authErrorClass, authLinkClass } from "./AuthLayout";
+import { AuthLayout, authInputClass, authButtonClass, authErrorClass, authLinkClass } from "./AuthLayout";
 
 export const ForgotPasswordScreen: React.FC = () => {
   const [email, setEmail] = useState("");

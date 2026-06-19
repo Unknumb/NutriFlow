@@ -1,17 +1,18 @@
-import { LockOpen } from 'lucide-react';
+import { LockOpen, Check } from 'lucide-react';
 import type { ClinicalContext, MacronutrientTotals } from '../types';
 
 // 🚨 CLEAN CODE: Ahora recibe todo por Props, no sabe qué es Zustand.
 interface Props {
     context: ClinicalContext;
     totals: MacronutrientTotals;
+    isBalanced: boolean;
     onPesoChange: (peso: number) => void;
     onTmbChange: (tmb: number) => void;
+    onAutoBalance: () => void;
 }
 
-export const MacronutrientsHeader = ({ context, totals, onPesoChange, onTmbChange }: Props) => {
+export const MacronutrientsHeader = ({ context, totals, isBalanced, onPesoChange, onTmbChange, onAutoBalance }: Props) => {
     const totalKcalCalculado = totals.prot.kcal + totals.cho.kcal + totals.fat.kcal;
-    const isBalanced = totalKcalCalculado === context.tmbPromedio;
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6 mb-6">
@@ -54,10 +55,14 @@ export const MacronutrientsHeader = ({ context, totals, onPesoChange, onTmbChang
             <div className="bg-white flex flex-col gap-6 rounded-card border border-mist lg:col-span-3 shadow-card">
                 <div className="px-6 pt-6 pb-6">
                     <label className="items-center gap-2 text-sm font-medium mb-2 block text-ink-soft">Balance Automático</label>
-                    <button className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-all bg-pine text-porcelain hover:bg-pine-soft w-full h-14 gap-2">
-                        <LockOpen className="w-5 h-5" /> Activo
+                    <button
+                        onClick={onAutoBalance}
+                        disabled={isBalanced}
+                        className={`inline-flex items-center justify-center rounded-md text-sm font-medium transition-all w-full h-14 gap-2 ${isBalanced ? 'bg-pine-soft/10 border border-pine-soft/40 text-pine-soft cursor-default' : 'bg-pine text-porcelain hover:bg-pine-soft'}`}
+                    >
+                        {isBalanced ? <><Check className="w-5 h-5" /> Cuadrado</> : <><LockOpen className="w-5 h-5" /> Cuadrar a 100%</>}
                     </button>
-                    <p className="text-xs text-ink-soft mt-2 text-center">Auto-ajuste a 100%</p>
+                    <p className="text-xs text-ink-soft mt-2 text-center">Ajusta carbohidratos a 100%</p>
                 </div>
             </div>
         </div>

@@ -28,6 +28,12 @@ export class PautasController {
     return this.pautasService.obtenerDistribucionPorPaciente(id, user.userId);
   }
 
+  @Get('lista/:pacienteId')
+  @ApiOperation({ summary: 'Listar las pautas (distribuciones) de un paciente' })
+  async listarPorPaciente(@Param('pacienteId') pacienteId: string, @CurrentUser() user: any) {
+    return this.pautasService.listarPorPaciente(pacienteId, user.userId);
+  }
+
   @Post('guardar-distribucion')
   @ApiOperation({ summary: 'Guardar la distribución de porciones' })
   async guardarDistribucion(

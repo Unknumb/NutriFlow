@@ -132,6 +132,8 @@ interface SetupCardProps {
   isBalanced: boolean;
   actions: {
     setMacro: (key: "prot" | "cho" | "fat", val: number) => void;
+    updateFromGrams: (key: "prot" | "cho" | "fat", grams: number) => void;
+    updateFromGramsPerKg: (key: "prot" | "cho" | "fat", gPerKg: number) => void;
     setProtGkg: (val: number) => void;
     setChoPct: (val: number) => void;
     setFatPct: (val: number) => void;
@@ -164,13 +166,13 @@ export const MacronutrientSetupCard = ({
             val: totals.prot.g,
             max: 400,
             step: 1,
-            onChange: (v) => actions.setProtGkg(v / context.pesoActivo),
+            onChange: (v) => actions.updateFromGrams("prot", v),
           }
         : {
             val: inputs.protGkg,
             max: 4,
             step: 0.1,
-            onChange: (v) => actions.setProtGkg(v),
+            onChange: (v) => actions.updateFromGramsPerKg("prot", v),
           };
 
   const choProps: SliderProps =
@@ -186,18 +188,14 @@ export const MacronutrientSetupCard = ({
             val: totals.cho.g,
             max: 600,
             step: 1,
-            onChange: (v) =>
-              actions.setChoPct(((v * 4) / context.tmbPromedio) * 100),
+            onChange: (v) => actions.updateFromGrams("cho", v),
           }
         : {
             val:
               context.tmbPromedio > 0 ? totals.cho.g / context.pesoActivo : 0,
             max: 10,
             step: 0.1,
-            onChange: (v) =>
-              actions.setChoPct(
-                ((v * context.pesoActivo * 4) / context.tmbPromedio) * 100,
-              ),
+            onChange: (v) => actions.updateFromGramsPerKg("cho", v),
           };
 
   const fatProps: SliderProps =
@@ -213,18 +211,14 @@ export const MacronutrientSetupCard = ({
             val: totals.fat.g,
             max: 200,
             step: 1,
-            onChange: (v) =>
-              actions.setFatPct(((v * 9) / context.tmbPromedio) * 100),
+            onChange: (v) => actions.updateFromGrams("fat", v),
           }
         : {
             val:
               context.tmbPromedio > 0 ? totals.fat.g / context.pesoActivo : 0,
             max: 4,
             step: 0.1,
-            onChange: (v) =>
-              actions.setFatPct(
-                ((v * context.pesoActivo * 9) / context.tmbPromedio) * 100,
-              ),
+            onChange: (v) => actions.updateFromGramsPerKg("fat", v),
           };
 
   return (

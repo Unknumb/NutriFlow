@@ -92,7 +92,7 @@ export const FichasPacientes: React.FC = () => {
 
   return (
     <div className="flex flex-col h-full bg-porcelain flex-1 overflow-hidden w-full">
-      <div className="p-4 md:p-8 max-w-7xl mx-auto w-full lg:h-full flex flex-col">
+      <div className="p-3 sm:p-4 md:p-8 max-w-7xl mx-auto w-full lg:h-full flex flex-col overflow-x-hidden">
         
         {/* Encabezado Principal */}
         <div className="mb-8">
@@ -184,26 +184,26 @@ export const FichasPacientes: React.FC = () => {
               ) : (
                 <>
               <div className="px-6 pt-6">
-                <div className="flex items-start justify-between mb-6">
-                  <div className="flex items-start gap-4">
-                    <span className="relative flex h-16 w-16 shrink-0 overflow-hidden rounded-full">
-                      <span className="flex h-full w-full items-center justify-center rounded-full bg-pine-soft/10 text-pine-soft text-xl font-medium">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
+                  <div className="flex items-start gap-3 min-w-0">
+                    <span className="relative flex h-12 w-12 sm:h-16 sm:w-16 shrink-0 overflow-hidden rounded-full">
+                      <span className="flex h-full w-full items-center justify-center rounded-full bg-pine-soft/10 text-pine-soft text-lg sm:text-xl font-medium">
                         {`${pacienteSeleccionado.nombre[0]}${pacienteSeleccionado.apellido[0]}`.toUpperCase()}
                       </span>
                     </span>
-                    <div>
-                      <h2 className="text-2xl font-semibold text-ink">{pacienteSeleccionado.nombre} {pacienteSeleccionado.apellido}</h2>
-                      <p className="text-ink-soft">Nutricionista: {user?.user_metadata?.nombre || user?.email || 'Nutricionista'}</p>
+                    <div className="min-w-0">
+                      <h2 className="text-xl sm:text-2xl font-semibold text-ink break-words">{pacienteSeleccionado.nombre} {pacienteSeleccionado.apellido}</h2>
+                      <p className="text-ink-soft text-sm truncate">Nutricionista: {user?.user_metadata?.nombre || user?.email || 'Nutricionista'}</p>
                     </div>
                   </div>
                   {activePatient?.id === pacienteSeleccionado.id ? (
-                    <span className="inline-flex items-center justify-center rounded-md border border-pine-soft/50 px-2 py-0.5 text-xs font-medium bg-pine-soft/10 text-pine-soft">
+                    <span className="inline-flex items-center justify-center rounded-md border border-pine-soft/50 px-2 py-0.5 text-xs font-medium bg-pine-soft/10 text-pine-soft shrink-0 self-start sm:self-auto">
                       Paciente Activo en Sistema
                     </span>
                   ) : (
                     <button
                       onClick={handleSetActive}
-                      className="inline-flex items-center justify-center rounded-md border border-mist px-3 py-1.5 text-sm font-medium bg-white text-ink-soft hover:bg-pine-soft/5 hover:text-pine-soft transition-colors shadow-sm gap-2"
+                      className="inline-flex items-center justify-center rounded-md border border-mist px-3 py-1.5 text-sm font-medium bg-white text-ink-soft hover:bg-pine-soft/5 hover:text-pine-soft transition-colors shadow-sm gap-2 w-full sm:w-auto shrink-0"
                     >
                       <Star className="w-4 h-4" />
                       Establecer como Paciente Activo
@@ -211,8 +211,8 @@ export const FichasPacientes: React.FC = () => {
                   )}
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 mb-6">
-                  <div className="flex items-center gap-2 text-sm text-ink-soft">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+                  <div className="flex items-center gap-2 text-sm text-ink-soft min-w-0">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-ink-soft/60"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
                     {pacienteSeleccionado.telefono || 'Sin teléfono'}
                   </div>
@@ -263,11 +263,11 @@ export const FichasPacientes: React.FC = () => {
                   <div className="space-y-6 animate-in fade-in duration-300 mt-2">
                     <DatosPersonalesPaciente key={pacienteSeleccionado.id} paciente={pacienteSeleccionado} />
 
-                    <div className="flex justify-between items-center mb-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
                       <h4 className="font-semibold text-ink">Historial de Evaluaciones</h4>
-                      <button 
+                      <button
                         onClick={() => setShowNuevaEval(!showNuevaEval)}
-                        className="px-3 py-1.5 text-sm font-medium bg-pine text-white rounded-md hover:bg-pine-soft transition-colors"
+                        className="w-full sm:w-auto px-3 py-1.5 text-sm font-medium bg-pine text-white rounded-md hover:bg-pine-soft transition-colors"
                       >
                         {showNuevaEval ? 'Cancelar' : '+ Nueva Evaluación'}
                       </button>
@@ -355,9 +355,9 @@ export const FichasPacientes: React.FC = () => {
                       <div className="space-y-4">
                         {evaluaciones?.map(evaluacion => (
                           <div key={evaluacion.id} className="p-4 border border-mist bg-white rounded-card shadow-sm">
-                            <div className="flex justify-between items-center mb-3 pb-3 border-b border-mist/70">
+                            <div className="flex flex-wrap justify-between items-center gap-2 mb-3 pb-3 border-b border-mist/70">
                               <span className="font-medium text-ink">{formatearFecha(evaluacion.fecha_evaluacion)}</span>
-                              <span className="px-2 py-0.5 bg-blue-50 text-blue-700 text-xs font-medium border border-blue-100 rounded-md uppercase">
+                              <span className="px-2 py-0.5 bg-blue-50 text-blue-700 text-xs font-medium border border-blue-100 rounded-md uppercase whitespace-nowrap">
                                 {evaluacion.objetivo.replace('_', ' ')}
                               </span>
                             </div>
@@ -406,22 +406,22 @@ export const FichasPacientes: React.FC = () => {
                     ) : (
                       <div className="space-y-6">
                         {planificacionesDelPaciente.map((planificacion: any) => (
-                          <div key={planificacion.id} className="p-6 border border-mist bg-white rounded-card shadow-md transition-shadow">
-                            <div className="flex justify-between items-center mb-5 pb-4 border-b border-mist">
-                              <div>
-                                <div className="flex items-center gap-2">
-                                  <span className="font-semibold text-ink text-xl">{planificacion.nombre || 'Planificación'}</span>
+                          <div key={planificacion.id} className="p-4 sm:p-6 border border-mist bg-white rounded-card shadow-md transition-shadow">
+                            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-5 pb-4 border-b border-mist">
+                              <div className="min-w-0">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <span className="font-semibold text-ink text-lg sm:text-xl truncate">{planificacion.nombre || 'Planificación'}</span>
                                   {planificacion.activa && (
-                                    <span className="px-2 py-0.5 bg-pine-soft/10 text-pine-soft text-xs font-semibold border border-pine-soft/30 rounded-full">Activa</span>
+                                    <span className="px-2 py-0.5 bg-pine-soft/10 text-pine-soft text-xs font-semibold border border-pine-soft/30 rounded-full shrink-0">Activa</span>
                                   )}
                                 </div>
                                 <p className="text-sm text-ink-soft mt-1">Creada el {formatearFecha(planificacion.fecha_creacion)}</p>
                               </div>
-                              <div className="flex items-center gap-3">
-                                <span className="px-4 py-1.5 bg-pine-soft/5 text-pine-soft text-sm font-bold border border-pine-soft/30 rounded-full">
+                              <div className="flex items-center gap-3 shrink-0">
+                                <span className="px-4 py-1.5 bg-pine-soft/5 text-pine-soft text-sm font-bold border border-pine-soft/30 rounded-full whitespace-nowrap">
                                   {Math.round(planificacion.calorias_totales)} kcal
                                 </span>
-                                <button 
+                                <button
                                   onClick={() => {
                                     if (window.confirm('¿Estás seguro de que deseas eliminar esta planificación y TODAS sus pautas asociadas? Esta acción no se puede deshacer.')) {
                                       deletePlanificacion.mutate(planificacion.id);
@@ -436,7 +436,7 @@ export const FichasPacientes: React.FC = () => {
                               </div>
                             </div>
                             
-                            <div className="grid grid-cols-3 gap-4 mb-6">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
                               <div className="bg-clinical-red/5 p-4 rounded-card border border-clinical-red/20 flex flex-col items-center justify-center">
                                 <p className="text-sm font-medium text-clinical-red mb-1">Proteínas</p>
                                 <p className="text-2xl font-bold text-clinical-red">{Math.round(planificacion.distribucion_macros?.proteina || 0)}%</p>

@@ -134,10 +134,10 @@ export const BibliotecaPreparaciones: React.FC = () => {
   };
 
   return (
-    <div className="p-8 max-w-7xl mx-auto">
+    <div className="w-full max-w-7xl mx-auto overflow-x-hidden p-3 sm:p-4 md:p-8">
       {/* Encabezado */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-semibold text-ink">Biblioteca de Preparaciones</h1>
+      <div className="mb-6 md:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-semibold text-ink">Biblioteca de Preparaciones</h1>
         <p className="text-ink-soft mt-1">
           Gestiona tus preparaciones y utiliza las del sistema
           {preparaciones ? ` · ${preparaciones.length} disponibles` : ''}
@@ -145,8 +145,8 @@ export const BibliotecaPreparaciones: React.FC = () => {
       </div>
 
       {/* Controles */}
-      <div className="mb-6 flex items-center gap-4">
-        <div className="flex-1 relative">
+      <div className="mb-6 flex flex-col md:flex-row gap-3 md:items-center w-full">
+        <div className="flex-1 relative min-w-0">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-ink-soft/60" />
           <input
             type="text"
@@ -159,7 +159,7 @@ export const BibliotecaPreparaciones: React.FC = () => {
 
         <button
           onClick={() => setIsModalOpen(true)}
-          className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border bg-white text-ink hover:bg-mist/60 h-9 px-4 py-2 gap-2 shadow-sm"
+          className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border bg-white text-ink hover:bg-mist/60 h-9 px-4 py-2 gap-2 shadow-sm w-full md:w-auto"
         >
           <Plus className="w-4 h-4" />
           Nueva Preparación
@@ -167,7 +167,7 @@ export const BibliotecaPreparaciones: React.FC = () => {
 
         <Link
           to="/generador"
-          className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors text-white h-9 px-4 py-2 gap-2 bg-pine hover:bg-pine-soft shadow-sm"
+          className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors text-white h-9 px-4 py-2 gap-2 bg-pine hover:bg-pine-soft shadow-sm w-full md:w-auto"
         >
           <Sparkles className="w-4 h-4" />
           Ir al Generador de Menús
@@ -189,7 +189,7 @@ export const BibliotecaPreparaciones: React.FC = () => {
 
       {/* Grid */}
       {!isLoading && !isError && (
-        <div className="grid grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
           {preparacionesFiltradas.map((prep) => (
             <TarjetaPreparacion
               key={prep.id}
@@ -200,7 +200,7 @@ export const BibliotecaPreparaciones: React.FC = () => {
             />
           ))}
           {preparacionesFiltradas.length === 0 && (
-            <div className="col-span-3 text-center py-12 text-ink-soft">
+            <div className="col-span-full text-center py-12 text-ink-soft">
               No se encontraron preparaciones
             </div>
           )}

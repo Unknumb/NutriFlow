@@ -71,20 +71,20 @@ export const PautasPage = () => {
     const ALL_GROUPS = [...FOOD_GROUPS, ...customFoods];
 
     return (
-        <div className="p-4 max-w-[1400px] mx-auto w-full">
+        <div className="w-full max-w-[1400px] mx-auto overflow-x-hidden p-3 sm:p-4 md:p-6">
             <FlowStepper current={2} />
-            <div className="mb-6 flex items-start justify-between">
-                <div>
-                    <h1 className="text-3xl font-bold text-ink tracking-tight">Armador de Pautas Alimentarias</h1>
-                    <p className="text-ink-soft mt-1 font-medium">{ALL_GROUPS.length} grupos de alimentos · Sistema de intercambio por porciones</p>
+            <div className="mb-6 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                <div className="min-w-0">
+                    <h1 className="text-2xl sm:text-3xl font-bold text-ink tracking-tight break-words">Armador de Pautas Alimentarias</h1>
+                    <p className="text-ink-soft mt-1 font-medium text-sm sm:text-base">{ALL_GROUPS.length} grupos de alimentos · Sistema de intercambio por porciones</p>
                     <div className="mt-3">
                         <PlanificacionSelector />
                     </div>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 shrink-0">
                     <button
                         onClick={() => setIsAddModalOpen(true)}
-                        className="inline-flex items-center gap-2 bg-white border-2 border-pine text-pine-soft hover:bg-pine-soft/5 px-5 py-2.5 rounded-card text-sm font-bold transition-colors shadow-sm"
+                        className="inline-flex items-center gap-2 bg-white border-2 border-pine text-pine-soft hover:bg-pine-soft/5 px-4 py-2 sm:px-5 sm:py-2.5 rounded-card text-sm font-bold transition-colors shadow-sm w-full sm:w-auto"
                     >
                         <Plus className="w-4 h-4" /> Agregar grupo de alimento
                     </button>
@@ -101,7 +101,7 @@ export const PautasPage = () => {
                 />
 
                 {/* PANEL DERECHO (Renderizado Dinámico) */}
-                <div className="col-span-9">
+                <div className="col-span-full lg:col-span-9">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {ALL_GROUPS.map((group) => (
                             <FoodGroupCard

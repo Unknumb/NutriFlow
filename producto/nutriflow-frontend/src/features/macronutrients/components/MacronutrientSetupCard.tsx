@@ -62,13 +62,13 @@ const MacroSliderCard = ({
       className={`bg-white flex flex-col gap-6 rounded-card border border-mist border-l-4 shadow-card ${theme.borderLeft}`}
     >
       {/* Header de la Tarjeta */}
-      <div className="px-6 pt-6 border-b border-mist pb-4">
-        <h4 className="leading-none flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className={`w-3 h-3 rounded-full ${theme.bgIcon}`}></div>
-            <span className="font-display font-semibold text-ink">{title}</span>
+      <div className="px-4 sm:px-6 pt-4 sm:pt-6 border-b border-mist pb-4">
+        <h4 className="leading-none flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className={`w-3 h-3 rounded-full shrink-0 ${theme.bgIcon}`}></div>
+            <span className="font-display font-semibold text-ink truncate">{title}</span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 shrink-0">
             <span className="inline-flex items-center justify-center rounded-md border border-mist text-ink-soft font-semibold text-sm px-3 py-1 tnum">
               {totals.pct}%
             </span>
@@ -82,7 +82,7 @@ const MacroSliderCard = ({
       </div>
 
       {/* Cuerpo y Slider Nativo */}
-      <div className="px-6 pb-6 space-y-5">
+      <div className="px-4 sm:px-6 pb-4 sm:pb-6 space-y-5">
         <div className="relative flex items-center h-5">
           <input
             type="range"
@@ -224,24 +224,24 @@ export const MacronutrientSetupCard = ({
   return (
     <div className="col-span-7 flex flex-col h-full gap-6">
       <div
-        className="bg-mist/60 p-1 h-9 items-center justify-center rounded-md flex border border-mist"
+        className="bg-mist/60 p-1 min-h-9 items-center justify-center rounded-md flex border border-mist"
         role="tablist"
       >
         <button
           onClick={() => setActiveTab("percentage")}
-          className={`inline-flex items-center justify-center gap-1.5 rounded-md border border-transparent px-2 py-1.5 text-sm font-medium whitespace-nowrap transition-colors duration-150 w-full h-full ${activeTab === "percentage" ? "bg-white text-ink shadow-sm" : "text-ink-soft hover:text-ink"}`}
+          className={`inline-flex items-center justify-center gap-1 rounded-md border border-transparent px-2 py-1.5 text-xs sm:text-sm font-medium whitespace-nowrap transition-colors duration-150 w-full h-full ${activeTab === "percentage" ? "bg-white text-ink shadow-sm" : "text-ink-soft hover:text-ink"}`}
         >
-          Porcentaje (%)
+          <span className="hidden sm:inline">Porcentaje</span> (%)
         </button>
         <button
           onClick={() => setActiveTab("grams")}
-          className={`inline-flex items-center justify-center gap-1.5 rounded-md border border-transparent px-2 py-1.5 text-sm font-medium whitespace-nowrap transition-colors duration-150 w-full h-full ${activeTab === "grams" ? "bg-white text-ink shadow-sm" : "text-ink-soft hover:text-ink"}`}
+          className={`inline-flex items-center justify-center gap-1 rounded-md border border-transparent px-2 py-1.5 text-xs sm:text-sm font-medium whitespace-nowrap transition-colors duration-150 w-full h-full ${activeTab === "grams" ? "bg-white text-ink shadow-sm" : "text-ink-soft hover:text-ink"}`}
         >
-          Gramos Totales (g)
+          <span className="hidden sm:inline">Gramos</span> (g)
         </button>
         <button
           onClick={() => setActiveTab("gkg")}
-          className={`inline-flex items-center justify-center gap-1.5 rounded-md border border-transparent px-2 py-1.5 text-sm font-medium whitespace-nowrap transition-colors duration-150 w-full h-full ${activeTab === "gkg" ? "bg-white text-ink shadow-sm" : "text-ink-soft hover:text-ink"}`}
+          className={`inline-flex items-center justify-center gap-1 rounded-md border border-transparent px-2 py-1.5 text-xs sm:text-sm font-medium whitespace-nowrap transition-colors duration-150 w-full h-full ${activeTab === "gkg" ? "bg-white text-ink shadow-sm" : "text-ink-soft hover:text-ink"}`}
         >
           g/kg
         </button>

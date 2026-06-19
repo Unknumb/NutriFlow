@@ -57,8 +57,8 @@ export const PorcionesPage = () => {
 
             <FlowStepper current={3} />
 
-            <div className="bg-white rounded-t-card border border-mist border-b-0 px-6 py-4 shrink-0">
-                <div className="flex items-start justify-between gap-4">
+            <div className="bg-white rounded-t-card border border-mist border-b-0 px-4 sm:px-6 py-4 shrink-0">
+                <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                     <div>
                         <h1 className="text-xl font-semibold text-ink">Distribución de Porciones</h1>
                         <p className="text-xs text-ink-soft mt-1">Configura y ajusta la pauta nutricional del paciente activo.</p>
@@ -66,14 +66,14 @@ export const PorcionesPage = () => {
                             <PlanificacionSelector />
                         </div>
                     </div>
-                    <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
+                    <div className="flex flex-wrap items-center gap-2 md:justify-end">
                         {/* Selector de pautas de la planificación activa */}
                         <select
                             value={selectedPautaId ?? 'nueva'}
                             onChange={(e) => onSelectorChange(e.target.value)}
                             disabled={!puedeGuardar}
                             aria-label="Pauta"
-                            className="px-3 py-1.5 rounded-lg border border-mist bg-white text-xs text-ink font-medium outline-none focus:border-pine-soft disabled:opacity-50 disabled:cursor-not-allowed max-w-[180px]"
+                            className="px-3 py-1.5 rounded-lg border border-mist bg-white text-xs text-ink font-medium outline-none focus:border-pine-soft disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto sm:max-w-[180px]"
                         >
                             {pautas.map((p) => (
                                 <option key={p.id} value={p.id}>
@@ -129,18 +129,18 @@ export const PorcionesPage = () => {
                 )}
             </div>
 
-            <div className="bg-white px-6 py-3 border-x border-b border-mist rounded-b-card mb-4 shrink-0 shadow-sm">
-                <div className="text-ink-soft h-9 w-fit items-center justify-center rounded-xl p-[3px] flex bg-mist/60">
-                    <button onClick={() => setActiveTab('tabla')} className={`inline-flex h-full items-center justify-center rounded-lg px-3 py-1 font-medium gap-1.5 text-xs transition-all ${activeTab === 'tabla' ? 'bg-white text-ink shadow-sm' : 'hover:text-ink'}`}>
+            <div className="bg-white px-4 sm:px-6 py-3 border-x border-b border-mist rounded-b-card mb-4 shrink-0 shadow-sm overflow-x-auto scrollbar-hide">
+                <div className="text-ink-soft h-9 w-fit min-w-full items-center justify-center rounded-xl p-[3px] flex bg-mist/60">
+                    <button onClick={() => setActiveTab('tabla')} className={`inline-flex h-full items-center justify-center rounded-lg px-3 py-1 font-medium gap-1.5 text-xs transition-all whitespace-nowrap ${activeTab === 'tabla' ? 'bg-white text-ink shadow-sm' : 'hover:text-ink'}`}>
                         <LayoutGrid className="w-3.5 h-3.5" /> Tabla
                     </button>
-                    <button onClick={() => setActiveTab('pauta')} className={`inline-flex h-full items-center justify-center rounded-lg px-3 py-1 font-medium gap-1.5 text-xs transition-all ${activeTab === 'pauta' ? 'bg-white text-ink shadow-sm' : 'hover:text-ink'}`}>
+                    <button onClick={() => setActiveTab('pauta')} className={`inline-flex h-full items-center justify-center rounded-lg px-3 py-1 font-medium gap-1.5 text-xs transition-all whitespace-nowrap ${activeTab === 'pauta' ? 'bg-white text-ink shadow-sm' : 'hover:text-ink'}`}>
                         <FileText className="w-3.5 h-3.5" /> Vista Pauta
                     </button>
-                    <button onClick={() => setActiveTab('opciones')} className={`inline-flex h-full items-center justify-center rounded-lg px-3 py-1 font-medium gap-1.5 text-xs transition-all ${activeTab === 'opciones' ? 'bg-white text-ink shadow-sm' : 'hover:text-ink'}`}>
+                    <button onClick={() => setActiveTab('opciones')} className={`inline-flex h-full items-center justify-center rounded-lg px-3 py-1 font-medium gap-1.5 text-xs transition-all whitespace-nowrap ${activeTab === 'opciones' ? 'bg-white text-ink shadow-sm' : 'hover:text-ink'}`}>
                         <BookOpen className="w-3.5 h-3.5" /> Opciones por Grupo
                     </button>
-                    <button onClick={() => setActiveTab('pdf')} className={`inline-flex h-full items-center justify-center rounded-lg px-3 py-1 font-medium gap-1.5 text-xs transition-all ${activeTab === 'pdf' ? 'bg-white text-ink shadow-sm' : 'hover:text-ink'}`}>
+                    <button onClick={() => setActiveTab('pdf')} className={`inline-flex h-full items-center justify-center rounded-lg px-3 py-1 font-medium gap-1.5 text-xs transition-all whitespace-nowrap ${activeTab === 'pdf' ? 'bg-white text-ink shadow-sm' : 'hover:text-ink'}`}>
                         <Download className="w-3.5 h-3.5" /> Exportar PDF
                     </button>
                 </div>

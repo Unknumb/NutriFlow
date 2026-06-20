@@ -6,8 +6,8 @@ import { GuardarDistribucionMacrosDto } from './dto/guardar-distribucion.dto';
 
 @Injectable()
 export class MathEngineService {
-  // 1. Ajustamos la URL base según tu main.py (prefix: /api/calculadoras)
-  private readonly pythonUrl = 'http://127.0.0.1:8000/api/calculadoras';
+  // URL base del motor matemático (backend-math). Configurable vía MATH_ENGINE_URL para el deploy.
+  private readonly pythonUrl = `${process.env.MATH_ENGINE_URL ?? 'http://localhost:8000'}/api/calculadoras`;
 
   constructor(
     private readonly httpService: HttpService,

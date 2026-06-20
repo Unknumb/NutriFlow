@@ -60,7 +60,7 @@ export class EvaluacionesService {
       } else {
         // 3. Petición HTTP al motor matemático (usamos el prefijo /api/calculadoras definido en FastAPI)
         const response = await firstValueFrom(
-          this.httpService.post('http://localhost:8000/api/calculadoras/tmb', {
+          this.httpService.post(`${process.env.MATH_ENGINE_URL ?? 'http://localhost:8000'}/api/calculadoras/tmb`, {
             sexo: sexoStr,
             edad: edad,
             talla_cm: createEvaluacionDto.talla_cm,

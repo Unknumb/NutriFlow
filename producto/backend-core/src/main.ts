@@ -6,8 +6,12 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   
-  // Habilitar CORS y validación global
-  app.enableCors();
+  // Habilitar CORS y validación global.
+  // En producción se restringe a los orígenes de FRONTEND_URL (separados por coma);
+  // si la variable no está definida, se reflejan todos los orígenes (útil en desarrollo).
+  app.enableCors({
+    origin: process.env.FRONTEND_URL?.split(',').map((o) => o.trim()) ?? true,
+  });
   app.useGlobalPipes(new ValidationPipe({
     whitelist: true,
     forbidNonWhitelisted: true,

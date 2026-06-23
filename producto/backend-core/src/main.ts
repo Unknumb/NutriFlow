@@ -11,6 +11,9 @@ async function bootstrap() {
   // si la variable no está definida, se reflejan todos los orígenes (útil en desarrollo).
   app.enableCors({
     origin: process.env.FRONTEND_URL?.split(',').map((o) => o.trim()) ?? true,
+    allowedHeaders: ['Authorization', 'Accept', 'Content-Type'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    credentials: true,
   });
   app.useGlobalPipes(new ValidationPipe({
     whitelist: true,

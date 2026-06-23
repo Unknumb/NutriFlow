@@ -10,7 +10,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
  */
 export type EstadoConexion = 'verificando' | 'conectado' | 'sin-base-datos' | 'sin-conexion';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+// Se quitan las barras finales para evitar URLs con doble barra ("//health")
+// cuando VITE_API_URL viene configurada con "/" al final (ej. en Vercel/Render).
+const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3000').replace(/\/+$/, '');
 
 // Cada cuánto se vuelve a comprobar la conexión de forma automática (30 s).
 const INTERVALO_MS = 30_000;

@@ -15,7 +15,10 @@ export class AppController {
    * de modo que el frontend pueda distinguir "servidor caído" (la petición
    * falla) de "servidor arriba pero base de datos sin responder".
    */
-  @Get('health')
+  // Se expone en dos rutas: `/health` (estándar, lo usa el monitoreo de Render)
+  // y `/estado` (la consume el frontend; los bloqueadores de anuncios suelen
+  // bloquear rutas llamadas "health", provocando ERR_BLOCKED_BY_CLIENT).
+  @Get(['health', 'estado'])
   @ApiOperation({ summary: 'Estado del servidor y de la base de datos' })
   async health(): Promise<{ servidor: boolean; baseDatos: boolean; hora: string }> {
     let baseDatos = false;

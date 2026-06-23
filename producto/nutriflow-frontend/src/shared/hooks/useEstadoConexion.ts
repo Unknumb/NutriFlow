@@ -48,7 +48,7 @@ export function useEstadoConexion(): UseEstadoConexionReturn {
     const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
     try {
-      const res = await fetch(`${API_URL}/health`, {
+      const res = await fetch(`${API_URL}/estado`, {
         method: 'GET',
         signal: controller.signal,
         headers: { Accept: 'application/json' },

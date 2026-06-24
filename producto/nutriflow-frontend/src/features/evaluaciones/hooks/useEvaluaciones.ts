@@ -1,7 +1,21 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { evaluacionesApi } from '../services/evaluacionesApi';
 import { pacientesKeys } from '../../../shared/api/queryKeys';
-import type { CreateEvaluacionPayload } from '../types/evaluacion.types';
+import type { CreateEvaluacionPayload, UpdateEvaluacionPayload } from '../types/evaluacion.types';
+
+export const useUpdateEvaluacion = (pacienteId: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: Partial<UpdateEvaluacionPayload> }) =>
+      evaluacionesApi.updateEvaluacion(id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: pacientesKeys.evaluaciones(pacienteId),
+      });
+    },
+  });
+};
 
 export const useEvaluacionesByPaciente = (pacienteId: string | undefined) => {
   return useQuery({

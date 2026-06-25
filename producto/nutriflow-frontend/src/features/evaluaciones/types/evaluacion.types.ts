@@ -19,6 +19,11 @@ export interface CreateEvaluacionPayload {
   objetivo: string;
 }
 
+export interface UpdateEvaluacionPayload extends Omit<CreateEvaluacionPayload, 'paciente_id'> {
+  tmb?: number;
+  gasto_energetico_total?: number;
+}
+
 export interface EvaluacionConCalculos extends Evaluacion {
   calculos?: {
     tmb: Record<string, number>;

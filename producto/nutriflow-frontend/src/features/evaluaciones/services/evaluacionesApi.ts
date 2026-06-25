@@ -1,5 +1,5 @@
 import { apiClient } from '../../../shared/api/apiClient';
-import type { CreateEvaluacionPayload, EvaluacionConCalculos, CreateEvaluacionResponse } from '../types/evaluacion.types';
+import type { CreateEvaluacionPayload, UpdateEvaluacionPayload, EvaluacionConCalculos, CreateEvaluacionResponse } from '../types/evaluacion.types';
 
 export const evaluacionesApi = {
   fetchEvaluacionesByPaciente: async (pacienteId: string): Promise<EvaluacionConCalculos[]> => {
@@ -17,7 +17,7 @@ export const evaluacionesApi = {
     return data;
   },
 
-  updateEvaluacion: async (id: string, payload: Partial<CreateEvaluacionPayload>): Promise<EvaluacionConCalculos> => {
+  updateEvaluacion: async (id: string, payload: Partial<UpdateEvaluacionPayload>): Promise<EvaluacionConCalculos> => {
     const { data } = await apiClient.patch(`/evaluaciones/${id}`, payload);
     return data;
   },

@@ -40,7 +40,7 @@ async function bootstrap() {
       return callback(null, permitido);
     },
     allowedHeaders: ['Authorization', 'Accept', 'Content-Type'],
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     credentials: true,
   });
   app.useGlobalPipes(new ValidationPipe({

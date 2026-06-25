@@ -60,7 +60,7 @@ export class MenusService {
     const cached = await this.redisService.client.get(cacheKey);
     if (cached) return cached;
 
-    const url = 'http://127.0.0.1:8000/api/menus/generar-menu';
+    const url = `${process.env.MATH_ENGINE_URL ?? 'http://localhost:8000'}/api/menus/generar-menu`;
     try {
       const { data } = await firstValueFrom(this.httpService.post(url, payload));
       await this.redisService.client.set(cacheKey, data, { ex: 7200 }); // 2 horas

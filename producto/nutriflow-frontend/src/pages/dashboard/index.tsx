@@ -12,7 +12,7 @@ export const DashboardPage = () => {
   const { data, isLoading, error } = useDashboardClinico(activePatient);
 
   return (
-    <div className="p-8 max-w-7xl mx-auto w-full">
+    <div className="w-full max-w-7xl mx-auto overflow-x-hidden p-3 sm:p-4 md:p-8">
       <PageHeader
         eyebrow="Clínica"
         title="Dashboard Clínico"
@@ -28,7 +28,7 @@ export const DashboardPage = () => {
             <div className="p-4 mb-4 text-clinical-red">Error al obtener datos del motor matemático</div>
           ) : null}
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
             <TmbCalculatorCard data={data?.tmb} />
             <MacrosCard />
             <ReferenceWeightsCard data={data?.pesos} />

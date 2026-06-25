@@ -19,7 +19,7 @@ export const FoodGroupCard = ({ group, portions, onIncrement, onDecrement, onDel
 
     return (
         <div
-            className={`rounded-card border-2 ${group.theme.bgMain} ${group.theme.border} overflow-hidden flex flex-col`}
+            className={`w-full min-w-0 rounded-card border-2 ${group.theme.bgMain} ${group.theme.border} overflow-hidden flex flex-col`}
             style={borderStyle}
         >
             {/* Encabezado de color */}

@@ -7,6 +7,8 @@ export interface Evaluacion {
   talla_cm: number;
   nivel_actividad_fisica: string;
   objetivo: string;
+  tmb?: number;
+  gasto_energetico_total?: number;
 }
 
 export interface CreateEvaluacionPayload {
@@ -17,7 +19,24 @@ export interface CreateEvaluacionPayload {
   objetivo: string;
 }
 
-export interface EvaluacionConCalculos extends Evaluacion {
+export interface UpdateEvaluacionPayload extends Omit<CreateEvaluacionPayload, 'paciente_id'> {
   tmb?: number;
   gasto_energetico_total?: number;
+}
+
+export interface EvaluacionConCalculos extends Evaluacion {
+  calculos?: {
+    tmb: Record<string, number>;
+    gasto_energetico_total: number;
+  };
+}
+
+// Respuesta del POST /evaluaciones — el backend devuelve la evaluación
+// persistida junto al desglose de cálculos del motor matemático.
+export interface CreateEvaluacionResponse {
+  evaluacion: Evaluacion;
+  calculos: {
+    tmb: Record<string, number>;
+    gasto_energetico_total: number;
+  };
 }

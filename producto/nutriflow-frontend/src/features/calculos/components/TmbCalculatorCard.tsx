@@ -81,8 +81,8 @@ export const TmbCalculatorCard = ({ data }: TmbProps) => {
                 </div>
 
                 {activeData.length > 0 && (
-                    <div className="bg-porcelain rounded-md border border-mist p-4 mb-4">
-                        <table className="w-full">
+                    <div className="bg-porcelain rounded-md border border-mist p-4 mb-4 overflow-x-auto">
+                        <table className="w-full min-w-[280px]">
                             <thead>
                                 <tr className="border-b border-mist">
                                     <th className="text-left py-2 text-sm font-medium text-ink-soft">Fórmula</th>
@@ -102,9 +102,9 @@ export const TmbCalculatorCard = ({ data }: TmbProps) => {
                 )}
 
                 <div className="bg-pine rounded-md p-5">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                         <span className="text-sm font-medium text-porcelain/80 uppercase tracking-wide">Promedio TMB</span>
-                        <span className="cifra-data text-[32px] font-medium text-porcelain">
+                        <span className="cifra-data text-2xl sm:text-[32px] font-medium text-porcelain break-words">
                             {averageKcal > 0 ? `${averageKcal} kcal/día` : 'Seleccione al menos una fórmula'}
                         </span>
                     </div>

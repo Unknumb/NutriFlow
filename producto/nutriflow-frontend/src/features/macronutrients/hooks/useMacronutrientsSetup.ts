@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useClinicalStore } from '../../../shared/store/useClinicalStore';
 import { useCreatePlanificacion } from '../../planificaciones/hooks/usePlanificaciones';
 
@@ -13,7 +13,6 @@ const readMacro = (patientId: string | undefined, field: keyof typeof DEFAULTS) 
 };
 
 export const useMacronutrientsSetup = () => {
-    // 1. Estado Global (Zustand)
     const activePatient = useClinicalStore((state) => state.activePatient);
     const pesoActivo = useClinicalStore((state) => state.pesoActivo);
     const tmbPromedio = useClinicalStore((state) => state.tmbPromedio);
@@ -38,35 +37,92 @@ export const useMacronutrientsSetup = () => {
         localStorage.setItem(macroKey(activePatient?.id, 'fatPct'), fatPct.toString());
     }, [protGkg, choPct, fatPct, activePatient?.id]);
 
-    // 3. Motor de Cálculo Reactivo
+    // Convierte g/kg → % y redondea para no acumular decimales en los sliders
+    const macrosPct = useMemo(() => {
+        const protKcal = protGkg * pesoActivo * 4;
+        const prot = tmbPromedio > 0 ? Math.round((protKcal / tmbPromedio) * 100) : 0;
+        return { prot, cho: Math.round(choPct), fat: Math.round(fatPct) };
+    }, [protGkg, pesoActivo, tmbPromedio, choPct, fatPct]);
+
+    // Motor de cálculo reactivo
     const totals = useMemo(() => {
-        // Proteínas (Base: g/kg)
-        const protG = protGkg * pesoActivo;
-        const protKcal = protG * 4;
-        const protPct = tmbPromedio > 0 ? (protKcal / tmbPromedio) * 100 : 0;
+        const protKcal = (macrosPct.prot / 100) * tmbPromedio;
+        const protG    = protKcal / 4;
 
-        // Carbohidratos (Base: %)
-        const choKcal = (choPct / 100) * tmbPromedio;
-        const choG = choKcal / 4;
+        const choKcal  = (macrosPct.cho / 100) * tmbPromedio;
+        const choG     = choKcal / 4;
 
-        // Grasas (Base: %)
-        const fatKcal = (fatPct / 100) * tmbPromedio;
-        const fatG = fatKcal / 9;
-
-        const totalGrams = protG + choG + fatG;
-        const totalPercent = Math.round(protPct) + Math.round(choPct) + Math.round(fatPct);
+        const fatKcal  = (macrosPct.fat / 100) * tmbPromedio;
+        const fatG     = fatKcal / 9;
 
         return {
-            prot: { g: Math.round(protG), kcal: Math.round(protKcal), pct: Math.round(protPct) },
-            cho: { g: Math.round(choG), kcal: Math.round(choKcal), pct: Math.round(choPct) },
-            fat: { g: Math.round(fatG), kcal: Math.round(fatKcal), pct: Math.round(fatPct) },
-            summary: { grams: Math.round(totalGrams), percent: totalPercent }
+            prot: { g: Math.round(protG), kcal: Math.round(protKcal), pct: macrosPct.prot },
+            cho:  { g: Math.round(choG),  kcal: Math.round(choKcal),  pct: macrosPct.cho  },
+            fat:  { g: Math.round(fatG),  kcal: Math.round(fatKcal),  pct: macrosPct.fat  },
+            summary: {
+                grams:   Math.round(protG + choG + fatG),
+                percent: macrosPct.prot + macrosPct.cho + macrosPct.fat, // siempre 100
+            }
         };
-    }, [protGkg, choPct, fatPct, pesoActivo, tmbPromedio]);
+    }, [macrosPct, tmbPromedio]);
 
-    // 4. Mutación de TanStack Query (Para Guardar Planificacion)
     const createPlanificacion = useCreatePlanificacion();
     const setActivePlanificacionId = useClinicalStore((state) => state.setActivePlanificacionId);
+
+    // Auto-balance: al mover A, la diferencia se resta de B primero y el overflow a C.
+    // Garantiza sum = 100 en cada interacción del slider.
+    const setMacro = useCallback((key: "prot" | "cho" | "fat", val: number) => {
+        const v = Math.round(val);
+        const curProt = macrosPct.prot;
+        const curCho  = macrosPct.cho;
+        const curFat  = macrosPct.fat;
+
+        let newProt = curProt;
+        let newCho  = curCho;
+        let newFat  = curFat;
+
+        if (key === "prot") {
+            const diff = v - curProt;
+            newProt = v;
+            newCho  = curCho - diff;                                // B absorbe primero
+            if (newCho < 0) { newFat = Math.max(0, curFat + newCho); newCho = 0; }
+        } else if (key === "cho") {
+            const diff = v - curCho;
+            newCho  = v;
+            newFat  = curFat - diff;                                // B absorbe primero
+            if (newFat < 0) { newProt = Math.max(0, curProt + newFat); newFat = 0; }
+        } else {
+            const diff = v - curFat;
+            newFat  = v;
+            newCho  = curCho - diff;                                // B absorbe primero
+            if (newCho < 0) { newProt = Math.max(0, curProt + newCho); newCho = 0; }
+        }
+
+        // Corrección de residual: absorbe desvíos de redondeo o estado inicial desbalanceado
+        const residual = 100 - newProt - newCho - newFat;
+        if (residual !== 0) {
+            if (key !== "fat") newFat = Math.max(0, newFat + residual);
+            else               newCho = Math.max(0, newCho + residual);
+        }
+
+        // Convertir prot% → g/kg para el estado interno
+        const protG = (newProt / 100) * tmbPromedio / 4;
+        setProtGkg(pesoActivo > 0 ? protG / pesoActivo : 0);
+        setChoPct(newCho);
+        setFatPct(newFat);
+    }, [macrosPct, tmbPromedio, pesoActivo]);
+
+    // Traduce gramos → % y delega a setMacro para respetar el auto-balance.
+    const updateFromGrams = useCallback((key: "prot" | "cho" | "fat", grams: number) => {
+        if (tmbPromedio <= 0) return;
+        const kcal = grams * (key === "fat" ? 9 : 4);
+        setMacro(key, (kcal / tmbPromedio) * 100);
+    }, [setMacro, tmbPromedio]);
+
+    // Traduce g/kg → gramos y delega a updateFromGrams.
+    const updateFromGramsPerKg = useCallback((key: "prot" | "cho" | "fat", gPerKg: number) => {
+        updateFromGrams(key, gPerKg * pesoActivo);
+    }, [updateFromGrams, pesoActivo]);
 
     const handleSave = (nombre?: string) => {
         if (!activePatient?.id) {
@@ -78,9 +134,9 @@ export const useMacronutrientsSetup = () => {
             nombre: nombre?.trim() || undefined,
             calorias_totales: totals.summary.percent === 100 ? totals.prot.kcal + totals.cho.kcal + totals.fat.kcal : tmbPromedio,
             distribucion_macros: {
-                proteina: totals.prot.pct,
-                grasa: totals.fat.pct,
-                carbohidratos: totals.cho.pct
+                proteina:      macrosPct.prot,
+                grasa:         macrosPct.fat,
+                carbohidratos: macrosPct.cho,
             }
         }, {
             onSuccess: (data: any) => {
@@ -120,8 +176,8 @@ export const useMacronutrientsSetup = () => {
 
     return {
         context: { pesoActivo, tmbPromedio },
-        inputs: { protGkg, choPct, fatPct },
-        actions: { setProtGkg, setChoPct, setFatPct, handleReset, handleSave, autoBalance },
+        inputs: { protGkg, protPct: macrosPct.prot, choPct, fatPct },
+        actions: { setMacro, updateFromGrams, updateFromGramsPerKg, setProtGkg, setChoPct, setFatPct, handleReset, handleSave, autoBalance },
         totals,
         isBalanced,
         isSaving: createPlanificacion.isPending

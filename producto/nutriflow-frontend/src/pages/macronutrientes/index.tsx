@@ -42,7 +42,7 @@ export const MacronutrientesPage = () => {
 
     return (
         // Reemplazamos el Layout por el contenedor estándar de nuestra arquitectura
-        <div className="p-8 max-w-[1400px] mx-auto w-full">
+        <div className="w-full max-w-[1400px] mx-auto overflow-x-hidden p-3 sm:p-4 md:p-6 lg:p-8">
             <FlowStepper current={1} />
             <PageHeader
                 eyebrow="Planificación"
@@ -52,7 +52,7 @@ export const MacronutrientesPage = () => {
                     <button
                         onClick={openSaveModal}
                         disabled={setup.isSaving}
-                        className="px-6 py-2.5 bg-pine hover:bg-pine-soft disabled:opacity-60 text-porcelain font-medium rounded-md transition-colors duration-150"
+                        className="px-6 py-2.5 bg-pine hover:bg-pine-soft disabled:opacity-60 text-porcelain font-medium rounded-md transition-colors duration-150 w-full sm:w-auto"
                     >
                         {setup.isSaving ? 'Guardando...' : 'Guardar planificación'}
                     </button>

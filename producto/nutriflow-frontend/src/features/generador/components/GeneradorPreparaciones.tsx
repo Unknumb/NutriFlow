@@ -125,7 +125,7 @@ export const GeneradorPreparaciones: React.FC = () => {
   return (
     <div className="flex flex-col h-full bg-white flex-1 overflow-hidden">
       {/* Encabezado */}
-      <div className="px-8 py-6 border-b border-mist bg-white">
+      <div className="px-4 sm:px-8 py-4 sm:py-6 border-b border-mist bg-white">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-semibold text-ink flex items-center gap-2">
@@ -139,7 +139,7 @@ export const GeneradorPreparaciones: React.FC = () => {
 
       {/* Tabs */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="px-8 pt-4 bg-white border-b border-mist/70">
+        <div className="px-4 sm:px-8 pt-4 bg-white border-b border-mist/70">
           <div className="text-ink-soft h-9 w-fit items-center justify-center rounded-card p-0.75 flex bg-mist/60">
             <button 
               onClick={() => setActiveTab('generador')}
@@ -160,9 +160,9 @@ export const GeneradorPreparaciones: React.FC = () => {
 
         {/* Contenido Principal */}
         {activeTab === 'generador' && (
-          <div className="flex gap-0 h-full overflow-hidden">
+          <div className="flex flex-col md:flex-row h-full overflow-auto md:overflow-hidden">
             {/* Panel Lateral Izquierdo (Controles) */}
-            <div className="w-96 border-r border-mist overflow-y-auto bg-porcelain shrink-0">
+            <div className="w-full md:w-96 border-b md:border-b-0 md:border-r border-mist overflow-y-auto bg-porcelain md:shrink-0">
               <div className="p-6 space-y-6">
                 
                 {/* Selector de comida + porciones reales */}
@@ -386,7 +386,7 @@ export const GeneradorPreparaciones: React.FC = () => {
                   <h3 className="text-lg font-semibold text-ink-soft mb-2">Configura la distribución del plan</h3>
                   <p className="text-sm text-ink-soft max-w-sm">Ingresa las porciones por grupo de alimento para cada tiempo de comida y el sistema sugerirá preparaciones compatibles automáticamente usando la API.</p>
                   
-                  <div className="mt-8 grid grid-cols-3 gap-4 text-left max-w-lg">
+                  <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4 text-left max-w-lg w-full">
                     <div className="bg-porcelain rounded-card p-4 text-center border border-mist/70">
                       <div className="text-2xl mb-2">1️⃣</div>
                       <p className="text-xs text-ink-soft font-medium">Define porciones por tiempo de comida</p>
@@ -407,10 +407,10 @@ export const GeneradorPreparaciones: React.FC = () => {
         )}
         {/* Contenido Pestaña 2: Mi Biblioteca */}
         {activeTab === 'biblioteca' && (
-          <div className="flex-1 overflow-y-auto p-8 bg-porcelain">
+          <div className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-8 bg-porcelain">
             {/* Buscador y Filtros */}
-            <div className="flex flex-wrap items-center gap-3 mb-6">
-              <div className="relative flex-1 min-w-60">
+            <div className="flex flex-col md:flex-row gap-3 md:items-center w-full mb-6">
+              <div className="relative flex-1 min-w-0">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-soft/60"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
                 <input
                   type="text"
@@ -421,7 +421,7 @@ export const GeneradorPreparaciones: React.FC = () => {
                 />
               </div>
               <select
-                className="border border-mist rounded-lg px-3 py-1.5 text-sm text-ink-soft bg-white focus:outline-none focus:ring-2 focus:ring-pine-soft h-9"
+                className="border border-mist rounded-lg px-3 py-1.5 text-sm text-ink-soft bg-white focus:outline-none focus:ring-2 focus:ring-pine-soft h-9 w-full md:w-auto"
                 value={filtroTiempo}
                 onChange={(e) => setFiltroTiempo(e.target.value as 'todos' | TipoComida)}
               >
@@ -432,7 +432,7 @@ export const GeneradorPreparaciones: React.FC = () => {
               </select>
               <Link
                 to="/biblioteca"
-                className="inline-flex items-center justify-center rounded-md text-sm font-medium text-white h-9 px-4 bg-pine hover:bg-pine-soft gap-2 transition-colors"
+                className="inline-flex items-center justify-center rounded-md text-sm font-medium text-white h-9 px-4 bg-pine hover:bg-pine-soft gap-2 transition-colors w-full md:w-auto"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>
                 Gestionar en Biblioteca
@@ -440,7 +440,7 @@ export const GeneradorPreparaciones: React.FC = () => {
             </div>
 
             {/* Tarjetas de Resumen (Métricas) */}
-            <div className="grid grid-cols-3 gap-4 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
               <div className="bg-white rounded-card border border-mist p-4 shadow-sm">
                 <p className="text-xs text-ink-soft mb-1">Total preparaciones</p>
                 <p className="text-2xl font-bold text-ink">{totalPreparaciones}</p>

@@ -15,11 +15,14 @@ app = FastAPI(title=settings.PROJECT_NAME)
 async def favicon():
     return Response(status_code=204)
 
-# Configuración de CORS
+# Configuración de CORS. A los orígenes de desarrollo (localhost) se suman los
+# definidos en ALLOWED_ORIGINS (separados por coma) para el entorno desplegado.
 origins = [
     "http://localhost:5173",  # Vite (React/Vue/Svelte) default
     "http://localhost:3000",  # Next.js / Create React App default
 ]
+if settings.ALLOWED_ORIGINS:
+    origins += [o.strip() for o in settings.ALLOWED_ORIGINS.split(",") if o.strip()]
 
 app.add_middleware(
     CORSMiddleware,

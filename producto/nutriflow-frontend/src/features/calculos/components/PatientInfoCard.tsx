@@ -121,7 +121,7 @@ export const PatientInfoCard = () => {
                                 <X size={18} />
                             </button>
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 gap-4">
                             <div className="col-span-2">
                                 <label className="block text-xs font-medium text-ink-soft mb-1">Nombre</label>
                                 <input type="text" className="w-full text-sm border border-mist rounded-md p-2 bg-white text-ink focus:ring-1 focus:ring-pine-soft focus:border-pine-soft outline-none" value={newNombre} onChange={e => setNewNombre(e.target.value)} placeholder="Ej. Juan" />
@@ -164,8 +164,8 @@ export const PatientInfoCard = () => {
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-4">
-                        <div className="col-span-2 flex items-end gap-2">
-                            <div className="flex-1">
+                        <div className="col-span-2 flex items-end gap-2 min-w-0">
+                            <div className="flex-1 min-w-0">
                                 <label className="block text-sm font-medium text-ink-soft mb-1">Nombre</label>
                                 <select 
                                     className="w-full text-sm border border-mist rounded-md bg-white text-ink focus:ring-1 focus:ring-pine-soft focus:border-pine-soft p-2 outline-none"
@@ -207,23 +207,23 @@ export const PatientInfoCard = () => {
                 )}
 
                 {!isCreating && (
-                    <div className="flex items-center justify-between mt-6 pt-4 border-t border-mist">
-                        <div className="flex items-center">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-6 pt-4 border-t border-mist">
+                        <div className="flex items-center shrink-0">
                             <input id="recordar" type="checkbox" className="h-4 w-4 accent-pine border-mist rounded" />
                             <label htmlFor="recordar" className="ml-2 block text-sm text-ink-soft">
                                 Recordar datos para la próxima sesión
                             </label>
                         </div>
-                        <div className="flex items-center space-x-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 min-w-0">
                             {(peso <= 0 || talla <= 0 || edad <= 0 || !sexo) && selectedId && (
-                                <span className="text-xs text-apricot font-medium">
+                                <span className="text-xs text-apricot font-medium break-words">
                                     Faltan datos requeridos (Edad, Sexo, Talla, Peso) para activarlo.
                                 </span>
                             )}
-                            <button 
+                            <button
                                 onClick={handleSave}
                                 disabled={!selectedId || peso <= 0 || talla <= 0 || edad <= 0 || !sexo}
-                                className="bg-pine hover:bg-pine-soft text-porcelain px-6 py-2 rounded-md text-sm font-medium transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-full sm:w-auto bg-pine hover:bg-pine-soft text-porcelain px-6 py-2 rounded-md text-sm font-medium transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
                             >
                                 Establecer como paciente activo
                             </button>

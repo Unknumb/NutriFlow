@@ -4,3 +4,6 @@
 **/.claude/
 .agents/
 skills-lock.json
+graphify-out/
+.graphifyignore
+producto/backend-math/math/

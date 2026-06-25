@@ -17,7 +17,7 @@ export const NutritionTargetsPanel = ({ targets, current, onSuggest, onReset }: 
     const pctFat = getPct(current.fat, targets.fat);
 
     return (
-        <div className="col-span-3 space-y-4">
+        <div className="col-span-full lg:col-span-3 space-y-4">
             {/* TARJETA 1: Inputs de Objetivos */}
             <div className="bg-white text-ink flex flex-col gap-6 rounded-card border border-mist shadow-sm sticky top-4">
                 <div className="px-6 pt-6 border-b border-mist/50 pb-3">

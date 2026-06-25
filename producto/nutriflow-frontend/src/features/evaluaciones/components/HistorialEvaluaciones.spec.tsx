@@ -169,6 +169,8 @@ describe('HistorialEvaluaciones', () => {
       talla_cm: 170,
       nivel_actividad_fisica: 'moderado',
       objetivo: 'perdida_peso',
+      tmb: 1650,
+      gasto_energetico_total: 2310,
     });
   });
 

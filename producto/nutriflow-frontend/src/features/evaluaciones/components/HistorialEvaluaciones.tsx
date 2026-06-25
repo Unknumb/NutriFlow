@@ -11,7 +11,7 @@ type EditPayload = Pick<
 interface Props {
   evaluaciones: Evaluacion[] | undefined;
   isLoading: boolean;
-  onUpdateEvaluation: (id: string, payload: EditPayload) => Promise<void>;
+  onUpdateEvaluation: (id: string, payload: EditPayload) => Promise<unknown>;
   onDeleteEvaluation: (id: string) => void;
 }
 

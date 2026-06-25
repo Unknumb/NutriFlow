@@ -9,6 +9,8 @@ const mockUseAuthStore = vi.hoisted(() => vi.fn());
 const mockUsePerfilNutricionista = vi.hoisted(() => vi.fn());
 const mockUseEvaluaciones = vi.hoisted(() => vi.fn());
 const mockUseCreateEvaluacion = vi.hoisted(() => vi.fn());
+const mockUseDeleteEvaluacion = vi.hoisted(() => vi.fn());
+const mockUseUpdateEvaluacion = vi.hoisted(() => vi.fn());
 const mockUseDeletePauta = vi.hoisted(() => vi.fn());
 const mockUsePlanificaciones = vi.hoisted(() => vi.fn());
 const mockUseDeletePlanificacion = vi.hoisted(() => vi.fn());
@@ -35,6 +37,8 @@ vi.mock('../../perfil/hooks/usePerfil', () => ({
 vi.mock('../../evaluaciones/hooks/useEvaluaciones', () => ({
   useEvaluacionesByPaciente: mockUseEvaluaciones,
   useCreateEvaluacion: mockUseCreateEvaluacion,
+  useDeleteEvaluacion: mockUseDeleteEvaluacion,
+  useUpdateEvaluacion: mockUseUpdateEvaluacion,
 }));
 
 vi.mock('../../pautas/hooks/usePautas', () => ({
@@ -84,6 +88,9 @@ vi.mock('lucide-react', () => ({
   Trash2: () => <span data-testid="icon-trash" />,
   Printer: () => <span data-testid="icon-printer" />,
   Plus: () => <span data-testid="icon-plus" />,
+  Pencil: () => <span data-testid="icon-pencil" />,
+  Check: () => <span data-testid="icon-check" />,
+  X: () => <span data-testid="icon-x" />,
 }));
 
 // ── datos de prueba ───────────────────────────────────────────────────────────
@@ -144,6 +151,8 @@ const setupDefaultMocks = () => {
   mockUsePerfilNutricionista.mockReturnValue({ data: null });
   mockUseEvaluaciones.mockReturnValue({ data: [], isLoading: false });
   mockUseCreateEvaluacion.mockReturnValue({ mutate: vi.fn(), isPending: false });
+  mockUseDeleteEvaluacion.mockReturnValue({ mutate: vi.fn(), isPending: false });
+  mockUseUpdateEvaluacion.mockReturnValue({ mutate: vi.fn(), isPending: false });
   mockUseDeletePauta.mockReturnValue({ mutate: vi.fn(), isPending: false });
   mockUsePlanificaciones.mockReturnValue({ data: [], isLoading: false });
   mockUseDeletePlanificacion.mockReturnValue({ mutate: vi.fn(), isPending: false });

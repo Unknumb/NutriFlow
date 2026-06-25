@@ -16,11 +16,15 @@ describe('AppController (e2e)', () => {
     await app.init();
   });
 
-  it('/ (GET)', () => {
+  it('/estado (GET) -> chequeo de estado público', () => {
     return request(app.getHttpServer())
-      .get('/')
+      .get('/estado')
       .expect(200)
-      .expect('Hello World!');
+      .expect((res) => {
+        expect(res.body.servidor).toBe(true);
+        expect(typeof res.body.baseDatos).toBe('boolean');
+        expect(typeof res.body.hora).toBe('string');
+      });
   });
 
   afterEach(async () => {

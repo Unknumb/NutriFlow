@@ -81,13 +81,13 @@ describe('MacronutrientsHeader', () => {
   });
 
   describe('botón de balance automático', () => {
-    it('sigue clickable cuando isBalanced=true (permite re-cuadrar)', () => {
+    it('está desactivado ("Cuadrado") cuando isBalanced=true', () => {
       renderHeader({ isBalanced: true });
-      expect(screen.getByRole('button')).not.toBeDisabled();
+      expect(screen.getByRole('button')).toBeDisabled();
     });
 
-    it('está desactivado solo cuando no hay TMB (tmbPromedio<=0)', () => {
-      renderHeader({ context: { tmbPromedio: 0, pesoActivo: 70 } });
+    it('está desactivado cuando no hay TMB (tmbPromedio<=0)', () => {
+      renderHeader({ isBalanced: false, context: { tmbPromedio: 0, pesoActivo: 70 } });
       expect(screen.getByRole('button')).toBeDisabled();
     });
 

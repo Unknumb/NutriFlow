@@ -60,15 +60,16 @@ export const MacronutrientsHeader = ({ context, totals, isBalanced, onPesoChange
             <div className="bg-white flex flex-col gap-6 rounded-card border border-mist lg:col-span-3 shadow-card">
                 <div className="px-6 pt-6 pb-6">
                     <label className="items-center gap-2 text-sm font-medium mb-2 block text-ink-soft">Balance Automático</label>
-                    {/* Siempre clickable (mientras haya TMB): permite re-cuadrar tras mover los sliders. */}
+                    {/* Se desactiva ("Cuadrado") cuando la distribución ya suma 100%; al
+                        mover los sliders manualmente vuelve a activarse para re-cuadrar. */}
                     <button
                         onClick={onAutoBalance}
-                        disabled={context.tmbPromedio <= 0}
-                        className={`inline-flex items-center justify-center rounded-md text-sm font-medium transition-all w-full h-14 gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${isBalanced ? 'bg-pine-soft/10 border border-pine-soft/40 text-pine-soft hover:bg-pine-soft/20' : 'bg-pine text-porcelain hover:bg-pine-soft'}`}
+                        disabled={isBalanced || context.tmbPromedio <= 0}
+                        className={`inline-flex items-center justify-center rounded-md text-sm font-medium transition-all w-full h-14 gap-2 disabled:cursor-not-allowed ${isBalanced ? 'bg-pine-soft/10 border border-pine-soft/40 text-pine-soft' : 'bg-pine text-porcelain hover:bg-pine-soft'}`}
                     >
                         {isBalanced ? <><Check className="w-5 h-5" /> Cuadrado</> : <><LockOpen className="w-5 h-5" /> Cuadrar a 100%</>}
                     </button>
-                    <p className="text-xs text-ink-soft mt-2 text-center">Ajusta carbohidratos a 100%</p>
+                    <p className="text-xs text-ink-soft mt-2 text-center">Reparte proteínas, carbohidratos y grasas para sumar 100%</p>
                 </div>
             </div>
         </div>

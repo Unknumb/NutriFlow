@@ -35,36 +35,31 @@ export class EvaluacionesService {
     return niveles[nivel.toLowerCase()] || 1.2;
   }
 
-  async create(createEvaluacionDto: CreateEvaluacionDto, nutricionistaId: string) {
-    // Seguridad adicional: Verificar que el paciente le pertenece a esta nutricionista antes de evaluarlo
-    const paciente = await this.prisma.pacientes.findFirst({
-      where: { id: createEvaluacionDto.paciente_id, nutricionista_id: nutricionistaId },
-    });
-
-    if (!paciente) {
-      throw new NotFoundException('Paciente no encontrado o no tienes permisos para evaluarlo');
-    }
-
+  /**
+   * Calcula la TMB (promedio del motor matemático) y el gasto energético total
+   * a partir de los datos del paciente y de la evaluación. Centralizado para que
+   * tanto la creación como la EDICIÓN recalculen automáticamente (antes el update
+   * no recalculaba y la TMB/gasto quedaban stale al cambiar peso/talla/actividad).
+   */
+  private async calcularTmbYGasto(paciente: { fecha_nacimiento: Date; sexo_biologico: string | null }, tallaCm: number, pesoKg: number, nivelActividad: string) {
     const edad = this.calculateAge(paciente.fecha_nacimiento);
-    // Asumimos que sexo_biologico es "MASCULINO" o "FEMENINO" o "M" o "F"
     const sexoUpper = paciente.sexo_biologico?.toUpperCase();
     const sexoStr = (sexoUpper === 'MASCULINO' || sexoUpper === 'M') ? 'M' : 'F';
 
     let calculosTmb;
     try {
-      const cacheKey = `tmb:${sexoStr}:${edad}:${createEvaluacionDto.talla_cm}:${createEvaluacionDto.peso_actual}`;
+      const cacheKey = `tmb:${sexoStr}:${edad}:${tallaCm}:${pesoKg}`;
       const cachedTmb = await this.redisService.client.get(cacheKey);
 
       if (cachedTmb) {
         calculosTmb = cachedTmb;
       } else {
-        // 3. Petición HTTP al motor matemático (usamos el prefijo /api/calculadoras definido en FastAPI)
         const response = await firstValueFrom(
           this.httpService.post(`${process.env.MATH_ENGINE_URL ?? 'http://localhost:8000'}/api/calculadoras/tmb`, {
             sexo: sexoStr,
             edad: edad,
-            talla_cm: createEvaluacionDto.talla_cm,
-            peso_kg: createEvaluacionDto.peso_actual
+            talla_cm: tallaCm,
+            peso_kg: pesoKg
           })
         );
         calculosTmb = response.data;
@@ -76,8 +71,28 @@ export class EvaluacionesService {
     }
 
     const tmbPromedio = calculosTmb.promedio_calculado;
-    const factorActividad = this.getActivityFactor(createEvaluacionDto.nivel_actividad_fisica);
+    const factorActividad = this.getActivityFactor(nivelActividad);
     const gastoEnergeticoTotal = Math.round(tmbPromedio * factorActividad);
+
+    return { tmbPromedio, gastoEnergeticoTotal, calculosTmb };
+  }
+
+  async create(createEvaluacionDto: CreateEvaluacionDto, nutricionistaId: string) {
+    // Seguridad adicional: Verificar que el paciente le pertenece a esta nutricionista antes de evaluarlo
+    const paciente = await this.prisma.pacientes.findFirst({
+      where: { id: createEvaluacionDto.paciente_id, nutricionista_id: nutricionistaId },
+    });
+
+    if (!paciente) {
+      throw new NotFoundException('Paciente no encontrado o no tienes permisos para evaluarlo');
+    }
+
+    const { tmbPromedio, gastoEnergeticoTotal, calculosTmb } = await this.calcularTmbYGasto(
+      paciente,
+      createEvaluacionDto.talla_cm,
+      createEvaluacionDto.peso_actual,
+      createEvaluacionDto.nivel_actividad_fisica,
+    );
 
     const evaluacion = await this.prisma.evaluacion.create({
       data: {
@@ -135,9 +150,26 @@ export class EvaluacionesService {
   async update(id: string, updateEvaluacionDto: UpdateEvaluacionDto, nutricionistaId: string) {
     const evaluacion = await this.findOne(id, nutricionistaId); // Reutilizamos findOne para garantizar que la evaluación le pertenece
 
+    // Recalcula automáticamente TMB y gasto con los valores resultantes (merge de
+    // lo enviado + lo existente). Sobrescribe cualquier tmb/gasto que venga del
+    // formulario, para que editar peso/talla/actividad actualice los cálculos.
+    const tallaCm = updateEvaluacionDto.talla_cm ?? evaluacion.talla_cm;
+    const pesoKg = updateEvaluacionDto.peso_actual ?? evaluacion.peso_actual;
+    const nivel = updateEvaluacionDto.nivel_actividad_fisica ?? evaluacion.nivel_actividad_fisica;
+
+    const paciente = await this.prisma.pacientes.findFirst({
+      where: { id: evaluacion.paciente_id, nutricionista_id: nutricionistaId },
+    });
+
+    let calculados: { tmb: number; gasto_energetico_total: number } | null = null;
+    if (paciente && tallaCm && pesoKg) {
+      const { tmbPromedio, gastoEnergeticoTotal } = await this.calcularTmbYGasto(paciente, tallaCm, pesoKg, nivel);
+      calculados = { tmb: tmbPromedio, gasto_energetico_total: gastoEnergeticoTotal };
+    }
+
     const updated = await this.prisma.evaluacion.update({
       where: { id },
-      data: updateEvaluacionDto,
+      data: { ...updateEvaluacionDto, ...(calculados ?? {}) },
     });
 
     await this.redisService.client.del(`evaluaciones:${evaluacion.paciente_id}:${nutricionistaId}`);

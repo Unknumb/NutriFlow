@@ -3,7 +3,6 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { PortionsConfigPanel } from './PortionsConfigPanel';
 
 const mockToggleMeal = vi.hoisted(() => vi.fn());
-const mockToggleGroup = vi.hoisted(() => vi.fn());
 const mockAddCustomMeal = vi.hoisted(() => vi.fn());
 const mockRemoveCustomMeal = vi.hoisted(() => vi.fn());
 const mockSetMealTime = vi.hoisted(() => vi.fn());
@@ -17,10 +16,6 @@ vi.mock('../constants', () => ({
   MEALS: [
     { id: 'desayuno', name: 'Desayuno' },
     { id: 'almuerzo', name: 'Almuerzo' },
-  ],
-  NUTRITION_GROUPS: [
-    { id: 'cereales', label: 'Cereales', emoji: '🌾' },
-    { id: 'lacteos', label: 'Lácteos', emoji: '🥛' },
   ],
   resolverComida: (id: string, _: any[], mealTimes: Record<string, string>) => ({
     time: mealTimes[id] ?? '08:00',
@@ -36,14 +31,12 @@ vi.mock('lucide-react', () => ({
 
 const STATE_BASE = {
   activeMeals: ['desayuno'],
-  activeGroups: ['cereales'],
   customMeals: [],
   mealTimes: { desayuno: '08:00', almuerzo: '12:00' },
 };
 
 const ACTIONS_BASE = {
   toggleMeal: mockToggleMeal,
-  toggleGroup: mockToggleGroup,
   addCustomMeal: mockAddCustomMeal,
   removeCustomMeal: mockRemoveCustomMeal,
   setMealTime: mockSetMealTime,
@@ -88,13 +81,6 @@ describe('PortionsConfigPanel', () => {
       expect(screen.getByText('Almuerzo')).toBeInTheDocument();
     });
 
-    it('muestra los grupos de alimentos de NUTRITION_GROUPS', () => {
-      render(<PortionsConfigPanel />);
-      openPanel();
-      expect(screen.getByText('Cereales')).toBeInTheDocument();
-      expect(screen.getByText('Lácteos')).toBeInTheDocument();
-    });
-
     it('el checkbox de Desayuno está marcado (activeMeals=[desayuno])', () => {
       render(<PortionsConfigPanel />);
       const checkboxes = screen.getAllByRole('checkbox');
@@ -106,18 +92,6 @@ describe('PortionsConfigPanel', () => {
       const checkboxes = screen.getAllByRole('checkbox');
       expect(checkboxes[1]).not.toBeChecked();
     });
-
-    it('el checkbox de Cereales está marcado (activeGroups=[cereales])', () => {
-      render(<PortionsConfigPanel />);
-      const checkboxes = screen.getAllByRole('checkbox');
-      expect(checkboxes[2]).toBeChecked();
-    });
-
-    it('el checkbox de Lácteos está desmarcado', () => {
-      render(<PortionsConfigPanel />);
-      const checkboxes = screen.getAllByRole('checkbox');
-      expect(checkboxes[3]).not.toBeChecked();
-    });
   });
 
   describe('callbacks de toggle', () => {
@@ -125,12 +99,6 @@ describe('PortionsConfigPanel', () => {
       render(<PortionsConfigPanel />);
       fireEvent.click(screen.getAllByRole('checkbox')[0]);
       expect(mockToggleMeal).toHaveBeenCalledWith('desayuno');
-    });
-
-    it('toggleGroup se llama al cambiar el checkbox de Cereales', () => {
-      render(<PortionsConfigPanel />);
-      fireEvent.click(screen.getAllByRole('checkbox')[2]);
-      expect(mockToggleGroup).toHaveBeenCalledWith('cereales');
     });
   });
 

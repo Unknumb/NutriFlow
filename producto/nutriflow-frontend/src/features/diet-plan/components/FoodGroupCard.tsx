@@ -1,4 +1,4 @@
-import { Minus, Plus, Trash2, Infinity as InfinityIcon } from 'lucide-react';
+import { Minus, Plus, Pencil, Trash2, Infinity as InfinityIcon } from 'lucide-react';
 import type { FoodGroupDef } from '../constants/foodGroups';
 
 interface FoodGroupProps {
@@ -6,6 +6,7 @@ interface FoodGroupProps {
     portions: number;
     onIncrement: () => void;
     onDecrement: () => void;
+    onEdit?: () => void;
     onDelete?: () => void;
     /** Si el grupo está marcado como libre consumo (ad libitum). */
     esLibre: boolean;
@@ -13,7 +14,7 @@ interface FoodGroupProps {
     onToggleLibre: () => void;
 }
 
-export const FoodGroupCard = ({ group, portions, onIncrement, onDecrement, onDelete, esLibre, onToggleLibre }: FoodGroupProps) => {
+export const FoodGroupCard = ({ group, portions, onIncrement, onDecrement, onEdit, onDelete, esLibre, onToggleLibre }: FoodGroupProps) => {
     const headerStyle = group.customColor ? { backgroundColor: group.customColor } : undefined;
     const borderStyle = group.customColor ? { borderColor: group.customColor } : undefined;
 
@@ -25,15 +26,28 @@ export const FoodGroupCard = ({ group, portions, onIncrement, onDecrement, onDel
             {/* Encabezado de color */}
             <div className={`${group.theme.bgHeader} px-3 py-2 flex items-center justify-between`} style={headerStyle}>
                 <span className="text-xs font-bold text-white leading-tight drop-shadow-sm flex-1">{group.title}</span>
-                {onDelete && (
-                    <button
-                        onClick={onDelete}
-                        className="text-white/80 hover:text-white transition-colors"
-                        title="Eliminar grupo"
-                    >
-                        <Trash2 className="w-4 h-4" />
-                    </button>
-                )}
+                <div className="flex items-center gap-1 shrink-0">
+                    {onEdit && (
+                        <button
+                            onClick={onEdit}
+                            className="text-white/80 hover:text-white transition-colors"
+                            aria-label={`Editar grupo ${group.title}`}
+                            title="Editar grupo"
+                        >
+                            <Pencil className="w-3.5 h-3.5" />
+                        </button>
+                    )}
+                    {onDelete && (
+                        <button
+                            onClick={onDelete}
+                            className="text-white/80 hover:text-white transition-colors"
+                            aria-label={`Eliminar grupo ${group.title}`}
+                            title="Eliminar grupo"
+                        >
+                            <Trash2 className="w-4 h-4" />
+                        </button>
+                    )}
+                </div>
             </div>
 
             <div className="p-3 flex-1 flex flex-col justify-between bg-white/40">

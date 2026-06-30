@@ -1,5 +1,5 @@
 // nutriflow-frontend/src/features/pacientes/components/ModalNuevoPaciente.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { UserPlus, X } from 'lucide-react';
 import { useCreatePaciente } from '../hooks/usePacientes';
@@ -60,15 +60,64 @@ export const ModalNuevoPaciente: React.FC<ModalNuevoPacienteProps> = ({ isOpen, 
   const [form, setForm] = useState<FormState>(FORM_INICIAL);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  // Cierra con Escape mientras el modal está abierto.
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm(prev => ({ ...prev, [key]: value }));
 
+  const hoy = new Date().toISOString().split('T')[0];
+  // Fecha máxima de nacimiento = hace 1 año (no se permiten menores de 1 año:
+  // "0 años" no tiene sentido clínico en la consulta).
+  const haceUnAnio = (() => {
+    const d = new Date();
+    d.setFullYear(d.getFullYear() - 1);
+    return d.toISOString().split('T')[0];
+  })();
+
+  const calcularEdad = (iso: string): number => {
+    const [y, m, d] = iso.split('-').map(Number);
+    const ahora = new Date();
+    let edad = ahora.getFullYear() - y;
+    const mesActual = ahora.getMonth() + 1;
+    if (mesActual < m || (mesActual === m && ahora.getDate() < d)) edad--;
+    return edad;
+  };
+
   const rutInvalido = form.rut.trim() !== '' && !esRutValido(form.rut);
+
+  // Antropometría: deben ser números positivos dentro de rangos clínicos
+  // plausibles. Antes se aceptaba "0" y negativos (se persistían -1 cm / -50 kg).
+  const tallaNum = Number(form.talla_cm);
+  const pesoNum = Number(form.peso_kg);
+  const tallaInvalida = form.talla_cm.trim() !== '' && (!(tallaNum > 0) || tallaNum < 30 || tallaNum > 250);
+  const pesoInvalido = form.peso_kg.trim() !== '' && (!(pesoNum > 0) || pesoNum > 500);
+  // La fecha de nacimiento no puede ser futura ni dar una edad menor a 1 año.
+  const fechaFutura = form.fecha_nacimiento !== '' && form.fecha_nacimiento > hoy;
+  const edadMenorAUno = form.fecha_nacimiento !== '' && !fechaFutura && calcularEdad(form.fecha_nacimiento) < 1;
+  const fechaInvalida = fechaFutura || edadMenorAUno;
+  // Email opcional, pero si se ingresa debe tener formato válido.
+  const emailInvalido = form.email.trim() !== '' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim());
+
   const camposObligatoriosOk =
-    form.nombre.trim() && form.apellido.trim() && form.fecha_nacimiento && form.talla_cm && form.peso_kg;
-  const puedeGuardar = Boolean(camposObligatoriosOk) && !rutInvalido && !createPaciente.isPending;
+    form.nombre.trim() && form.apellido.trim() && form.fecha_nacimiento && tallaNum > 0 && pesoNum > 0;
+  const puedeGuardar =
+    Boolean(camposObligatoriosOk) &&
+    !rutInvalido &&
+    !tallaInvalida &&
+    !pesoInvalido &&
+    !fechaInvalida &&
+    !emailInvalido &&
+    !createPaciente.isPending;
 
   const handleClose = () => {
     setForm(FORM_INICIAL);
@@ -109,12 +158,21 @@ export const ModalNuevoPaciente: React.FC<ModalNuevoPacienteProps> = ({ isOpen, 
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="bg-white rounded-card shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden">
+    <div
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+      onClick={handleClose}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="nuevo-paciente-titulo"
+        onClick={(e) => e.stopPropagation()}
+        className="bg-white rounded-card shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden"
+      >
         {/* Header */}
         <div className="flex justify-between items-center p-6 pb-4 border-b border-mist/70">
           <div>
-            <h2 className="text-2xl font-bold text-ink flex items-center gap-2">
+            <h2 id="nuevo-paciente-titulo" className="text-2xl font-bold text-ink flex items-center gap-2">
               <UserPlus className="w-6 h-6 text-pine-soft" />
               Nuevo Paciente
             </h2>
@@ -152,7 +210,15 @@ export const ModalNuevoPaciente: React.FC<ModalNuevoPacienteProps> = ({ isOpen, 
               </div>
               <div>
                 <label className={labelClass}>Fecha de nacimiento *</label>
-                <input type="date" className={inputClass} value={form.fecha_nacimiento} onChange={e => set('fecha_nacimiento', e.target.value)} />
+                <input
+                  type="date"
+                  max={haceUnAnio}
+                  className={`${inputClass} ${fechaInvalida ? 'border-clinical-red/60 focus:border-clinical-red focus:ring-clinical-red' : ''}`}
+                  value={form.fecha_nacimiento}
+                  onChange={e => set('fecha_nacimiento', e.target.value)}
+                />
+                {fechaFutura && <p className="text-xs text-clinical-red mt-1">La fecha de nacimiento no puede ser futura</p>}
+                {edadMenorAUno && <p className="text-xs text-clinical-red mt-1">El paciente debe tener al menos 1 año</p>}
               </div>
               <div>
                 <label className={labelClass}>Sexo biológico</label>
@@ -168,7 +234,14 @@ export const ModalNuevoPaciente: React.FC<ModalNuevoPacienteProps> = ({ isOpen, 
               </div>
               <div>
                 <label className={labelClass}>Correo electrónico</label>
-                <input type="email" className={inputClass} value={form.email} onChange={e => set('email', e.target.value)} placeholder="paciente@correo.com" />
+                <input
+                  type="email"
+                  className={`${inputClass} ${emailInvalido ? 'border-clinical-red/60 focus:border-clinical-red focus:ring-clinical-red' : ''}`}
+                  value={form.email}
+                  onChange={e => set('email', e.target.value)}
+                  placeholder="paciente@correo.com"
+                />
+                {emailInvalido && <p className="text-xs text-clinical-red mt-1">Correo electrónico con formato inválido</p>}
               </div>
               <div>
                 <label className={labelClass}>Teléfono</label>
@@ -187,11 +260,25 @@ export const ModalNuevoPaciente: React.FC<ModalNuevoPacienteProps> = ({ isOpen, 
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className={labelClass}>Talla inicial (cm) *</label>
-                <input type="number" step="0.1" min="0" className={inputClass} value={form.talla_cm} onChange={e => set('talla_cm', e.target.value)} placeholder="170" />
+                <input
+                  type="number" step="0.1" min="30" max="250"
+                  className={`${inputClass} ${tallaInvalida ? 'border-clinical-red/60 focus:border-clinical-red focus:ring-clinical-red' : ''}`}
+                  value={form.talla_cm}
+                  onChange={e => set('talla_cm', e.target.value)}
+                  placeholder="170"
+                />
+                {tallaInvalida && <p className="text-xs text-clinical-red mt-1">Ingresa una talla válida en cm (30–250)</p>}
               </div>
               <div>
                 <label className={labelClass}>Peso inicial (kg) *</label>
-                <input type="number" step="0.1" min="0" className={inputClass} value={form.peso_kg} onChange={e => set('peso_kg', e.target.value)} placeholder="70" />
+                <input
+                  type="number" step="0.1" min="1" max="500"
+                  className={`${inputClass} ${pesoInvalido ? 'border-clinical-red/60 focus:border-clinical-red focus:ring-clinical-red' : ''}`}
+                  value={form.peso_kg}
+                  onChange={e => set('peso_kg', e.target.value)}
+                  placeholder="70"
+                />
+                {pesoInvalido && <p className="text-xs text-clinical-red mt-1">Ingresa un peso válido en kg (mayor que 0)</p>}
               </div>
             </div>
           </section>

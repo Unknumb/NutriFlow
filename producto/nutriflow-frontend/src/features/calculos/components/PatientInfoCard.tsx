@@ -207,13 +207,7 @@ export const PatientInfoCard = () => {
                 )}
 
                 {!isCreating && (
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-6 pt-4 border-t border-mist">
-                        <div className="flex items-center shrink-0">
-                            <input id="recordar" type="checkbox" className="h-4 w-4 accent-pine border-mist rounded" />
-                            <label htmlFor="recordar" className="ml-2 block text-sm text-ink-soft">
-                                Recordar datos para la próxima sesión
-                            </label>
-                        </div>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-end gap-3 mt-6 pt-4 border-t border-mist">
                         <div className="flex flex-col sm:flex-row sm:items-center gap-2 min-w-0">
                             {(peso <= 0 || talla <= 0 || edad <= 0 || !sexo) && selectedId && (
                                 <span className="text-xs text-apricot font-medium break-words">

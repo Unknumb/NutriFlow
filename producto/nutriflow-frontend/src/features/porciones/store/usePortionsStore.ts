@@ -36,6 +36,7 @@ export interface PortionsState {
     setTargets: (targets: Record<string, number>) => void;
     setInitialPortions: (data: { targets: Record<string, number>, distributions: Record<string, Record<string, number>>, activeMeals: string[], activeGroups: string[], libreConsumoIds?: string[], customMeals?: { id: string; name: string; time: string }[], mealTimes?: Record<string, string> }) => void;
     addCustomFood: (food: CustomFoodDef) => void;
+    updateCustomFood: (id: string, data: Partial<CustomFoodDef>) => void;
     removeCustomFood: (id: string) => void;
     toggleMeal: (mealId: string) => void;
     toggleGroup: (groupId: string) => void;
@@ -184,6 +185,9 @@ export const usePortionsStore = create<PortionsState>((set) => ({
     resetDistributions: () => set({ distributions: {} }),
     setTargets: (newTargets) => set({ targets: newTargets }),
     addCustomFood: (food) => set((state) => ({ customFoods: [...state.customFoods, food] })),
+    updateCustomFood: (id, data) => set((state) => ({
+        customFoods: state.customFoods.map(f => f.id === id ? { ...f, ...data } : f),
+    })),
     removeCustomFood: (id) => set((state) => {
         // Also remove its portion distributions and targets
         const newTargets = { ...state.targets };

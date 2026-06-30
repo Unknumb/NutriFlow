@@ -2,8 +2,6 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { useClinicalStore } from './useClinicalStore';
 import type { PatientData } from './useClinicalStore';
 
-const PESO_FALLBACK = 67.4;
-
 const mockPaciente: PatientData = {
   id: 'pac-1',
   nombre: 'María González',
@@ -15,21 +13,22 @@ const mockPaciente: PatientData = {
 
 beforeEach(() => {
   localStorage.clear();
+  // Baseline = defaults reales del store: sin valores clínicos fabricados.
   useClinicalStore.setState({
-    pesoActivo: PESO_FALLBACK,
-    tmbPromedio: 1766,
+    pesoActivo: 0,
+    tmbPromedio: 0,
     activePatient: null,
     activePlanificacionId: null,
   });
 });
 
 describe('useClinicalStore — estado inicial', () => {
-  it('pesoActivo parte en el valor por defecto', () => {
-    expect(useClinicalStore.getState().pesoActivo).toBe(PESO_FALLBACK);
+  it('pesoActivo parte en 0 (sin dato fabricado)', () => {
+    expect(useClinicalStore.getState().pesoActivo).toBe(0);
   });
 
-  it('tmbPromedio parte en 1766', () => {
-    expect(useClinicalStore.getState().tmbPromedio).toBe(1766);
+  it('tmbPromedio parte en 0 (la TMB se calcula por paciente, nunca un default)', () => {
+    expect(useClinicalStore.getState().tmbPromedio).toBe(0);
   });
 
   it('activePatient y activePlanificacionId parten en null', () => {
@@ -47,18 +46,24 @@ describe('setActivePatient', () => {
     expect(pesoActivo).toBe(mockPaciente.peso);
   });
 
-  it('con null: limpia activePatient y restaura pesoActivo al fallback', () => {
+  it('resetea la TMB a 0 al activar un paciente (evita arrastrar la del anterior)', () => {
+    useClinicalStore.getState().setTmbPromedio(1800);
+    useClinicalStore.getState().setActivePatient(mockPaciente);
+    expect(useClinicalStore.getState().tmbPromedio).toBe(0);
+  });
+
+  it('con null: limpia activePatient y deja pesoActivo en 0', () => {
     useClinicalStore.getState().setActivePatient(mockPaciente);
     useClinicalStore.getState().setActivePatient(null);
     const { activePatient, pesoActivo } = useClinicalStore.getState();
     expect(activePatient).toBeNull();
-    expect(pesoActivo).toBe(PESO_FALLBACK);
+    expect(pesoActivo).toBe(0);
   });
 
-  it('con paciente cuyo peso es 0 (falsy): usa fallback', () => {
+  it('con paciente cuyo peso es 0 (falsy): pesoActivo queda en 0', () => {
     const pacienteSinPeso = { ...mockPaciente, peso: 0 };
     useClinicalStore.getState().setActivePatient(pacienteSinPeso);
-    expect(useClinicalStore.getState().pesoActivo).toBe(PESO_FALLBACK);
+    expect(useClinicalStore.getState().pesoActivo).toBe(0);
   });
 });
 

@@ -37,6 +37,10 @@ export const MacronutrientesPage = () => {
             alert('Selecciona un paciente primero');
             return;
         }
+        if (!setup.canSave) {
+            alert('Aún no se ha calculado la TMB del paciente. Espera unos segundos o revísala en el Dashboard antes de guardar.');
+            return;
+        }
         setModalOpen(true);
     };
 
@@ -51,8 +55,9 @@ export const MacronutrientesPage = () => {
                 actions={
                     <button
                         onClick={openSaveModal}
-                        disabled={setup.isSaving}
-                        className="px-6 py-2.5 bg-pine hover:bg-pine-soft disabled:opacity-60 text-porcelain font-medium rounded-md transition-colors duration-150 w-full sm:w-auto"
+                        disabled={setup.isSaving || !setup.canSave}
+                        title={!setup.canSave ? 'Calculando la TMB del paciente…' : undefined}
+                        className="px-6 py-2.5 bg-pine hover:bg-pine-soft disabled:opacity-60 disabled:cursor-not-allowed text-porcelain font-medium rounded-md transition-colors duration-150 w-full sm:w-auto"
                     >
                         {setup.isSaving ? 'Guardando...' : 'Guardar planificación'}
                     </button>

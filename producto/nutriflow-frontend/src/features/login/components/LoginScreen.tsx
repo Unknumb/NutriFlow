@@ -43,6 +43,7 @@ export const LoginScreen: React.FC = () => {
               id="email"
               name="email"
               type="email"
+              autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="nombre@ejemplo.com"
@@ -69,6 +70,7 @@ export const LoginScreen: React.FC = () => {
               id="password"
               name="password"
               type={showPassword ? "text" : "password"}
+              autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"

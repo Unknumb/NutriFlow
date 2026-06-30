@@ -1,6 +1,8 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from '@tanstack/react-router';
+import { AlertTriangle } from 'lucide-react';
 import { useGenerarMenu } from '../../menus/hooks/useMenus';
+import { useClinicalStore } from '../../../shared/store/useClinicalStore';
 import { usePortionsStore } from '../../porciones/store/usePortionsStore';
 import { usePreparaciones } from '../../preparaciones/hooks/usePreparaciones';
 import { usePacientes } from '../../pacientes/hooks/usePacientes';
@@ -46,9 +48,10 @@ export const GeneradorPreparaciones: React.FC = () => {
   const [comidaGenerar, setComidaGenerar] = useState('almuerzo');
 
   const { distributions, activeMeals } = usePortionsStore();
-  const { mutate, data: menusGenerados, isPending } = useGenerarMenu();
+  const { mutate, data: menusGenerados, isPending, isError } = useGenerarMenu();
   const { data: preparaciones, isLoading: cargandoBiblioteca } = usePreparaciones();
   const { data: pacientes } = usePacientes();
+  const activePatient = useClinicalStore((s) => s.activePatient);
 
   const pacienteSeleccionado = useMemo(
     () => (pacientes ?? []).find((p) => p.id === pacienteId),
@@ -74,6 +77,16 @@ export const GeneradorPreparaciones: React.FC = () => {
       ),
     );
   };
+
+  // El generador se relaciona con el paciente activo: al entrar (o al cambiar de
+  // paciente activo) se preselecciona y se cargan sus restricciones. Queda
+  // editable para la sesión; la nutricionista puede cambiarlo si lo necesita.
+  useEffect(() => {
+    if (activePatient?.id && (pacientes ?? []).some((p) => p.id === activePatient.id)) {
+      handleSeleccionPaciente(activePatient.id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activePatient?.id, pacientes]);
 
   const toggleRestriccion = (restriccion: RestriccionDietetica) => {
     setRestriccionesSel((prev) => {
@@ -354,6 +367,23 @@ export const GeneradorPreparaciones: React.FC = () => {
                 <div className="flex items-center justify-center h-full text-pine-soft font-medium">
                   Analizando y generando sugerencias con el motor matemático...
                 </div>
+              ) : isError ? (
+                <div className="flex flex-col items-center justify-center h-full text-center py-20" role="alert">
+                  <div className="w-16 h-16 rounded-card bg-clinical-red/10 flex items-center justify-center mb-4">
+                    <AlertTriangle className="w-8 h-8 text-clinical-red" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-ink mb-2">No se pudieron generar las sugerencias</h3>
+                  <p className="text-sm text-ink-soft max-w-sm mb-6">
+                    El motor matemático no respondió correctamente. Puede ser una caída temporal del servicio.
+                  </p>
+                  <button
+                    onClick={handleGenerar}
+                    disabled={!tienePorciones}
+                    className="px-6 py-2.5 bg-pine hover:bg-pine-soft disabled:opacity-60 text-porcelain font-medium rounded-md transition-colors"
+                  >
+                    Reintentar
+                  </button>
+                </div>
               ) : menusGenerados ? (
                 <div>
                   <h3 className="text-lg font-semibold mb-4 text-pine-soft">Sugerencias Exactas</h3>
@@ -388,15 +418,15 @@ export const GeneradorPreparaciones: React.FC = () => {
                   
                   <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4 text-left max-w-lg w-full">
                     <div className="bg-porcelain rounded-card p-4 text-center border border-mist/70">
-                      <div className="text-2xl mb-2">1️⃣</div>
+                      <div className="w-8 h-8 mx-auto mb-2 rounded-full bg-pine-soft/10 text-pine-soft font-semibold flex items-center justify-center tnum">1</div>
                       <p className="text-xs text-ink-soft font-medium">Define porciones por tiempo de comida</p>
                     </div>
                     <div className="bg-porcelain rounded-card p-4 text-center border border-mist/70">
-                      <div className="text-2xl mb-2">2️⃣</div>
+                      <div className="w-8 h-8 mx-auto mb-2 rounded-full bg-pine-soft/10 text-pine-soft font-semibold flex items-center justify-center tnum">2</div>
                       <p className="text-xs text-ink-soft font-medium">Agrega preferencias del paciente</p>
                     </div>
                     <div className="bg-porcelain rounded-card p-4 text-center border border-mist/70">
-                      <div className="text-2xl mb-2">3️⃣</div>
+                      <div className="w-8 h-8 mx-auto mb-2 rounded-full bg-pine-soft/10 text-pine-soft font-semibold flex items-center justify-center tnum">3</div>
                       <p className="text-xs text-ink-soft font-medium">Genera sugerencias dinámicamente</p>
                     </div>
                   </div>

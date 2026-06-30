@@ -14,6 +14,7 @@ const TOTALS = {
   prot: { pct: 30, g: 150, kcal: 600 },
   cho: { pct: 50, g: 250, kcal: 1000 },
   fat: { pct: 20, g: 60, kcal: 540 },
+  summary: { grams: 460, percent: 100 },
 } as any;
 
 const ACTIONS = {
@@ -80,8 +81,13 @@ describe('MacronutrientsHeader', () => {
   });
 
   describe('botón de balance automático', () => {
-    it('está desactivado cuando isBalanced=true', () => {
+    it('sigue clickable cuando isBalanced=true (permite re-cuadrar)', () => {
       renderHeader({ isBalanced: true });
+      expect(screen.getByRole('button')).not.toBeDisabled();
+    });
+
+    it('está desactivado solo cuando no hay TMB (tmbPromedio<=0)', () => {
+      renderHeader({ context: { tmbPromedio: 0, pesoActivo: 70 } });
       expect(screen.getByRole('button')).toBeDisabled();
     });
 

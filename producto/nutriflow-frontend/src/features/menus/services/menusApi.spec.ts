@@ -21,7 +21,7 @@ describe('menusApi.generarMenu', () => {
     const respuesta = { matches_exactos: [], matches_parciales: [] };
     mockPost.mockResolvedValue({ data: respuesta });
     const result = await menusApi.generarMenu(payload);
-    expect(mockPost).toHaveBeenCalledWith('/menus/generar', payload);
+    expect(mockPost).toHaveBeenCalledWith('/menus/generar', payload, { timeout: 30000 });
     expect(result).toEqual(respuesta);
   });
 
@@ -29,6 +29,6 @@ describe('menusApi.generarMenu', () => {
     const payload = { porciones_disponibles: {} };
     mockPost.mockResolvedValue({ data: { matches_exactos: [], matches_parciales: [] } });
     await menusApi.generarMenu(payload);
-    expect(mockPost).toHaveBeenCalledWith('/menus/generar', payload);
+    expect(mockPost).toHaveBeenCalledWith('/menus/generar', payload, { timeout: 30000 });
   });
 });

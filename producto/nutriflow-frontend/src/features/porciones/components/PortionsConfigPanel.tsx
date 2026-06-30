@@ -1,12 +1,12 @@
 import { Settings, X, Plus, Trash2 } from 'lucide-react';
 import { usePortions } from '../hooks/usePortions';
-import { MEALS, NUTRITION_GROUPS, resolverComida } from '../constants';
+import { MEALS, resolverComida } from '../constants';
 import { useState } from 'react';
 
 export const PortionsConfigPanel = () => {
     const { state, actions } = usePortions();
-    const { activeMeals, activeGroups, customMeals, mealTimes } = state;
-    const { toggleMeal, toggleGroup, addCustomMeal, removeCustomMeal, setMealTime } = actions;
+    const { activeMeals, customMeals, mealTimes } = state;
+    const { toggleMeal, addCustomMeal, removeCustomMeal, setMealTime } = actions;
 
     const [isOpen, setIsOpen] = useState(false);
     const [nuevoNombre, setNuevoNombre] = useState('');
@@ -123,29 +123,6 @@ export const PortionsConfigPanel = () => {
                                     </button>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-
-                    {/* Grupos de Alimentos */}
-                    <div>
-                        <h3 className="text-sm font-bold text-ink mb-3 uppercase tracking-wider flex items-center gap-2">
-                            🥦 Grupos de Alimentos
-                        </h3>
-                        <div className="space-y-2">
-                            {NUTRITION_GROUPS.map(group => (
-                                <label key={group.id} className="flex items-center justify-between p-3 rounded-xl border border-mist/70 hover:bg-porcelain cursor-pointer transition-colors">
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-xl">{group.emoji}</span>
-                                        <span className="text-sm font-medium text-ink-soft">{group.label}</span>
-                                    </div>
-                                    <input
-                                        type="checkbox"
-                                        className="w-4 h-4 accent-pine rounded border-mist focus:ring-pine-soft"
-                                        checked={activeGroups.includes(group.id)}
-                                        onChange={() => toggleGroup(group.id)}
-                                    />
-                                </label>
-                            ))}
                         </div>
                     </div>
 

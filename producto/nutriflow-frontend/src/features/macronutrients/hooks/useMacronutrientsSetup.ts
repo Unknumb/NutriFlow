@@ -129,6 +129,13 @@ export const useMacronutrientsSetup = () => {
             alert('Selecciona un paciente primero');
             return;
         }
+        // No se guarda una planificación sin TMB real calculada: evita persistir
+        // calorías fabricadas/arrastradas. La TMB se calcula automáticamente al
+        // activar el paciente (useSyncActivePatientTmb); si aún es 0, no está lista.
+        if (tmbPromedio <= 0 || pesoActivo <= 0) {
+            alert('Aún no se ha calculado la TMB del paciente. Espera unos segundos o revísala en el Dashboard antes de guardar.');
+            return;
+        }
         createPlanificacion.mutate({
             paciente_id: activePatient.id,
             nombre: nombre?.trim() || undefined,
@@ -174,12 +181,16 @@ export const useMacronutrientsSetup = () => {
     // Balanceado = la suma de porcentajes está a ±1 de 100 (tolerancia de redondeo).
     const isBalanced = Math.abs(totals.summary.percent - 100) <= 1;
 
+    // Solo se puede guardar con paciente activo y TMB/peso reales calculados.
+    const canSave = !!activePatient?.id && tmbPromedio > 0 && pesoActivo > 0;
+
     return {
         context: { pesoActivo, tmbPromedio },
         inputs: { protGkg, protPct: macrosPct.prot, choPct, fatPct },
         actions: { setMacro, updateFromGrams, updateFromGramsPerKg, setProtGkg, setChoPct, setFatPct, handleReset, handleSave, autoBalance },
         totals,
         isBalanced,
+        canSave,
         isSaving: createPlanificacion.isPending
     };
 };

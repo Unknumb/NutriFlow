@@ -3,12 +3,19 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { BibliotecaPreparaciones } from './BibliotecaPreparaciones';
 
 const mockMutate = vi.hoisted(() => vi.fn());
+const mockCrearMutate = vi.hoisted(() => vi.fn());
 const mockUsePreparaciones = vi.hoisted(() => vi.fn());
 const mockUseEliminarPreparacion = vi.hoisted(() => vi.fn());
+const mockUseCrearPreparacion = vi.hoisted(() => vi.fn());
 
 vi.mock('../hooks/usePreparaciones', () => ({
   usePreparaciones: mockUsePreparaciones,
   useEliminarPreparacion: mockUseEliminarPreparacion,
+  useCrearPreparacion: mockUseCrearPreparacion,
+}));
+
+vi.mock('../../../shared/store/useToastStore', () => ({
+  notify: vi.fn(),
 }));
 
 vi.mock('@tanstack/react-router', () => ({
@@ -34,6 +41,7 @@ vi.mock('../types/preparacion.types', () => ({
 }));
 
 vi.mock('lucide-react', () => ({
+  Copy: () => <span data-testid="icon-copy" />,
   ImageOff: () => <span data-testid="icon-image-off" />,
   Loader2: () => <span data-testid="icon-loader" />,
   Pencil: () => <span data-testid="icon-pencil" />,
@@ -71,6 +79,7 @@ beforeEach(() => {
     isError: false,
   });
   mockUseEliminarPreparacion.mockReturnValue({ mutate: mockMutate, isPending: false });
+  mockUseCrearPreparacion.mockReturnValue({ mutate: mockCrearMutate, isPending: false });
 });
 
 describe('BibliotecaPreparaciones', () => {

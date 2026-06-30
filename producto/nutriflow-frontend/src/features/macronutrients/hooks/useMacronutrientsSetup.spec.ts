@@ -164,6 +164,33 @@ describe('useMacronutrientsSetup', () => {
       act(() => { result.current.actions.autoBalance(); });
       expect(result.current.inputs.choPct).toBeGreaterThan(result.current.inputs.fatPct);
     });
+
+    it('aplica un reparto por defecto (30/40/30) cuando todo está en 0', () => {
+      const { result } = renderHook(() => useMacronutrientsSetup());
+      act(() => {
+        result.current.actions.setMacro('prot', 0);
+        result.current.actions.setMacro('cho', 0);
+        result.current.actions.setMacro('fat', 0);
+      });
+      expect(result.current.totals.summary.percent).toBe(0);
+      act(() => { result.current.actions.autoBalance(); });
+      expect(result.current.inputs.protPct).toBe(30);
+      expect(result.current.inputs.choPct).toBe(40);
+      expect(result.current.inputs.fatPct).toBe(30);
+    });
+
+    it('reparte en los 3 grupos cuando solo un macro tiene valor (prot=100)', () => {
+      const { result } = renderHook(() => useMacronutrientsSetup());
+      act(() => {
+        result.current.actions.setMacro('cho', 0);
+        result.current.actions.setMacro('fat', 0);
+        result.current.actions.setMacro('prot', 100);
+      });
+      act(() => { result.current.actions.autoBalance(); });
+      expect(result.current.inputs.protPct).toBe(30);
+      expect(result.current.inputs.choPct).toBe(40);
+      expect(result.current.inputs.fatPct).toBe(30);
+    });
   });
 
   describe('localStorage — persistencia por paciente', () => {

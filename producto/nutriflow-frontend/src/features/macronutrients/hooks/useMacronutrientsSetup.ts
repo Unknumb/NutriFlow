@@ -134,19 +134,35 @@ export const useMacronutrientsSetup = () => {
         setFatPct(30);
     };
 
-    // Balance automático: reparte proteínas, carbohidratos y grasas de forma
-    // PROPORCIONAL para que sumen exactamente 100%, conservando las relaciones
-    // que la nutricionista definió manualmente (en vez de cargar todo el ajuste
-    // en los carbohidratos). El último macro absorbe el redondeo.
+    // Balance automático: deja proteínas, carbohidratos y grasas sumando 100%
+    // repartidos en los 3 grupos.
+    // - Si ya hay una distribución significativa (≥2 macros con valor), se ESCALA
+    //   de forma proporcional conservando las relaciones definidas.
+    // - Si el estado es degenerado (todo en 0, o un solo macro con valor, p.ej.
+    //   proteína al 100%), se aplica un reparto equilibrado por defecto
+    //   (30% proteínas / 40% carbohidratos / 30% grasas) para que el botón
+    //   siempre produzca un balance real de los 3 grupos.
     const autoBalance = () => {
         if (tmbPromedio <= 0) return;
-        const total = macrosPct.prot + macrosPct.cho + macrosPct.fat;
-        if (total <= 0) return;
 
-        const factor = 100 / total;
-        const newProt = Math.round(macrosPct.prot * factor);
-        const newCho = Math.round(macrosPct.cho * factor);
-        const newFat = Math.max(0, 100 - newProt - newCho);
+        const total = macrosPct.prot + macrosPct.cho + macrosPct.fat;
+        const conValor = [macrosPct.prot, macrosPct.cho, macrosPct.fat].filter((x) => x > 0).length;
+
+        let newProt: number;
+        let newCho: number;
+        let newFat: number;
+
+        if (total <= 0 || conValor < 2) {
+            // Reparto equilibrado estándar para los 3 grupos.
+            newProt = 30;
+            newCho = 40;
+            newFat = 30;
+        } else {
+            const factor = 100 / total;
+            newProt = Math.round(macrosPct.prot * factor);
+            newCho = Math.round(macrosPct.cho * factor);
+            newFat = Math.max(0, 100 - newProt - newCho);
+        }
 
         const protG = (newProt / 100) * tmbPromedio / 4;
         setProtGkg(pesoActivo > 0 ? protG / pesoActivo : 0);

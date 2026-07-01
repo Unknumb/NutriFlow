@@ -23,7 +23,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     if (!payload.sub) {
       throw new UnauthorizedException('Token inválido o sin ID de usuario');
     }
-    
-    return { userId: payload.sub, email: payload.email, role: payload.role };
+    return { userId: payload.sub, email: payload.email, role: payload.role, aal: payload.aal };
   }
 }

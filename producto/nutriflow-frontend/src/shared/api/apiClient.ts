@@ -1,5 +1,6 @@
 import axios, { AxiosError } from 'axios';
 import { supabase } from '../utils/supabase';
+import { notify } from '../store/useToastStore';
 
 // 1. Configuración con timeout para evitar peticiones "zombie"
 export const apiClient = axios.create({
@@ -34,19 +35,24 @@ apiClient.interceptors.response.use(
             await supabase.auth.signOut();
             window.location.href = '/login';
         }
-        
+
         if (status === 400) {
             console.error('Error de validación:', apiError?.message);
         }
 
-        if (status === 500) {
+        // Errores inesperados (5xx) y de red: se surfacing al usuario con un
+        // toast global, además del log. Los 4xx se manejan a nivel de cada
+        // feature (validación de formularios, 409 de duplicado, etc.).
+        if (status && status >= 500) {
             console.error('Error interno del servidor en NutriFlow');
+            notify('error', 'Ocurrió un error en el servidor. Intenta nuevamente en unos momentos.');
         }
 
         if (!error.response) {
             console.error('Error de red o el servidor no responde');
+            notify('error', 'No se pudo conectar con el servidor. Revisa tu conexión e intenta otra vez.');
         }
-        
+
         return Promise.reject(error);
     }
 );

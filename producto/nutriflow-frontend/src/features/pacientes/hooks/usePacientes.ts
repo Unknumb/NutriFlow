@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { pacientesApi } from '../services/pacientesApi';
 import { pacientesKeys } from '../../../shared/api/queryKeys';
+import { notify } from '../../../shared/store/useToastStore';
 import type { UpdatePacientePayload } from '../types/paciente.types';
 
 export const usePacientes = () => {
@@ -49,6 +50,10 @@ export const useDeletePaciente = () => {
     mutationFn: pacientesApi.deletePaciente,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: pacientesKeys.all });
+      notify('success', 'Paciente eliminado.');
+    },
+    onError: () => {
+      notify('error', 'No se pudo eliminar el paciente. Intenta nuevamente.');
     },
   });
 };

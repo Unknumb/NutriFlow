@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { usePacientes } from "../hooks/usePacientes";
+import { usePacientes, useDeletePaciente } from "../hooks/usePacientes";
 import { useClinicalStore } from "../../../shared/store/useClinicalStore";
 import { useAuthStore } from "../../../shared/store/useAuthStore";
 import { Loader2, Star, Trash2, Printer, Plus } from "lucide-react";
@@ -22,7 +22,8 @@ import {
 import { NUTRITION_GROUPS, comidasOrdenadas } from "../../porciones/constants";
 import { PDFDownloadLink } from "@react-pdf/renderer";
 import { PautaDocumentPDF } from "../../porciones/components/PautaDocumentPDF";
-import { formatearFecha } from "../../../shared/utils/fechas";
+import { formatearFecha, formatearFechaLarga } from "../../../shared/utils/fechas";
+import { MACRO_COLORS } from "../../../shared/ui/macroColors";
 import { usePerfilNutricionista } from "../../perfil/hooks/usePerfil";
 
 const calculateAge = (birthDateString: string) => {
@@ -57,6 +58,8 @@ export const FichasPacientes: React.FC = () => {
   );
   const [activeTab, setActiveTab] = useState<"datos" | "pautas">("datos");
   const [showNuevoPaciente, setShowNuevoPaciente] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const deletePaciente = useDeletePaciente();
 
   const { data: evaluaciones, isLoading: loadingEvals } =
     useEvaluacionesByPaciente(selectedPatientId || "");
@@ -107,6 +110,22 @@ export const FichasPacientes: React.FC = () => {
     }
   };
 
+  const handleDeletePaciente = () => {
+    if (!pacienteSeleccionado) return;
+    const idEliminado = pacienteSeleccionado.id;
+    deletePaciente.mutate(idEliminado, {
+      onSuccess: () => {
+        // Si era el paciente activo, se limpia el contexto clínico.
+        if (activePatient?.id === idEliminado) {
+          setActivePatient(null);
+        }
+        setSelectedPatientId(null);
+        setConfirmDelete(false);
+      },
+      onError: () => setConfirmDelete(false),
+    });
+  };
+
   // Estado local para nueva evaluación
   const [showNuevaEval, setShowNuevaEval] = useState(false);
   const [nuevaEvalForm, setNuevaEvalForm] = useState<
@@ -139,7 +158,10 @@ export const FichasPacientes: React.FC = () => {
                     Pacientes Activos
                   </h4>
                   <p className="text-sm text-ink-soft">
-                    {pacientes?.length ?? 0} pacientes en seguimiento
+                    {pacientes?.length ?? 0}{" "}
+                    {(pacientes?.length ?? 0) === 1
+                      ? "paciente en seguimiento"
+                      : "pacientes en seguimiento"}
                   </p>
                 </div>
                 <button
@@ -173,13 +195,15 @@ export const FichasPacientes: React.FC = () => {
                   const edad = calculateAge(paciente.fecha_nacimiento);
 
                   return (
-                    <div
+                    <button
                       key={paciente.id}
+                      type="button"
+                      aria-pressed={selectedPatientId === paciente.id}
                       onClick={() => {
                         setSelectedPatientId(paciente.id);
                         setShowNuevaEval(false);
                       }}
-                      className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                      className={`w-full text-left p-4 rounded-lg border-2 cursor-pointer transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-apricot ${
                         selectedPatientId === paciente.id
                           ? "border-pine-soft bg-pine-soft/5"
                           : "border-mist hover:border-mist bg-white"
@@ -199,16 +223,15 @@ export const FichasPacientes: React.FC = () => {
                             {edad} años · {paciente.sexo_biologico || "N/A"}
                           </p>
                           <div className="flex items-center gap-2 mt-2">
-                            <span className="inline-flex items-center justify-center rounded-md border px-2 py-0.5 text-xs font-medium text-ink-soft bg-white shadow-sm">
-                              - kg
-                            </span>
-                            <span className="inline-flex items-center justify-center rounded-md px-2 py-0.5 text-xs font-medium bg-mist/60 text-ink-soft">
-                              0 síntomas
+                            <span className="inline-flex items-center justify-center rounded-md border px-2 py-0.5 text-xs font-medium text-ink-soft bg-white shadow-sm tnum">
+                              {paciente.Evaluacion?.[0]?.peso_actual
+                                ? `${paciente.Evaluacion[0].peso_actual} kg`
+                                : '— kg'}
                             </span>
                           </div>
                         </div>
                       </div>
-                    </div>
+                    </button>
                   );
                 })}
               </div>
@@ -245,19 +268,29 @@ export const FichasPacientes: React.FC = () => {
                           </p>
                         </div>
                       </div>
-                      {activePatient?.id === pacienteSeleccionado.id ? (
-                        <span className="inline-flex items-center justify-center rounded-md border border-pine-soft/50 px-2 py-0.5 text-xs font-medium bg-pine-soft/10 text-pine-soft shrink-0 self-start sm:self-auto">
-                          Paciente Activo en Sistema
-                        </span>
-                      ) : (
+                      <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto w-full sm:w-auto">
+                        {activePatient?.id === pacienteSeleccionado.id ? (
+                          <span className="inline-flex items-center justify-center rounded-md border border-pine-soft/50 px-2 py-0.5 text-xs font-medium bg-pine-soft/10 text-pine-soft">
+                            Paciente Activo en Sistema
+                          </span>
+                        ) : (
+                          <button
+                            onClick={handleSetActive}
+                            className="inline-flex items-center justify-center rounded-md border border-mist px-3 py-1.5 text-sm font-medium bg-white text-ink-soft hover:bg-pine-soft/5 hover:text-pine-soft transition-colors shadow-sm gap-2 flex-1 sm:flex-none"
+                          >
+                            <Star className="w-4 h-4" />
+                            Establecer como Paciente Activo
+                          </button>
+                        )}
                         <button
-                          onClick={handleSetActive}
-                          className="inline-flex items-center justify-center rounded-md border border-mist px-3 py-1.5 text-sm font-medium bg-white text-ink-soft hover:bg-pine-soft/5 hover:text-pine-soft transition-colors shadow-sm gap-2 w-full sm:w-auto shrink-0"
+                          onClick={() => setConfirmDelete(true)}
+                          aria-label="Eliminar paciente"
+                          title="Eliminar paciente"
+                          className="inline-flex items-center justify-center rounded-md border border-mist p-2 text-ink-soft/70 hover:text-clinical-red hover:border-clinical-red/40 hover:bg-clinical-red/5 transition-colors shadow-sm"
                         >
-                          <Star className="w-4 h-4" />
-                          Establecer como Paciente Activo
+                          <Trash2 className="w-4 h-4" />
                         </button>
-                      )}
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
@@ -617,11 +650,14 @@ export const FichasPacientes: React.FC = () => {
                                   </div>
 
                                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-                                    <div className="bg-clinical-red/5 p-4 rounded-card border border-clinical-red/20 flex flex-col items-center justify-center">
-                                      <p className="text-sm font-medium text-clinical-red mb-1">
+                                    <div
+                                      className="p-4 rounded-card border flex flex-col items-center justify-center"
+                                      style={{ backgroundColor: `${MACRO_COLORS.proteinas}0d`, borderColor: `${MACRO_COLORS.proteinas}33` }}
+                                    >
+                                      <p className="text-sm font-medium mb-1" style={{ color: MACRO_COLORS.proteinas }}>
                                         Proteínas
                                       </p>
-                                      <p className="text-2xl font-bold text-clinical-red">
+                                      <p className="text-2xl font-bold tnum" style={{ color: MACRO_COLORS.proteinas }}>
                                         {Math.round(
                                           planificacion.distribucion_macros
                                             ?.proteina || 0,
@@ -629,11 +665,14 @@ export const FichasPacientes: React.FC = () => {
                                         %
                                       </p>
                                     </div>
-                                    <div className="bg-blue-50 p-4 rounded-card border border-blue-100 flex flex-col items-center justify-center">
-                                      <p className="text-sm font-medium text-blue-800 mb-1">
+                                    <div
+                                      className="p-4 rounded-card border flex flex-col items-center justify-center"
+                                      style={{ backgroundColor: `${MACRO_COLORS.carbohidratos}0d`, borderColor: `${MACRO_COLORS.carbohidratos}33` }}
+                                    >
+                                      <p className="text-sm font-medium mb-1" style={{ color: MACRO_COLORS.carbohidratos }}>
                                         Carbohidratos
                                       </p>
-                                      <p className="text-2xl font-bold text-blue-600">
+                                      <p className="text-2xl font-bold tnum" style={{ color: MACRO_COLORS.carbohidratos }}>
                                         {Math.round(
                                           planificacion.distribucion_macros
                                             ?.carbohidratos || 0,
@@ -641,11 +680,14 @@ export const FichasPacientes: React.FC = () => {
                                         %
                                       </p>
                                     </div>
-                                    <div className="bg-yellow-50 p-4 rounded-card border border-yellow-100 flex flex-col items-center justify-center">
-                                      <p className="text-sm font-medium text-yellow-800 mb-1">
+                                    <div
+                                      className="p-4 rounded-card border flex flex-col items-center justify-center"
+                                      style={{ backgroundColor: `${MACRO_COLORS.grasas}0d`, borderColor: `${MACRO_COLORS.grasas}33` }}
+                                    >
+                                      <p className="text-sm font-medium mb-1" style={{ color: MACRO_COLORS.grasas }}>
                                         Grasas
                                       </p>
-                                      <p className="text-2xl font-bold text-yellow-600">
+                                      <p className="text-2xl font-bold tnum" style={{ color: MACRO_COLORS.grasas }}>
                                         {Math.round(
                                           planificacion.distribucion_macros
                                             ?.grasa || 0,
@@ -770,19 +812,11 @@ export const FichasPacientes: React.FC = () => {
                                                                 perfil?.registro_profesional ||
                                                                 "",
                                                             },
+                                                            // TZ-safe: evita el off-by-one de new Date(iso) en zonas al oeste de UTC.
                                                             fechaEmision:
-                                                              new Intl.DateTimeFormat(
-                                                                "es-CL",
-                                                                {
-                                                                  day: "2-digit",
-                                                                  month: "long",
-                                                                  year: "numeric",
-                                                                },
-                                                              ).format(
-                                                                new Date(
-                                                                  pauta.fecha_creacion ||
-                                                                    new Date(),
-                                                                ),
+                                                              formatearFechaLarga(
+                                                                pauta.fecha_creacion ||
+                                                                  new Date().toISOString(),
                                                               ),
                                                             objetivos: {
                                                               kcal,
@@ -1084,6 +1118,47 @@ export const FichasPacientes: React.FC = () => {
           setActiveTab("datos");
         }}
       />
+
+      {confirmDelete && pacienteSeleccionado && (
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+          onClick={() => setConfirmDelete(false)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="confirmar-eliminar-titulo"
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white rounded-card shadow-xl w-full max-w-md p-6"
+          >
+            <h2 id="confirmar-eliminar-titulo" className="text-lg font-semibold text-ink mb-2">
+              Eliminar paciente
+            </h2>
+            <p className="text-sm text-ink-soft mb-6">
+              ¿Seguro que quieres eliminar a{" "}
+              <span className="font-semibold text-ink">
+                {pacienteSeleccionado.nombre} {pacienteSeleccionado.apellido}
+              </span>
+              ? Se borrarán también sus evaluaciones y planificaciones. Esta acción no se puede deshacer.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setConfirmDelete(false)}
+                className="px-4 py-2 text-sm font-medium text-ink-soft bg-white border border-mist rounded-lg hover:bg-porcelain transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleDeletePaciente}
+                disabled={deletePaciente.isPending}
+                className="px-4 py-2 text-sm font-medium text-white bg-clinical-red rounded-lg hover:bg-clinical-red/90 disabled:opacity-60 transition-colors"
+              >
+                {deletePaciente.isPending ? "Eliminando..." : "Eliminar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

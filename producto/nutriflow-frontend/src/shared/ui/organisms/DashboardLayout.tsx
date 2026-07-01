@@ -2,9 +2,14 @@ import { Sidebar } from './Sidebar';
 import { Outlet } from '@tanstack/react-router';
 import { useClinicalStore } from '../../store/useClinicalStore';
 import { IndicadorConexion } from '../molecules/IndicadorConexion';
+import { useSyncActivePatientTmb } from '../../../features/calculos/hooks/useSyncActivePatientTmb';
 
 export const DashboardLayout = () => {
     const { activePatient, tmbPromedio } = useClinicalStore();
+
+    // Calcula la TMB real del paciente activo en todas las pantallas (no solo
+    // en el Dashboard), para que la planificación nunca use una TMB fabricada.
+    useSyncActivePatientTmb();
 
     return (
         <div className="flex h-screen bg-porcelain overflow-hidden font-sans">

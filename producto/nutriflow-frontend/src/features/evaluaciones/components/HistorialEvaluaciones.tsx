@@ -216,29 +216,23 @@ export const HistorialEvaluaciones: React.FC<Props> = ({
                 <div>
                   <label className="text-xs font-medium text-ink-soft mb-1 block">TMB Estimada (kcal)</label>
                   <input
-                    type="number"
-                    step="1"
-                    value={editForm.tmb ?? ''}
-                    onChange={(e) =>
-                      setEditForm({ ...editForm, tmb: e.target.value ? parseFloat(e.target.value) : undefined })
-                    }
-                    aria-label="TMB estimada"
-                    placeholder="Calculada automáticamente"
-                    className="w-full p-2 border border-mist rounded-md text-sm outline-none focus:ring-2 focus:ring-pine-soft"
+                    type="text"
+                    readOnly
+                    value={editForm.tmb ? `${Math.round(editForm.tmb)}` : 'Se calcula al guardar'}
+                    aria-label="TMB estimada (automática)"
+                    title="Se recalcula automáticamente según peso, talla, edad, sexo y actividad"
+                    className="w-full p-2 border border-mist rounded-md text-sm bg-mist/40 text-ink-soft cursor-not-allowed"
                   />
                 </div>
                 <div>
                   <label className="text-xs font-medium text-ink-soft mb-1 block">Gasto Total (kcal)</label>
                   <input
-                    type="number"
-                    step="1"
-                    value={editForm.gasto_energetico_total ?? ''}
-                    onChange={(e) =>
-                      setEditForm({ ...editForm, gasto_energetico_total: e.target.value ? parseFloat(e.target.value) : undefined })
-                    }
-                    aria-label="Gasto energético total"
-                    placeholder="Calculado automáticamente"
-                    className="w-full p-2 border border-mist rounded-md text-sm outline-none focus:ring-2 focus:ring-pine-soft"
+                    type="text"
+                    readOnly
+                    value={editForm.gasto_energetico_total ? `${Math.round(editForm.gasto_energetico_total)}` : 'Se calcula al guardar'}
+                    aria-label="Gasto energético total (automático)"
+                    title="Se recalcula automáticamente según la TMB y el nivel de actividad"
+                    className="w-full p-2 border border-mist rounded-md text-sm bg-mist/40 text-ink-soft cursor-not-allowed"
                   />
                 </div>
               </div>

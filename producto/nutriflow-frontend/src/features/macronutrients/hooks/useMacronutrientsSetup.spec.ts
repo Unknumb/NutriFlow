@@ -115,49 +115,81 @@ describe('useMacronutrientsSetup', () => {
     });
   });
 
-  describe('setMacro — auto-balance', () => {
-    it('al subir prot, CHO absorbe la diferencia (28→30: cho 45→43)', () => {
+  describe('setMacro — ajuste manual (sin auto-balance)', () => {
+    it('al cambiar prot no toca cho ni fat', () => {
       const { result } = renderHook(() => useMacronutrientsSetup());
       act(() => { result.current.actions.setMacro('prot', 30); });
-      expect(result.current.inputs.choPct).toBe(43);
+      expect(result.current.inputs.protPct).toBe(30);
+      expect(result.current.inputs.choPct).toBe(45);
       expect(result.current.inputs.fatPct).toBe(27);
     });
 
-    it('cuando CHO se agota, el overflow pasa a grasa (prot 28→80: cho=0, fat=20)', () => {
-      const { result } = renderHook(() => useMacronutrientsSetup());
-      // diff=52 > cho(45) → newCho=-7 → clamped to 0; fat=max(0, 27+(-7))=20
-      act(() => { result.current.actions.setMacro('prot', 80); });
-      expect(result.current.inputs.choPct).toBe(0);
-      expect(result.current.inputs.fatPct).toBe(20);
-    });
-
-    it('al subir CHO, grasa absorbe la diferencia (cho 45→50: fat 27→22)', () => {
+    it('al cambiar cho no toca prot ni fat', () => {
       const { result } = renderHook(() => useMacronutrientsSetup());
       act(() => { result.current.actions.setMacro('cho', 50); });
-      expect(result.current.inputs.fatPct).toBe(22);
+      expect(result.current.inputs.choPct).toBe(50);
+      expect(result.current.inputs.protPct).toBe(28);
+      expect(result.current.inputs.fatPct).toBe(27);
     });
 
-    it('al subir grasa, CHO absorbe la diferencia (fat 27→35: cho 45→37)', () => {
+    it('al cambiar fat no toca prot ni cho', () => {
       const { result } = renderHook(() => useMacronutrientsSetup());
       act(() => { result.current.actions.setMacro('fat', 35); });
-      expect(result.current.inputs.choPct).toBe(37);
+      expect(result.current.inputs.fatPct).toBe(35);
+      expect(result.current.inputs.choPct).toBe(45);
+      expect(result.current.inputs.protPct).toBe(28);
+    });
+
+    it('la suma puede quedar distinta de 100% (lo resuelve el balance)', () => {
+      const { result } = renderHook(() => useMacronutrientsSetup());
+      act(() => { result.current.actions.setMacro('cho', 60); });
+      // prot 28 + cho 60 + fat 27 = 115
+      expect(result.current.totals.summary.percent).toBe(115);
+      expect(result.current.isBalanced).toBe(false);
     });
   });
 
-  describe('autoBalance', () => {
-    it('usa CHO como macro de cierre (prot=28%, fat=30% → cho=42%)', () => {
-      localStorage.setItem('nutriflow_macros_patient-1_fatPct', '30');
+  describe('autoBalance — reparte proporcionalmente a 100%', () => {
+    it('escala los 3 macros para sumar exactamente 100%', () => {
       const { result } = renderHook(() => useMacronutrientsSetup());
+      act(() => { result.current.actions.setMacro('cho', 60); }); // sum 115
+      expect(result.current.totals.summary.percent).toBe(115);
       act(() => { result.current.actions.autoBalance(); });
-      expect(result.current.inputs.choPct).toBe(42);
+      expect(result.current.totals.summary.percent).toBe(100);
     });
 
-    it('cuando prot+fat > 100, clampea fat a 0 y cho queda en 0', () => {
-      // protGkg=36 → protKcal=36*70*4=10080 → prot%=round(10080/2000*100)=504
-      localStorage.setItem('nutriflow_macros_patient-1_protGkg', '36');
+    it('conserva el orden de proporciones (el mayor sigue siendo el mayor)', () => {
       const { result } = renderHook(() => useMacronutrientsSetup());
+      act(() => { result.current.actions.setMacro('cho', 60); });
       act(() => { result.current.actions.autoBalance(); });
-      expect(result.current.inputs.choPct).toBe(0);
+      expect(result.current.inputs.choPct).toBeGreaterThan(result.current.inputs.fatPct);
+    });
+
+    it('aplica un reparto por defecto (30/40/30) cuando todo está en 0', () => {
+      const { result } = renderHook(() => useMacronutrientsSetup());
+      act(() => {
+        result.current.actions.setMacro('prot', 0);
+        result.current.actions.setMacro('cho', 0);
+        result.current.actions.setMacro('fat', 0);
+      });
+      expect(result.current.totals.summary.percent).toBe(0);
+      act(() => { result.current.actions.autoBalance(); });
+      expect(result.current.inputs.protPct).toBe(30);
+      expect(result.current.inputs.choPct).toBe(40);
+      expect(result.current.inputs.fatPct).toBe(30);
+    });
+
+    it('reparte en los 3 grupos cuando solo un macro tiene valor (prot=100)', () => {
+      const { result } = renderHook(() => useMacronutrientsSetup());
+      act(() => {
+        result.current.actions.setMacro('cho', 0);
+        result.current.actions.setMacro('fat', 0);
+        result.current.actions.setMacro('prot', 100);
+      });
+      act(() => { result.current.actions.autoBalance(); });
+      expect(result.current.inputs.protPct).toBe(30);
+      expect(result.current.inputs.choPct).toBe(40);
+      expect(result.current.inputs.fatPct).toBe(30);
     });
   });
 

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { AlertTriangle, Wand2 } from "lucide-react";
+import { MACRO_COLORS } from "../../../shared/ui/macroColors";
 import type {
   ClinicalContext,
   MacronutrientTotals,
@@ -7,6 +8,13 @@ import type {
   SliderProps,
   MacroMetrics,
 } from "../types";
+
+// Color del macro para el relleno del slider (track), por themeKey.
+const TRACK_COLOR: Record<"prot" | "cho" | "fat", string> = {
+  prot: MACRO_COLORS.proteinas,
+  cho: MACRO_COLORS.carbohidratos,
+  fat: MACRO_COLORS.grasas,
+};
 
 // 1. Temas por macro: usan el lenguaje de color del sistema (ver shared/ui/macroColors.ts)
 const MACRO_THEMES = {
@@ -90,10 +98,11 @@ const MacroSliderCard = ({
             max={sliderProps.max}
             step={sliderProps.step}
             value={sliderProps.val}
+            aria-label={`Ajustar ${title}`}
             onChange={(e) => sliderProps.onChange(Number(e.target.value))}
             className={`w-full h-4 rounded-full appearance-none cursor-pointer outline-none focus:ring-2 focus:ring-offset-1 transition-all [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-none ${theme.thumbClasses}`}
             style={{
-              background: `linear-gradient(to right, #1F3D33 ${(sliderProps.val / sliderProps.max) * 100}%, #E8EAE3 ${(sliderProps.val / sliderProps.max) * 100}%)`,
+              background: `linear-gradient(to right, ${TRACK_COLOR[themeKey]} ${(sliderProps.val / sliderProps.max) * 100}%, #E8EAE3 ${(sliderProps.val / sliderProps.max) * 100}%)`,
             }}
           />
         </div>

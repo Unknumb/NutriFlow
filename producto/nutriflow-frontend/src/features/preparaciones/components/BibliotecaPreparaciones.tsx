@@ -1,26 +1,24 @@
 // nutriflow-frontend/src/features/preparaciones/components/BibliotecaPreparaciones.tsx
 import React, { useMemo, useState } from 'react';
 import { Link } from '@tanstack/react-router';
-import { ImageOff, Loader2, Pencil, Plus, Search, Sparkles, Trash2 } from 'lucide-react';
+import { Copy, ImageOff, Loader2, Pencil, Plus, Search, Sparkles, Trash2 } from 'lucide-react';
 import { ModalNuevaPreparacion } from './ModalNuevaPreparacion';
-import { useEliminarPreparacion, usePreparaciones } from '../hooks/usePreparaciones';
+import { useCrearPreparacion, useEliminarPreparacion, usePreparaciones } from '../hooks/usePreparaciones';
 import { TIPO_COMIDA_LABELS, type Preparacion } from '../types/preparacion.types';
+import { notify } from '../../../shared/store/useToastStore';
 
-const COLORES_TAGS = [
-  'bg-yellow-100 text-yellow-800',
-  'bg-orange-100 text-orange-800',
-  'bg-blue-100 text-blue-800',
-  'bg-purple-100 text-purple-800',
-  'bg-green-100 text-green-800',
-  'bg-clinical-red/10 text-clinical-red',
-];
+// Chip de ingrediente neutro del sistema (REDISENO: sin colores pastel
+// aleatorios ni morado heredado; borde 1px sobre fondo mist).
+const CHIP_INGREDIENTE = 'bg-mist/50 text-ink-soft border border-mist';
 
 const TarjetaPreparacion: React.FC<{
   preparacion: Preparacion;
   onEditar: (prep: Preparacion) => void;
   onEliminar: (prep: Preparacion) => void;
+  onDuplicar: (prep: Preparacion) => void;
   eliminando: boolean;
-}> = ({ preparacion, onEditar, onEliminar, eliminando }) => (
+  duplicando: boolean;
+}> = ({ preparacion, onEditar, onEliminar, onDuplicar, eliminando, duplicando }) => (
   <div className="bg-white text-ink flex flex-col rounded-card border border-mist overflow-hidden hover:shadow-lg transition-shadow animate-in fade-in duration-300">
     {/* Imagen */}
     <div className="aspect-video bg-mist/60 relative overflow-hidden flex items-center justify-center">
@@ -60,10 +58,25 @@ const TarjetaPreparacion: React.FC<{
             {preparacion.totales.grasas}g
           </p>
         </div>
-        {!preparacion.es_sistema && (
+        {preparacion.es_sistema ? (
+          // Las del sistema son compartidas (solo lectura): se ofrece duplicar a
+          // la biblioteca propia, donde sí se pueden editar o eliminar.
+          <div className="flex items-center shrink-0">
+            <button
+              onClick={() => onDuplicar(preparacion)}
+              disabled={duplicando}
+              aria-label="Duplicar preparación a mi biblioteca"
+              title="Duplicar a mi biblioteca (para editarla)"
+              className="p-1.5 text-ink-soft/60 hover:text-pine-soft hover:bg-pine-soft/5 rounded-lg transition-colors disabled:opacity-50"
+            >
+              <Copy className="w-4 h-4" />
+            </button>
+          </div>
+        ) : (
           <div className="flex items-center shrink-0">
             <button
               onClick={() => onEditar(preparacion)}
+              aria-label="Editar preparación"
               title="Editar preparación"
               className="p-1.5 text-ink-soft/60 hover:text-pine-soft hover:bg-pine-soft/5 rounded-lg transition-colors"
             >
@@ -72,6 +85,7 @@ const TarjetaPreparacion: React.FC<{
             <button
               onClick={() => onEliminar(preparacion)}
               disabled={eliminando}
+              aria-label="Eliminar preparación"
               title="Eliminar preparación"
               className="p-1.5 text-ink-soft/60 hover:text-clinical-red hover:bg-clinical-red/5 rounded-lg transition-colors disabled:opacity-50"
             >
@@ -83,11 +97,11 @@ const TarjetaPreparacion: React.FC<{
 
       {/* Ingredientes */}
       <div className="flex flex-wrap gap-1.5">
-        {preparacion.ingredientes.map((ing, idx) => (
+        {preparacion.ingredientes.map((ing) => (
           <span
             key={ing.id}
             title={`${ing.cantidad_g} g`}
-            className={`inline-flex items-center justify-center rounded-md px-2 py-0.5 text-xs font-medium border-0 ${COLORES_TAGS[idx % COLORES_TAGS.length]}`}
+            className={`inline-flex items-center justify-center rounded-md px-2 py-0.5 text-xs font-medium ${CHIP_INGREDIENTE}`}
           >
             {ing.nombre}
           </span>
@@ -105,6 +119,7 @@ export const BibliotecaPreparaciones: React.FC = () => {
 
   const { data: preparaciones, isLoading, isError } = usePreparaciones();
   const { mutate: eliminarPreparacion, isPending: eliminando } = useEliminarPreparacion();
+  const { mutate: crearPreparacion, isPending: duplicando } = useCrearPreparacion();
 
   const preparacionesFiltradas = useMemo(() => {
     const lista = preparaciones ?? [];
@@ -128,6 +143,26 @@ export const BibliotecaPreparaciones: React.FC = () => {
     setIsModalOpen(true);
   };
 
+  // Copia una preparación del sistema a la biblioteca propia (editable/eliminable).
+  const handleDuplicar = (prep: Preparacion) => {
+    crearPreparacion(
+      {
+        nombre: `${prep.nombre} (copia)`.slice(0, 120),
+        descripcion: prep.descripcion ?? undefined,
+        instrucciones: prep.instrucciones ?? undefined,
+        tipo_comida: prep.tipo_comida ?? undefined,
+        ingredientes: prep.ingredientes.map((ing) => ({
+          alimento_id: ing.alimento_id,
+          cantidad_g: ing.cantidad_g,
+        })),
+      },
+      {
+        onSuccess: () => notify('success', 'Preparación duplicada a tu biblioteca. Ya puedes editarla.'),
+        onError: () => notify('error', 'No se pudo duplicar la preparación. Intenta nuevamente.'),
+      },
+    );
+  };
+
   const handleCerrarModal = () => {
     setIsModalOpen(false);
     setPreparacionEnEdicion(null);
@@ -149,8 +184,9 @@ export const BibliotecaPreparaciones: React.FC = () => {
         <div className="flex-1 relative min-w-0">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-ink-soft/60" />
           <input
-            type="text"
-            className="flex h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base transition-colors outline-none focus-visible:border-mist focus-visible:ring-2 focus-visible:ring-mist pl-10"
+            type="search"
+            aria-label="Buscar preparaciones por nombre o ingrediente"
+            className="flex h-9 w-full min-w-0 rounded-md border border-mist px-3 py-1 text-base transition-colors outline-none focus-visible:border-pine-soft focus-visible:ring-2 focus-visible:ring-apricot pl-10"
             placeholder="Buscar por nombre o ingrediente..."
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
@@ -196,7 +232,9 @@ export const BibliotecaPreparaciones: React.FC = () => {
               preparacion={prep}
               onEditar={handleEditar}
               onEliminar={handleEliminar}
+              onDuplicar={handleDuplicar}
               eliminando={eliminando}
+              duplicando={duplicando}
             />
           ))}
           {preparacionesFiltradas.length === 0 && (

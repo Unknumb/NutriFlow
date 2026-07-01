@@ -94,7 +94,8 @@ export const GestionAlimentos: React.FC = () => {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-soft/50" />
             <input
-              type="text"
+              type="search"
+              aria-label="Buscar alimentos por nombre"
               value={busqueda}
               onChange={(e) => onBuscar(e.target.value)}
               placeholder="Buscar por nombre..."

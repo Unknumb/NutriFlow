@@ -3,6 +3,8 @@ import { useAuthStore } from '../shared/store/useAuthStore';
 
 // 1. IMPORTACIONES
 import { DashboardLayout } from '../shared/ui/organisms/DashboardLayout';
+import { ErrorBoundary } from '../shared/ui/organisms/ErrorBoundary';
+import { Toaster } from '../shared/ui/molecules/Toaster';
 
 // 2. ROOT NEUTRO
 const rootRoute = createRootRoute({
@@ -147,5 +149,10 @@ declare module '@tanstack/react-router' {
 }
 
 export default function App() {
-    return <RouterProvider router={router} />;
+    return (
+        <ErrorBoundary>
+            <RouterProvider router={router} />
+            <Toaster />
+        </ErrorBoundary>
+    );
 }

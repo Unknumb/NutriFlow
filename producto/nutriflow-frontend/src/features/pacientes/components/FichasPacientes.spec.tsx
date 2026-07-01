@@ -14,12 +14,14 @@ const mockUseUpdateEvaluacion = vi.hoisted(() => vi.fn());
 const mockUseDeletePauta = vi.hoisted(() => vi.fn());
 const mockUsePlanificaciones = vi.hoisted(() => vi.fn());
 const mockUseDeletePlanificacion = vi.hoisted(() => vi.fn());
+const mockUseDeletePaciente = vi.hoisted(() => vi.fn());
 const mockSetActivePatient = vi.hoisted(() => vi.fn());
 const mockSetPesoActivo = vi.hoisted(() => vi.fn());
 const mockSetTmbPromedio = vi.hoisted(() => vi.fn());
 
 vi.mock('../hooks/usePacientes', () => ({
   usePacientes: mockUsePacientes,
+  useDeletePaciente: mockUseDeletePaciente,
 }));
 
 vi.mock('../../../shared/store/useClinicalStore', () => ({
@@ -156,6 +158,7 @@ const setupDefaultMocks = () => {
   mockUseDeletePauta.mockReturnValue({ mutate: vi.fn(), isPending: false });
   mockUsePlanificaciones.mockReturnValue({ data: [], isLoading: false });
   mockUseDeletePlanificacion.mockReturnValue({ mutate: vi.fn(), isPending: false });
+  mockUseDeletePaciente.mockReturnValue({ mutate: vi.fn(), isPending: false });
 };
 
 beforeEach(() => {

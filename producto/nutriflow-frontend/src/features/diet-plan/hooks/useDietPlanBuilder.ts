@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import { FOOD_GROUPS } from '../constants/foodGroups';
 import type { DietPlanTotals } from '../types';
 import type { ClinicalContext } from '../../macronutrients/types';
@@ -9,7 +9,10 @@ export const useDietPlanBuilder = (initialTargets: ClinicalContext & { kcal: num
     const store = usePortionsStore();
     const portions = store.targets; // Las porciones aquí son los targets en el store de distribuciones
 
-    const [targets, setTargets] = useState(initialTargets);
+    // Los objetivos se derivan directamente de las props (macros/TMB del paciente
+    // activo). No se copian a estado local para evitar que queden congelados al
+    // cambiar de paciente o de planificación (bug de targets stale).
+    const targets = initialTargets;
 
     const ALL_GROUPS = useMemo(() => [...FOOD_GROUPS, ...store.customFoods], [store.customFoods]);
 
@@ -104,7 +107,6 @@ export const useDietPlanBuilder = (initialTargets: ClinicalContext & { kcal: num
     return {
         portions,
         targets,
-        setTargets,
         currentTotals,
         actions: {
             incrementPortion: store.incrementTarget,

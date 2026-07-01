@@ -48,21 +48,28 @@ export const MacronutrientsHeader = ({ context, totals, isBalanced, onPesoChange
                     <div className={`cifra-data text-2xl font-medium h-14 flex items-center justify-center rounded-lg border transition-colors ${isBalanced ? 'bg-pine-soft/5 border-pine-soft/40 text-pine-soft' : 'bg-apricot/10 border-apricot/50 text-[#8a5a2a]'}`}>
                         {totalKcalCalculado}
                     </div>
-                    <p className="text-xs text-ink-soft mt-2 text-center">kcal/día</p>
+                    {/* Indicador explícito de si la distribución suma 100% */}
+                    <p className={`text-xs mt-2 text-center font-medium ${isBalanced ? 'text-pine-soft' : 'text-[#8a5a2a]'}`}>
+                        {isBalanced
+                            ? `Distribución cuadrada · ${totals.summary.percent}%`
+                            : `Suma ${totals.summary.percent}% · falta cuadrar a 100%`}
+                    </p>
                 </div>
             </div>
 
             <div className="bg-white flex flex-col gap-6 rounded-card border border-mist lg:col-span-3 shadow-card">
                 <div className="px-6 pt-6 pb-6">
                     <label className="items-center gap-2 text-sm font-medium mb-2 block text-ink-soft">Balance Automático</label>
+                    {/* Se desactiva ("Cuadrado") cuando la distribución ya suma 100%; al
+                        mover los sliders manualmente vuelve a activarse para re-cuadrar. */}
                     <button
                         onClick={onAutoBalance}
-                        disabled={isBalanced}
-                        className={`inline-flex items-center justify-center rounded-md text-sm font-medium transition-all w-full h-14 gap-2 ${isBalanced ? 'bg-pine-soft/10 border border-pine-soft/40 text-pine-soft cursor-default' : 'bg-pine text-porcelain hover:bg-pine-soft'}`}
+                        disabled={isBalanced || context.tmbPromedio <= 0}
+                        className={`inline-flex items-center justify-center rounded-md text-sm font-medium transition-all w-full h-14 gap-2 disabled:cursor-not-allowed ${isBalanced ? 'bg-pine-soft/10 border border-pine-soft/40 text-pine-soft' : 'bg-pine text-porcelain hover:bg-pine-soft'}`}
                     >
                         {isBalanced ? <><Check className="w-5 h-5" /> Cuadrado</> : <><LockOpen className="w-5 h-5" /> Cuadrar a 100%</>}
                     </button>
-                    <p className="text-xs text-ink-soft mt-2 text-center">Ajusta carbohidratos a 100%</p>
+                    <p className="text-xs text-ink-soft mt-2 text-center">Reparte proteínas, carbohidratos y grasas para sumar 100%</p>
                 </div>
             </div>
         </div>

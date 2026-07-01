@@ -69,50 +69,23 @@ export const useMacronutrientsSetup = () => {
     const createPlanificacion = useCreatePlanificacion();
     const setActivePlanificacionId = useClinicalStore((state) => state.setActivePlanificacionId);
 
-    // Auto-balance: al mover A, la diferencia se resta de B primero y el overflow a C.
-    // Garantiza sum = 100 en cada interacción del slider.
+    // Ajuste MANUAL: mover un macro cambia solo ese macro; la suma puede quedar
+    // por encima o por debajo de 100% (y se muestra el aviso). El cuadre a 100%
+    // se hace explícitamente con el botón "Balance Automático" (autoBalance).
     const setMacro = useCallback((key: "prot" | "cho" | "fat", val: number) => {
-        const v = Math.round(val);
-        const curProt = macrosPct.prot;
-        const curCho  = macrosPct.cho;
-        const curFat  = macrosPct.fat;
-
-        let newProt = curProt;
-        let newCho  = curCho;
-        let newFat  = curFat;
-
+        const v = Math.max(0, Math.round(val));
         if (key === "prot") {
-            const diff = v - curProt;
-            newProt = v;
-            newCho  = curCho - diff;                                // B absorbe primero
-            if (newCho < 0) { newFat = Math.max(0, curFat + newCho); newCho = 0; }
+            // La proteína se guarda en g/kg; convertimos el % objetivo a g/kg.
+            const protG = (v / 100) * tmbPromedio / 4;
+            setProtGkg(pesoActivo > 0 ? protG / pesoActivo : 0);
         } else if (key === "cho") {
-            const diff = v - curCho;
-            newCho  = v;
-            newFat  = curFat - diff;                                // B absorbe primero
-            if (newFat < 0) { newProt = Math.max(0, curProt + newFat); newFat = 0; }
+            setChoPct(v);
         } else {
-            const diff = v - curFat;
-            newFat  = v;
-            newCho  = curCho - diff;                                // B absorbe primero
-            if (newCho < 0) { newProt = Math.max(0, curProt + newCho); newCho = 0; }
+            setFatPct(v);
         }
+    }, [tmbPromedio, pesoActivo]);
 
-        // Corrección de residual: absorbe desvíos de redondeo o estado inicial desbalanceado
-        const residual = 100 - newProt - newCho - newFat;
-        if (residual !== 0) {
-            if (key !== "fat") newFat = Math.max(0, newFat + residual);
-            else               newCho = Math.max(0, newCho + residual);
-        }
-
-        // Convertir prot% → g/kg para el estado interno
-        const protG = (newProt / 100) * tmbPromedio / 4;
-        setProtGkg(pesoActivo > 0 ? protG / pesoActivo : 0);
-        setChoPct(newCho);
-        setFatPct(newFat);
-    }, [macrosPct, tmbPromedio, pesoActivo]);
-
-    // Traduce gramos → % y delega a setMacro para respetar el auto-balance.
+    // Traduce gramos → % del macro indicado (manual, sin tocar los otros).
     const updateFromGrams = useCallback((key: "prot" | "cho" | "fat", grams: number) => {
         if (tmbPromedio <= 0) return;
         const kcal = grams * (key === "fat" ? 9 : 4);
@@ -127,6 +100,13 @@ export const useMacronutrientsSetup = () => {
     const handleSave = (nombre?: string) => {
         if (!activePatient?.id) {
             alert('Selecciona un paciente primero');
+            return;
+        }
+        // No se guarda una planificación sin TMB real calculada: evita persistir
+        // calorías fabricadas/arrastradas. La TMB se calcula automáticamente al
+        // activar el paciente (useSyncActivePatientTmb); si aún es 0, no está lista.
+        if (tmbPromedio <= 0 || pesoActivo <= 0) {
+            alert('Aún no se ha calculado la TMB del paciente. Espera unos segundos o revísala en el Dashboard antes de guardar.');
             return;
         }
         createPlanificacion.mutate({
@@ -154,25 +134,47 @@ export const useMacronutrientsSetup = () => {
         setFatPct(30);
     };
 
-    // Auto-cuadre: la proteína (g/kg) es decisión clínica primaria y la grasa se
-    // respeta; los CARBOHIDRATOS son el macro de cierre que absorbe el ajuste
-    // hasta sumar exactamente 100%. Si no caben CHO (prot+grasa ya pasan de 100),
-    // se recorta la grasa.
+    // Balance automático: deja proteínas, carbohidratos y grasas sumando 100%
+    // repartidos en los 3 grupos.
+    // - Si ya hay una distribución significativa (≥2 macros con valor), se ESCALA
+    //   de forma proporcional conservando las relaciones definidas.
+    // - Si el estado es degenerado (todo en 0, o un solo macro con valor, p.ej.
+    //   proteína al 100%), se aplica un reparto equilibrado por defecto
+    //   (30% proteínas / 40% carbohidratos / 30% grasas) para que el botón
+    //   siempre produzca un balance real de los 3 grupos.
     const autoBalance = () => {
-        const protKcal = protGkg * pesoActivo * 4;
-        const protPctR = tmbPromedio > 0 ? Math.round((protKcal / tmbPromedio) * 100) : 0;
-        let fatR = Math.round(fatPct);
-        let choNuevo = 100 - protPctR - fatR;
-        if (choNuevo < 0) {
-            fatR = Math.max(0, 100 - protPctR);
-            setFatPct(fatR);
-            choNuevo = 0;
+        if (tmbPromedio <= 0) return;
+
+        const total = macrosPct.prot + macrosPct.cho + macrosPct.fat;
+        const conValor = [macrosPct.prot, macrosPct.cho, macrosPct.fat].filter((x) => x > 0).length;
+
+        let newProt: number;
+        let newCho: number;
+        let newFat: number;
+
+        if (total <= 0 || conValor < 2) {
+            // Reparto equilibrado estándar para los 3 grupos.
+            newProt = 30;
+            newCho = 40;
+            newFat = 30;
+        } else {
+            const factor = 100 / total;
+            newProt = Math.round(macrosPct.prot * factor);
+            newCho = Math.round(macrosPct.cho * factor);
+            newFat = Math.max(0, 100 - newProt - newCho);
         }
-        setChoPct(choNuevo);
+
+        const protG = (newProt / 100) * tmbPromedio / 4;
+        setProtGkg(pesoActivo > 0 ? protG / pesoActivo : 0);
+        setChoPct(newCho);
+        setFatPct(newFat);
     };
 
     // Balanceado = la suma de porcentajes está a ±1 de 100 (tolerancia de redondeo).
     const isBalanced = Math.abs(totals.summary.percent - 100) <= 1;
+
+    // Solo se puede guardar con paciente activo y TMB/peso reales calculados.
+    const canSave = !!activePatient?.id && tmbPromedio > 0 && pesoActivo > 0;
 
     return {
         context: { pesoActivo, tmbPromedio },
@@ -180,6 +182,7 @@ export const useMacronutrientsSetup = () => {
         actions: { setMacro, updateFromGrams, updateFromGramsPerKg, setProtGkg, setChoPct, setFatPct, handleReset, handleSave, autoBalance },
         totals,
         isBalanced,
+        canSave,
         isSaving: createPlanificacion.isPending
     };
 };

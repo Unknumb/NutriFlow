@@ -39,7 +39,12 @@ export function useMfa() {
     const { data, error: enrollError } = await supabase.auth.mfa.enroll({ factorType: 'totp' });
     setIsEnrolling(false);
     if (enrollError || !data) {
-      setError('No se pudo iniciar la configuración. Intenta de nuevo.');
+      console.error('[MFA] enroll error:', enrollError);
+      setError(
+        enrollError?.message
+          ? `No se pudo iniciar la configuración: ${enrollError.message}`
+          : 'No se pudo iniciar la configuración. Intenta de nuevo.',
+      );
       return;
     }
     setEnrollData({ factorId: data.id, qrCode: data.totp.qr_code, secret: data.totp.secret });

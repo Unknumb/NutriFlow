@@ -17,7 +17,6 @@ const protectedLayout = createRoute({
     id: 'protected',
     component: DashboardLayout,
     beforeLoad: async () => {
-        // Obtenemos la sesión actual en caso de que el store aún esté cargando
         const state = useAuthStore.getState();
         if (state.isLoading) {
             const { supabase } = await import('../shared/utils/supabase');
@@ -55,6 +54,20 @@ const resetPasswordRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: '/reset-password',
     component: lazyRouteComponent(() => import('../pages/reset-password/index'), 'ResetPasswordPage'),
+});
+
+// Callback de OAuth (Google) — Supabase redirige aquí tras autenticar
+const authCallbackRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/auth/callback',
+    component: lazyRouteComponent(() => import('../pages/auth-callback/index'), 'AuthCallbackPage'),
+});
+
+// Verificación MFA — se muestra cuando el usuario tiene aal1 y necesita aal2
+const authMfaRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/auth/mfa',
+    component: lazyRouteComponent(() => import('../pages/auth-mfa/index'), 'AuthMfaPage'),
 });
 
 // 5. RUTAS HIJAS DEL DASHBOARD
@@ -127,6 +140,8 @@ const routeTree = rootRoute.addChildren([
     registerRoute,
     forgotPasswordRoute,
     resetPasswordRoute,
+    authCallbackRoute,
+    authMfaRoute,
     protectedLayout.addChildren([
         dashboardRoute, 
         macronutrientesRoute, 

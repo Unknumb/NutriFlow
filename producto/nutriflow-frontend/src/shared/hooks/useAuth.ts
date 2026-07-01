@@ -20,6 +20,7 @@ interface AuthResult {
 
 interface UseAuthReturn {
   login: (credentials: LoginCredentials) => Promise<void>;
+  loginWithGoogle: () => Promise<AuthResult>;
   logout: () => Promise<void>;
   signUp: (data: SignUpData) => Promise<AuthResult>;
   requestPasswordReset: (email: string) => Promise<AuthResult>;
@@ -66,6 +67,14 @@ export function useAuth(): UseAuthReturn {
 
     // La sesión se actualiza automáticamente vía onAuthStateChange en main.tsx
     setIsLoggingIn(false);
+  };
+
+  const loginWithGoogle = async (): Promise<AuthResult> => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
+    });
+    return { error: error ? translateError(error.message) : null };
   };
 
   const logout = async () => {
@@ -136,5 +145,5 @@ export function useAuth(): UseAuthReturn {
     return { error: null };
   };
 
-  return { login, logout, signUp, requestPasswordReset, updatePassword, isLoggingIn, loginError };
+  return { login, loginWithGoogle, logout, signUp, requestPasswordReset, updatePassword, isLoggingIn, loginError };
 }

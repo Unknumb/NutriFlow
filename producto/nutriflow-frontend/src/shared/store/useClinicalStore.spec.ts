@@ -19,6 +19,7 @@ beforeEach(() => {
     tmbPromedio: 0,
     activePatient: null,
     activePlanificacionId: null,
+    ownerId: null,
   });
 });
 
@@ -102,5 +103,74 @@ describe('persist', () => {
     const guardado = localStorage.getItem('clinical-storage');
     expect(guardado).not.toBeNull();
     expect(JSON.parse(guardado!)).toHaveProperty('state');
+  });
+
+  it('persiste ownerId (para la barrera anti-fuga entre cuentas)', () => {
+    useClinicalStore.getState().switchOwner('user-A');
+    const guardado = JSON.parse(localStorage.getItem('clinical-storage')!);
+    expect(guardado.state.ownerId).toBe('user-A');
+  });
+});
+
+describe('reset', () => {
+  it('limpia todo el estado clínico (paciente, planificación, dueño, peso, TMB)', () => {
+    const s = useClinicalStore.getState();
+    s.switchOwner('user-A');
+    s.setActivePatient(mockPaciente);
+    s.setTmbPromedio(1800);
+    s.setActivePlanificacionId('plan-1');
+
+    useClinicalStore.getState().reset();
+
+    const { activePatient, activePlanificacionId, ownerId, pesoActivo, tmbPromedio } =
+      useClinicalStore.getState();
+    expect(activePatient).toBeNull();
+    expect(activePlanificacionId).toBeNull();
+    expect(ownerId).toBeNull();
+    expect(pesoActivo).toBe(0);
+    expect(tmbPromedio).toBe(0);
+  });
+});
+
+describe('switchOwner — barrera de seguridad entre cuentas', () => {
+  it('registra al dueño cuando no había ninguno', () => {
+    useClinicalStore.getState().switchOwner('user-A');
+    expect(useClinicalStore.getState().ownerId).toBe('user-A');
+  });
+
+  it('NO borra el estado si el usuario es el mismo (mismo dueño = idempotente)', () => {
+    const s = useClinicalStore.getState();
+    s.switchOwner('user-A');
+    s.setActivePatient(mockPaciente);
+
+    useClinicalStore.getState().switchOwner('user-A');
+
+    expect(useClinicalStore.getState().activePatient).toEqual(mockPaciente);
+    expect(useClinicalStore.getState().ownerId).toBe('user-A');
+  });
+
+  it('DESCARTA el paciente activo al cambiar a otra cuenta (no filtra entre usuarios)', () => {
+    const s = useClinicalStore.getState();
+    s.switchOwner('user-A');
+    s.setActivePatient(mockPaciente);
+    s.setActivePlanificacionId('plan-A');
+
+    // El usuario B inicia sesión (p.ej. vía Google) heredando el localStorage de A
+    useClinicalStore.getState().switchOwner('user-B');
+
+    const { activePatient, activePlanificacionId, ownerId } = useClinicalStore.getState();
+    expect(activePatient).toBeNull();
+    expect(activePlanificacionId).toBeNull();
+    expect(ownerId).toBe('user-B');
+  });
+
+  it('descarta estado persistido sin dueño (dato previo a la barrera) al iniciar sesión', () => {
+    // Simula localStorage viejo: hay paciente activo pero ownerId nulo
+    useClinicalStore.setState({ activePatient: mockPaciente, ownerId: null });
+
+    useClinicalStore.getState().switchOwner('user-B');
+
+    expect(useClinicalStore.getState().activePatient).toBeNull();
+    expect(useClinicalStore.getState().ownerId).toBe('user-B');
   });
 });

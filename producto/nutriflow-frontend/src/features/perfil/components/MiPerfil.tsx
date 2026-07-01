@@ -1,9 +1,10 @@
 // nutriflow-frontend/src/features/perfil/components/MiPerfil.tsx
 import React, { useEffect, useRef, useState } from 'react';
-import { Loader2, Save, UserCircle, BadgeCheck, Mail, Camera, Trash2 } from 'lucide-react';
+import { Loader2, Save, UserCircle, BadgeCheck, Mail, Camera, Trash2, Shield, ShieldCheck, ShieldOff } from 'lucide-react';
 import { usePerfilNutricionista, useUpdatePerfil } from '../hooks/usePerfil';
 import { subirAvatar, eliminarAvatar, validarAvatar, TIPOS_AVATAR_PERMITIDOS } from '../services/avatarPerfil';
 import { PageHeader } from '../../../shared/ui/organisms/PageHeader';
+import { useMfa } from '../../../shared/hooks/useMfa';
 
 export const MiPerfil: React.FC = () => {
   const { data: perfil, isLoading, error } = usePerfilNutricionista();
@@ -119,6 +120,27 @@ export const MiPerfil: React.FC = () => {
     } finally {
       setSubiendoFoto(false);
     }
+  };
+
+  const [mfaCode, setMfaCode] = useState('');
+  const {
+    verifiedFactor,
+    isLoadingFactors,
+    enrollData,
+    isEnrolling,
+    isVerifying,
+    isUnenrolling,
+    error: mfaError,
+    startEnroll,
+    verifyEnrollment,
+    cancelEnroll,
+    unenroll,
+  } = useMfa();
+
+  const handleVerifyEnrollment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const ok = await verifyEnrollment(mfaCode);
+    if (ok) setMfaCode('');
   };
 
   const iniciales = `${nombre[0] || '?'}${apellido[0] || ''}`.toUpperCase();
@@ -312,6 +334,149 @@ export const MiPerfil: React.FC = () => {
             </form>
           </div>
         )}
+
+          {/* Verificación en dos pasos (MFA) — solo cuando el perfil ya cargó */}
+          {!isLoading && (
+          <div className="bg-white rounded-card border border-mist shadow-card overflow-hidden mt-6">
+            <div className="px-6 py-5 border-b border-mist flex items-center justify-between">
+              <div>
+                <h3 className="font-semibold text-ink text-sm">Verificación en dos pasos</h3>
+                <p className="text-xs text-ink-soft mt-0.5">
+                  Protege tu cuenta con una app autenticadora (Google Authenticator, Authy, etc.).
+                </p>
+              </div>
+              {!isLoadingFactors && verifiedFactor && (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-pine-soft/10 text-pine-soft text-xs font-medium">
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  Activo
+                </span>
+              )}
+            </div>
+
+            <div className="p-6">
+              {isLoadingFactors && (
+                <Loader2 className="w-5 h-5 animate-spin text-pine-soft" />
+              )}
+
+              {mfaError && (
+                <div className="mb-4 p-3 bg-clinical-red/5 border border-clinical-red/30 rounded-md text-sm text-clinical-red">
+                  {mfaError}
+                </div>
+              )}
+
+              {/* Sin factor enrollado */}
+              {!isLoadingFactors && !verifiedFactor && !enrollData && (
+                <div className="flex items-start gap-4">
+                  <Shield className="w-8 h-8 text-ink-soft/40 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm text-ink-soft mb-3">
+                      La verificación en dos pasos no está activa. Al activarla, necesitarás ingresar
+                      un código de tu app autenticadora cada vez que inicies sesión.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={startEnroll}
+                      disabled={isEnrolling}
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-pine hover:bg-pine-soft text-porcelain text-sm font-medium rounded-md transition-colors duration-150 disabled:opacity-60"
+                    >
+                      {isEnrolling ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Shield className="w-4 h-4" />
+                      )}
+                      Activar verificación en dos pasos
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Flujo de enrollamiento: mostrar QR */}
+              {enrollData && (
+                <div>
+                  <p className="text-sm text-ink-soft mb-4">
+                    Escanea este código QR con tu app autenticadora:
+                  </p>
+                  <img
+                    src={enrollData.qrCode}
+                    alt="Código QR para autenticación en dos pasos"
+                    className="w-44 h-44 border border-mist rounded-md mb-3"
+                  />
+                  <p className="text-xs text-ink-soft mb-1">
+                    ¿No puedes escanear?{' '}
+                    <span className="font-mono text-ink bg-mist/60 px-1.5 py-0.5 rounded">
+                      {enrollData.secret}
+                    </span>
+                  </p>
+                  <form onSubmit={handleVerifyEnrollment} className="mt-5 flex flex-col gap-3 max-w-xs">
+                    <div>
+                      <label className="block text-xs font-medium text-ink-soft mb-1" htmlFor="mfa-enroll-code">
+                        Código de verificación
+                      </label>
+                      <input
+                        id="mfa-enroll-code"
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        maxLength={6}
+                        value={mfaCode}
+                        onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, ''))}
+                        placeholder="000000"
+                        required
+                        disabled={isVerifying}
+                        autoFocus
+                        className="w-full p-2 border border-mist rounded-md text-sm text-ink tracking-[0.2em] text-center outline-none focus:border-pine-soft focus:ring-1 focus:ring-pine-soft"
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        type="submit"
+                        disabled={isVerifying || mfaCode.length !== 6}
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-pine hover:bg-pine-soft text-porcelain text-sm font-medium rounded-md transition-colors duration-150 disabled:opacity-60"
+                      >
+                        {isVerifying ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
+                        Verificar y activar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={cancelEnroll}
+                        disabled={isVerifying}
+                        className="px-4 py-2 text-sm text-ink-soft hover:text-ink border border-mist rounded-md transition-colors duration-150"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+
+              {/* Factor activo */}
+              {!isLoadingFactors && verifiedFactor && !enrollData && (
+                <div className="flex items-start gap-4">
+                  <ShieldCheck className="w-8 h-8 text-pine-soft shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm text-ink-soft mb-3">
+                      Tu cuenta está protegida con verificación en dos pasos. Necesitarás tu app
+                      autenticadora cada vez que inicies sesión.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => unenroll(verifiedFactor.id)}
+                      disabled={isUnenrolling}
+                      className="inline-flex items-center gap-2 px-4 py-2 border border-clinical-red/40 text-clinical-red hover:bg-clinical-red/5 text-sm font-medium rounded-md transition-colors duration-150 disabled:opacity-60"
+                    >
+                      {isUnenrolling ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <ShieldOff className="w-4 h-4" />
+                      )}
+                      Desactivar verificación en dos pasos
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+          )}
       </div>
     </div>
   );

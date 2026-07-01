@@ -1,13 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { PatientInfoCard } from './PatientInfoCard';
 
 // ── hoisted mocks ────────────────────────────────────────────────────────────
 const mockSetActivePatient = vi.hoisted(() => vi.fn());
 const mockUseClinicalStore = vi.hoisted(() => vi.fn());
 const mockUsePacientes = vi.hoisted(() => vi.fn());
-const mockMutateAsync = vi.hoisted(() => vi.fn());
-const mockUseCreatePaciente = vi.hoisted(() => vi.fn());
+const mockNavigate = vi.hoisted(() => vi.fn());
+
+vi.mock('@tanstack/react-router', () => ({
+  useRouter: () => ({ navigate: mockNavigate }),
+}));
 
 vi.mock('../../../shared/store/useClinicalStore', () => ({
   useClinicalStore: mockUseClinicalStore,
@@ -15,7 +18,6 @@ vi.mock('../../../shared/store/useClinicalStore', () => ({
 
 vi.mock('../../pacientes/hooks/usePacientes', () => ({
   usePacientes: mockUsePacientes,
-  useCreatePaciente: mockUseCreatePaciente,
 }));
 
 vi.mock('../../../shared/ui/atoms/Card', () => ({
@@ -27,8 +29,6 @@ vi.mock('../../../shared/ui/atoms/Card', () => ({
 vi.mock('lucide-react', () => ({
   UserCircle: () => <span />,
   Plus: () => <span data-testid="icon-plus" />,
-  X: () => <span data-testid="icon-x" />,
-  Save: () => <span data-testid="icon-save" />,
 }));
 
 // ── datos de prueba ──────────────────────────────────────────────────────────
@@ -58,7 +58,6 @@ beforeEach(() => {
     setActivePatient: mockSetActivePatient,
   });
   mockUsePacientes.mockReturnValue({ data: PACIENTES, isLoading: false });
-  mockUseCreatePaciente.mockReturnValue({ mutateAsync: mockMutateAsync, isPending: false });
 });
 
 describe('PatientInfoCard (calculos)', () => {
@@ -129,56 +128,17 @@ describe('PatientInfoCard (calculos)', () => {
     });
   });
 
-  describe('formulario de creación de paciente', () => {
-    it('al clic en + se muestra el formulario de creación', () => {
+  describe('botón crear paciente → navega a Fichas de Pacientes', () => {
+    it('al clic en + navega a /pacientes (no abre un formulario inline)', () => {
       render(<PatientInfoCard />);
       fireEvent.click(screen.getByTestId('icon-plus').closest('button')!);
-      expect(screen.getByText('Crear nuevo paciente')).toBeInTheDocument();
+      expect(mockNavigate).toHaveBeenCalledWith({ to: '/pacientes' });
     });
 
-    it('el botón Guardar del formulario está desactivado con campos vacíos', () => {
+    it('NO renderiza un formulario de creación inline en el dashboard', () => {
       render(<PatientInfoCard />);
       fireEvent.click(screen.getByTestId('icon-plus').closest('button')!);
-      expect(screen.getByTitle('Guardar Paciente')).toBeDisabled();
-    });
-
-    it('al clic en X se cierra el formulario de creación', () => {
-      render(<PatientInfoCard />);
-      fireEvent.click(screen.getByTestId('icon-plus').closest('button')!);
-      expect(screen.getByText('Crear nuevo paciente')).toBeInTheDocument();
-      fireEvent.click(screen.getByTestId('icon-x').closest('button')!);
       expect(screen.queryByText('Crear nuevo paciente')).not.toBeInTheDocument();
-    });
-
-    it('llama a mutateAsync al guardar un nuevo paciente con todos los campos', async () => {
-      mockMutateAsync.mockResolvedValue({
-        id: 'p-nuevo',
-        nombre: 'Pedro',
-        apellido: 'Soto',
-        fecha_nacimiento: '2000-01-01T00:00:00Z',
-        sexo_biologico: 'M',
-        Evaluacion: [],
-      });
-      render(<PatientInfoCard />);
-      fireEvent.click(screen.getByTestId('icon-plus').closest('button')!);
-
-      fireEvent.change(screen.getByPlaceholderText('Ej. Juan'), { target: { value: 'Pedro' } });
-      fireEvent.change(screen.getByPlaceholderText('Ej. Pérez'), { target: { value: 'Soto' } });
-      fireEvent.change(document.body.querySelector('input[type="date"]')!, {
-        target: { value: '2000-01-01' },
-      });
-      fireEvent.change(screen.getByDisplayValue('Seleccionar...'), {
-        target: { value: 'M' },
-      });
-      fireEvent.change(screen.getByPlaceholderText('170'), { target: { value: '175' } });
-      fireEvent.change(screen.getByPlaceholderText('70'), { target: { value: '72' } });
-
-      fireEvent.click(screen.getByTitle('Guardar Paciente'));
-      await waitFor(() => {
-        expect(mockMutateAsync).toHaveBeenCalledWith(
-          expect.objectContaining({ nombre: 'Pedro', apellido: 'Soto' }),
-        );
-      });
     });
   });
 

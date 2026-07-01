@@ -335,7 +335,8 @@ export const MiPerfil: React.FC = () => {
           </div>
         )}
 
-          {/* Verificación en dos pasos (MFA) */}
+          {/* Verificación en dos pasos (MFA) — solo cuando el perfil ya cargó */}
+          {!isLoading && (
           <div className="bg-white rounded-card border border-mist shadow-card overflow-hidden mt-6">
             <div className="px-6 py-5 border-b border-mist flex items-center justify-between">
               <div>
@@ -475,6 +476,7 @@ export const MiPerfil: React.FC = () => {
               )}
             </div>
           </div>
+          )}
       </div>
     </div>
   );

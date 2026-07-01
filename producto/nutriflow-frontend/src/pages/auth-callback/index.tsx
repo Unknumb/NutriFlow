@@ -3,31 +3,45 @@ import { Loader2 } from 'lucide-react';
 import { supabase } from '../../shared/utils/supabase';
 import { useRouter } from '@tanstack/react-router';
 
+/**
+ * Página de retorno del flujo OAuth (Google).
+ * Supabase redirige aquí con un `code` en la URL; supabase-js lo intercambia
+ * automáticamente por una sesión (flujo PKCE) y emite el evento SIGNED_IN.
+ *
+ * Navegamos al dashboard en cuanto haya sesión, cubriendo dos caminos por si
+ * el intercambio termina antes o después de suscribirnos al listener:
+ *  1. onAuthStateChange (SIGNED_IN / INITIAL_SESSION con sesión).
+ *  2. getSession() como respaldo si el intercambio ya se completó.
+ * Si tras 8s no hay sesión, el intercambio falló y volvemos al login.
+ */
 export const AuthCallbackPage = () => {
   const router = useRouter();
 
   useEffect(() => {
-    console.log('[auth/callback] montado, URL:', window.location.href);
+    let handled = false;
+
+    const goToDashboard = () => {
+      if (handled) return;
+      handled = true;
+      router.navigate({ to: '/dashboard' });
+    };
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('[auth/callback] onAuthStateChange:', event, !!session);
-      if (event === 'SIGNED_IN' && session) {
-        console.log('[auth/callback] SIGNED_IN ok → dashboard');
-        subscription.unsubscribe();
-        router.navigate({ to: '/dashboard' });
+      if (session && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION')) {
+        goToDashboard();
       }
     });
 
-    // Verificar si ya hay sesión activa (usuario ya estaba logueado)
-    supabase.auth.getSession().then(({ data, error }) => {
-      console.log('[auth/callback] getSession result:', !!data.session, error?.message);
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session) goToDashboard();
     });
 
     const timeout = setTimeout(() => {
-      console.log('[auth/callback] timeout 10s → login');
-      subscription.unsubscribe();
-      router.navigate({ to: '/login' });
-    }, 10000);
+      if (!handled) {
+        handled = true;
+        router.navigate({ to: '/login' });
+      }
+    }, 8000);
 
     return () => {
       subscription.unsubscribe();

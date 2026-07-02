@@ -7,14 +7,19 @@
              targetNamespace="http://nutriflow.cl/bpmn"
              id="NutriFlow_Definitions">
 
+  <!-- Actualizado 2026-07-02: alineado con auditoría del código real
+       (login con contraseña vs OAuth Google vs MFA/TOTP, rutas reales de
+       backend-math, e integraciones Core→Math que el código actual NO
+       invoca aunque el endpoint exista). -->
+
   <collaboration id="NutriFlow_Collaboration">
     <participant id="Pool_Frontend"    name="Nutricionista (Frontend React)"  processRef="Process_Frontend" />
     <participant id="Pool_BackendCore" name="backend-core (NestJS / Postgres)" processRef="Process_BackendCore" />
     <participant id="Pool_BackendMath" name="backend-math (FastAPI / Cálculos)" processRef="Process_BackendMath" />
 
-    <!-- ── Autenticación ── -->
-    <messageFlow id="mf_login_req"   sourceRef="Task_Login"          targetRef="Task_BC_ValidarJWT" />
-    <messageFlow id="mf_login_res"   sourceRef="Task_BC_ValidarJWT"  targetRef="Task_Login" />
+    <!-- ── Autenticación (solo el login con contraseña pasa por backend-core) ── -->
+    <messageFlow id="mf_login_req"   sourceRef="Task_Login"          targetRef="Task_BC_Login" />
+    <messageFlow id="mf_login_res"   sourceRef="Task_BC_Login"       targetRef="Task_Login" />
 
     <!-- ── Crear Paciente ── -->
     <messageFlow id="mf_crearPac_req" sourceRef="Task_CrearPaciente"      targetRef="Task_BC_CrearPaciente" />
@@ -24,7 +29,7 @@
     <messageFlow id="mf_eval_req"  sourceRef="Task_RegistrarEval"     targetRef="Task_BC_GuardarEval" />
     <messageFlow id="mf_eval_res"  sourceRef="Task_BC_GuardarEval"    targetRef="Task_RegistrarEval" />
 
-    <!-- ── TMB Core → Math ── -->
+    <!-- ── TMB Core → Math (única llamada real Core→Math confirmada) ── -->
     <messageFlow id="mf_tmb_req"  sourceRef="Task_BC_LlamarTMB"    targetRef="Task_BM_CalcTMB" />
     <messageFlow id="mf_tmb_res"  sourceRef="Task_BM_CalcTMB"      targetRef="Task_BC_LlamarTMB" />
 
@@ -32,7 +37,7 @@
     <messageFlow id="mf_tmb_fe_req"  sourceRef="Task_VerDashboard"     targetRef="Task_BC_ObtenerMetricas" />
     <messageFlow id="mf_tmb_fe_res"  sourceRef="Task_BC_ObtenerMetricas" targetRef="Task_VerDashboard" />
 
-    <!-- ── Macros Core → Math ── -->
+    <!-- ── Macros Core → Math: existe en código (Redis) pero NINGÚN caller la invoca ── -->
     <messageFlow id="mf_macro_req"  sourceRef="Task_BC_LlamarCuadrador"  targetRef="Task_BM_Cuadrador" />
     <messageFlow id="mf_macro_res"  sourceRef="Task_BM_Cuadrador"        targetRef="Task_BC_LlamarCuadrador" />
 
@@ -40,7 +45,7 @@
     <messageFlow id="mf_macro_fe_req"  sourceRef="Task_ConfigMacros"         targetRef="Task_BC_GuardarMacros" />
     <messageFlow id="mf_macro_fe_res"  sourceRef="Task_BC_GuardarMacros"     targetRef="Task_ConfigMacros" />
 
-    <!-- ── Pauta Core → Math ── -->
+    <!-- ── Pauta Core → Math: endpoint real en backend-math, backend-core NO lo llama ── -->
     <messageFlow id="mf_pauta_req"  sourceRef="Task_BC_ArmarPauta"   targetRef="Task_BM_ArmarPauta" />
     <messageFlow id="mf_pauta_res"  sourceRef="Task_BM_ArmarPauta"   targetRef="Task_BC_ArmarPauta" />
 
@@ -52,7 +57,7 @@
     <messageFlow id="mf_guardarDist_req" sourceRef="Task_GuardarPauta"        targetRef="Task_BC_GuardarDistribucion" />
     <messageFlow id="mf_guardarDist_res" sourceRef="Task_BC_GuardarDistribucion" targetRef="Task_GuardarPauta" />
 
-    <!-- ── Pizarra Core → Math ── -->
+    <!-- ── Pizarra Core → Math: endpoint real en backend-math, backend-core NO tiene consumidor ── -->
     <messageFlow id="mf_pizarra_req"  sourceRef="Task_BC_ValidarPizarra"  targetRef="Task_BM_ValidarPizarra" />
     <messageFlow id="mf_pizarra_res"  sourceRef="Task_BM_ValidarPizarra"  targetRef="Task_BC_ValidarPizarra" />
 
@@ -78,14 +83,43 @@
       <outgoing>sf1</outgoing>
     </startEvent>
 
-    <!-- ── Autenticación ── -->
-    <task id="Task_Login" name="Iniciar sesión&#10;(Supabase Auth)">
+    <!-- ── Autenticación: contraseña, Google OAuth y MFA/TOTP ── -->
+    <exclusiveGateway id="GW_MetodoLogin" name="¿Método de login?">
       <incoming>sf1</incoming>
-      <outgoing>sf2</outgoing>
+      <outgoing>sf_metodoPass</outgoing>
+      <outgoing>sf_metodoGoogle</outgoing>
+    </exclusiveGateway>
+
+    <task id="Task_Login" name="Iniciar sesión&#10;(email + contraseña,&#10;Supabase Auth)">
+      <incoming>sf_metodoPass</incoming>
+      <outgoing>sf_loginMerge1</outgoing>
+    </task>
+
+    <task id="Task_LoginGoogle" name="Iniciar sesión con Google&#10;(Supabase OAuth)">
+      <incoming>sf_metodoGoogle</incoming>
+      <outgoing>sf_loginMerge2</outgoing>
+    </task>
+
+    <exclusiveGateway id="GW_LoginMerge">
+      <incoming>sf_loginMerge1</incoming>
+      <incoming>sf_loginMerge2</incoming>
+      <outgoing>sf_mfaCheck</outgoing>
+    </exclusiveGateway>
+
+    <exclusiveGateway id="GW_MfaRequerido" name="¿MFA habilitado?">
+      <incoming>sf_mfaCheck</incoming>
+      <outgoing>sf_mfaSi</outgoing>
+      <outgoing>sf_mfaNo</outgoing>
+    </exclusiveGateway>
+
+    <task id="Task_VerificarMFA" name="Verificar código TOTP&#10;(Supabase MFA challenge)">
+      <incoming>sf_mfaSi</incoming>
+      <outgoing>sf_mfaDone</outgoing>
     </task>
 
     <exclusiveGateway id="GW_AuthOk" name="¿Autenticado?">
-      <incoming>sf2</incoming>
+      <incoming>sf_mfaNo</incoming>
+      <incoming>sf_mfaDone</incoming>
       <outgoing>sf_authYes</outgoing>
       <outgoing>sf_authNo</outgoing>
     </exclusiveGateway>
@@ -169,9 +203,23 @@
       <incoming>sf_end</incoming>
     </endEvent>
 
+    <!-- Artefacto: aclara qué pasos de login NO pasan por backend-core -->
+    <textAnnotation id="TA_LoginExterno">
+      <text>OAuth Google y verificación MFA/TOTP se ejecutan directo contra Supabase Auth desde el frontend (supabase-js). backend-core NO participa en estos dos pasos; solo valida el JWT resultante vía JwtAuthGuard en cada request protegido posterior.</text>
+    </textAnnotation>
+    <association id="assoc_ta_login1" sourceRef="Task_LoginGoogle" targetRef="TA_LoginExterno" />
+    <association id="assoc_ta_login2" sourceRef="Task_VerificarMFA" targetRef="TA_LoginExterno" />
+
     <!-- Sequence flows -->
-    <sequenceFlow id="sf1"          sourceRef="Start_FE"              targetRef="Task_Login" />
-    <sequenceFlow id="sf2"          sourceRef="Task_Login"            targetRef="GW_AuthOk" />
+    <sequenceFlow id="sf1"            sourceRef="Start_FE"              targetRef="GW_MetodoLogin" />
+    <sequenceFlow id="sf_metodoPass"  sourceRef="GW_MetodoLogin"        targetRef="Task_Login"        name="Contraseña" />
+    <sequenceFlow id="sf_metodoGoogle" sourceRef="GW_MetodoLogin"       targetRef="Task_LoginGoogle"   name="Google" />
+    <sequenceFlow id="sf_loginMerge1" sourceRef="Task_Login"            targetRef="GW_LoginMerge" />
+    <sequenceFlow id="sf_loginMerge2" sourceRef="Task_LoginGoogle"      targetRef="GW_LoginMerge" />
+    <sequenceFlow id="sf_mfaCheck"    sourceRef="GW_LoginMerge"         targetRef="GW_MfaRequerido" />
+    <sequenceFlow id="sf_mfaSi"       sourceRef="GW_MfaRequerido"       targetRef="Task_VerificarMFA" name="Sí" />
+    <sequenceFlow id="sf_mfaNo"       sourceRef="GW_MfaRequerido"       targetRef="GW_AuthOk"         name="No" />
+    <sequenceFlow id="sf_mfaDone"     sourceRef="Task_VerificarMFA"     targetRef="GW_AuthOk" />
     <sequenceFlow id="sf_authYes"   sourceRef="GW_AuthOk"             targetRef="Task_Dashboard"           name="Sí" />
     <sequenceFlow id="sf_authNo"    sourceRef="GW_AuthOk"             targetRef="End_LoginFail"            name="No" />
     <sequenceFlow id="sf3"          sourceRef="Task_Dashboard"        targetRef="GW_PacienteExiste" />
@@ -196,8 +244,15 @@
        ═══════════════════════════════════════════════════════════ -->
   <process id="Process_BackendCore" name="backend-core NestJS" isExecutable="false">
 
-    <!-- Auth -->
-    <task id="Task_BC_ValidarJWT" name="Validar JWT Supabase&#10;(JwtStrategy / Passport)">
+    <!-- Auth: login (endpoint dedicado) vs. guard de validación (cross-cutting) -->
+    <task id="Task_BC_Login" name="POST /auth/login&#10;(AuthController → Supabase&#10;signInWithPassword)&#10;Rate-limit: 5/min por IP">
+      <outgoing>bc_sf_login</outgoing>
+    </task>
+    <endEvent id="End_BC_Login" name="access_token emitido">
+      <incoming>bc_sf_login</incoming>
+    </endEvent>
+
+    <task id="Task_BC_ValidarJWT" name="JwtAuthGuard / JwtStrategy&#10;(valida JWT en CADA request&#10;protegido; no forma parte del login)">
       <outgoing>bc_sf1</outgoing>
     </task>
     <endEvent id="End_BC_Auth" name="Token validado">
@@ -232,39 +287,45 @@
       <incoming>bc_sf5</incoming>
     </endEvent>
 
-    <!-- Macronutrientes: recibe del FE, llama al cuadrador con caché Redis -->
-    <task id="Task_BC_GuardarMacros" name="POST /dashboard-clinico/macronutrientes&#10;(GuardarDistribucionMacrosDto)">
+    <!-- Macronutrientes: el endpoint real es un mock; el cuadrador con Redis existe pero nadie lo llama -->
+    <task id="Task_BC_GuardarMacros" name="POST /dashboard-clinico/macronutrientes&#10;(mock: devuelve el DTO, NO persiste&#10;ni llama a backend-math)">
       <outgoing>bc_sf6</outgoing>
     </task>
-    <task id="Task_BC_LlamarCuadrador" name="MathEngineService&#10;→ POST /api/calculadoras/cuadrador&#10;(Redis TTL 24h)">
-      <incoming>bc_sf6</incoming>
+    <task id="Task_BC_LlamarCuadrador" name="(INALCANZABLE) MathEngineService&#10;→ POST /api/calculadoras/cuadrador&#10;(Redis TTL 24h) — sin caller">
       <outgoing>bc_sf7</outgoing>
     </task>
-    <endEvent id="End_BC_Macros" name="Distribución macros retornada al FE">
+    <endEvent id="End_BC_Macros" name="Distribución devuelta al FE&#10;(mock, no persiste)">
+      <incoming>bc_sf6</incoming>
+    </endEvent>
+    <endEvent id="End_BC_CuadradorDead" name="(inalcanzable en runtime actual)">
       <incoming>bc_sf7</incoming>
     </endEvent>
 
-    <!-- Armado de pauta: obtener distribución -->
-    <task id="Task_BC_ObtenerDistribucion" name="GET /pautas/armador/:id&#10;(PautasService → MathEngine)">
+    <!-- Armado de pauta: lee directo desde Postgres, NO llama a backend-math -->
+    <task id="Task_BC_ObtenerDistribucion" name="GET /pautas/armador/:id&#10;(PautasService lee estructura_grid_json&#10;desde Postgres, sin backend-math)">
       <outgoing>bc_sf8</outgoing>
     </task>
-    <task id="Task_BC_ArmarPauta" name="MathEngineService&#10;→ POST /api/calculadoras/pautas/armar-pauta">
-      <incoming>bc_sf8</incoming>
+    <task id="Task_BC_ArmarPauta" name="(NO IMPLEMENTADO) MathEngineService no&#10;tiene método armar-pauta — este endpoint&#10;de backend-math no tiene caller">
       <outgoing>bc_sf9</outgoing>
     </task>
-    <endEvent id="End_BC_Armador" name="Pauta calculada retornada">
+    <endEvent id="End_BC_Armador" name="Distribución leída desde Postgres&#10;(estructura_grid_json)">
+      <incoming>bc_sf8</incoming>
+    </endEvent>
+    <endEvent id="End_BC_ArmadorDead" name="(inalcanzable en runtime actual)">
       <incoming>bc_sf9</incoming>
     </endEvent>
 
-    <!-- Guardar distribución porciones + validar pizarra -->
+    <!-- Guardar distribución porciones: se persiste directo, sin validar contra pizarra -->
     <task id="Task_BC_GuardarDistribucion" name="POST /pautas/guardar-distribucion&#10;(PautasService → Prisma)">
       <outgoing>bc_sf10</outgoing>
     </task>
-    <task id="Task_BC_ValidarPizarra" name="MathEngineService&#10;→ POST /api/calculadoras/pizarra/validar-pizarra">
-      <incoming>bc_sf10</incoming>
+    <task id="Task_BC_ValidarPizarra" name="(NO IMPLEMENTADO) backend-core no tiene&#10;ninguna referencia a 'pizarra' en su código">
       <outgoing>bc_sf11</outgoing>
     </task>
-    <endEvent id="End_BC_Dist" name="Distribución guardada y validada">
+    <endEvent id="End_BC_Dist" name="Distribución guardada en Postgres&#10;(sin validar contra backend-math)">
+      <incoming>bc_sf10</incoming>
+    </endEvent>
+    <endEvent id="End_BC_PizarraDead" name="(inalcanzable en runtime actual)">
       <incoming>bc_sf11</incoming>
     </endEvent>
 
@@ -276,11 +337,11 @@
       <incoming>bc_sf12</incoming>
     </endEvent>
 
-    <!-- Menús -->
-    <task id="Task_BC_ProxyMenus" name="POST /menus/generar&#10;(MenusService → MathEngine)">
+    <!-- Menús: MenusService llama HttpService directo (NO pasa por MathEngineService) -->
+    <task id="Task_BC_ProxyMenus" name="POST /menus/generar&#10;(MenusService)">
       <outgoing>bc_sf13</outgoing>
     </task>
-    <task id="Task_BC_GenerarMenus" name="MathEngineService&#10;→ POST /api/calculadoras/menus/sugerir">
+    <task id="Task_BC_GenerarMenus" name="MenusService (HttpService directo,&#10;no usa MathEngineService)&#10;→ POST /api/menus/generar-menu&#10;Cache Redis 2h">
       <incoming>bc_sf13</incoming>
       <outgoing>bc_sf14</outgoing>
     </task>
@@ -288,18 +349,27 @@
       <incoming>bc_sf14</incoming>
     </endEvent>
 
+    <!-- Artefacto: explica por qué cuadrador/armador/pizarra están "sueltos" -->
+    <textAnnotation id="TA_NoConectado">
+      <text>Cuadrador, Armador de pauta y Validador de pizarra son endpoints reales de backend-math, pero backend-core actualmente NO los invoca desde el flujo principal: PautasService.create() deja el llamado al cuadrador comentado como "desactivado temporalmente"; CalculosController.guardarMacronutrientes() es un mock que no persiste ni llama a backend-math; no existe ninguna referencia a "pizarra" en todo backend-core. Auditoría de código 2026-07-02.</text>
+    </textAnnotation>
+    <association id="assoc_ta_nc1" sourceRef="Task_BC_LlamarCuadrador" targetRef="TA_NoConectado" />
+    <association id="assoc_ta_nc2" sourceRef="Task_BC_ArmarPauta" targetRef="TA_NoConectado" />
+    <association id="assoc_ta_nc3" sourceRef="Task_BC_ValidarPizarra" targetRef="TA_NoConectado" />
+
     <!-- Sequence flows BC -->
+    <sequenceFlow id="bc_sf_login" sourceRef="Task_BC_Login"            targetRef="End_BC_Login" />
     <sequenceFlow id="bc_sf1"  sourceRef="Task_BC_ValidarJWT"          targetRef="End_BC_Auth" />
     <sequenceFlow id="bc_sf2"  sourceRef="Task_BC_CrearPaciente"        targetRef="End_BC_Pac" />
     <sequenceFlow id="bc_sf3"  sourceRef="Task_BC_GuardarEval"          targetRef="End_BC_Eval" />
     <sequenceFlow id="bc_sf4"  sourceRef="Task_BC_ObtenerMetricas"      targetRef="Task_BC_LlamarTMB" />
     <sequenceFlow id="bc_sf5"  sourceRef="Task_BC_LlamarTMB"            targetRef="End_BC_TMB" />
-    <sequenceFlow id="bc_sf6"  sourceRef="Task_BC_GuardarMacros"        targetRef="Task_BC_LlamarCuadrador" />
-    <sequenceFlow id="bc_sf7"  sourceRef="Task_BC_LlamarCuadrador"      targetRef="End_BC_Macros" />
-    <sequenceFlow id="bc_sf8"  sourceRef="Task_BC_ObtenerDistribucion"  targetRef="Task_BC_ArmarPauta" />
-    <sequenceFlow id="bc_sf9"  sourceRef="Task_BC_ArmarPauta"           targetRef="End_BC_Armador" />
-    <sequenceFlow id="bc_sf10" sourceRef="Task_BC_GuardarDistribucion"  targetRef="Task_BC_ValidarPizarra" />
-    <sequenceFlow id="bc_sf11" sourceRef="Task_BC_ValidarPizarra"       targetRef="End_BC_Dist" />
+    <sequenceFlow id="bc_sf6"  sourceRef="Task_BC_GuardarMacros"        targetRef="End_BC_Macros" />
+    <sequenceFlow id="bc_sf7"  sourceRef="Task_BC_LlamarCuadrador"      targetRef="End_BC_CuadradorDead" />
+    <sequenceFlow id="bc_sf8"  sourceRef="Task_BC_ObtenerDistribucion"  targetRef="End_BC_Armador" />
+    <sequenceFlow id="bc_sf9"  sourceRef="Task_BC_ArmarPauta"           targetRef="End_BC_ArmadorDead" />
+    <sequenceFlow id="bc_sf10" sourceRef="Task_BC_GuardarDistribucion"  targetRef="End_BC_Dist" />
+    <sequenceFlow id="bc_sf11" sourceRef="Task_BC_ValidarPizarra"       targetRef="End_BC_PizarraDead" />
     <sequenceFlow id="bc_sf12" sourceRef="Task_BC_CrearPlanificacion"   targetRef="End_BC_Plan" />
     <sequenceFlow id="bc_sf13" sourceRef="Task_BC_ProxyMenus"           targetRef="Task_BC_GenerarMenus" />
     <sequenceFlow id="bc_sf14" sourceRef="Task_BC_GenerarMenus"         targetRef="End_BC_Menu" />
@@ -327,7 +397,7 @@
     </endEvent>
 
     <!-- Armador de pauta -->
-    <task id="Task_BM_ArmarPauta" name="POST /api/calculadoras/pautas/armar-pauta&#10;Suma kcal + macros por grupos&#10;alimentarios">
+    <task id="Task_BM_ArmarPauta" name="POST /api/pautas/armar-pauta&#10;(prefijo /api, NO /api/calculadoras)&#10;Suma kcal + macros por grupos">
       <outgoing>bm_sf3</outgoing>
     </task>
     <endEvent id="End_BM_Pauta" name="OutputPauta retornado">
@@ -335,7 +405,7 @@
     </endEvent>
 
     <!-- Pizarra -->
-    <task id="Task_BM_ValidarPizarra" name="POST /api/calculadoras/pizarra/validar-pizarra&#10;Validar que porciones por tiempos&#10;de comida cuadren con pauta total">
+    <task id="Task_BM_ValidarPizarra" name="POST /api/pizarra/validar-pizarra&#10;(prefijo /api, NO /api/calculadoras)&#10;Valida que porciones cuadren con pauta">
       <outgoing>bm_sf4</outgoing>
     </task>
     <exclusiveGateway id="GW_PizarraOk" name="¿Distribución válida?">
@@ -352,7 +422,7 @@
     </endEvent>
 
     <!-- Menús -->
-    <task id="Task_BM_SugerirMenus" name="POST /api/calculadoras/menus/sugerir&#10;Sugerencias de preparaciones&#10;por alimento + porción">
+    <task id="Task_BM_SugerirMenus" name="POST /api/menus/generar-menu&#10;(prefijo /api, NO /api/calculadoras;&#10;nombre real es 'generar-menu', no 'sugerir')">
       <outgoing>bm_sf6</outgoing>
     </task>
     <endEvent id="End_BM_Menu" name="Lista de menús retornada">
@@ -382,7 +452,7 @@
 
       <!-- ── Pool Frontend (y=20, h=420) ── -->
       <bpmndi:BPMNShape id="Shape_Pool_Frontend" bpmnElement="Pool_Frontend" isHorizontal="true">
-        <dc:Bounds x="20" y="20" width="1800" height="420" />
+        <dc:Bounds x="20" y="20" width="2400" height="420" />
       </bpmndi:BPMNShape>
 
       <bpmndi:BPMNShape id="Shape_Start_FE" bpmnElement="Start_FE">
@@ -390,103 +460,147 @@
         <bpmndi:BPMNLabel><dc:Bounds x="50" y="245" width="80" height="27" /></bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
 
+      <bpmndi:BPMNShape id="Shape_GW_MetodoLogin" bpmnElement="GW_MetodoLogin" isMarkerVisible="true">
+        <dc:Bounds x="140" y="195" width="50" height="50" />
+        <bpmndi:BPMNLabel><dc:Bounds x="115" y="174" width="100" height="14" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
       <bpmndi:BPMNShape id="Shape_Task_Login" bpmnElement="Task_Login">
-        <dc:Bounds x="150" y="180" width="120" height="80" />
+        <dc:Bounds x="230" y="110" width="120" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Shape_Task_LoginGoogle" bpmnElement="Task_LoginGoogle">
+        <dc:Bounds x="230" y="290" width="120" height="80" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Shape_GW_LoginMerge" bpmnElement="GW_LoginMerge" isMarkerVisible="true">
+        <dc:Bounds x="400" y="195" width="50" height="50" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Shape_GW_MfaRequerido" bpmnElement="GW_MfaRequerido" isMarkerVisible="true">
+        <dc:Bounds x="500" y="195" width="50" height="50" />
+        <bpmndi:BPMNLabel><dc:Bounds x="478" y="252" width="95" height="14" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Shape_Task_VerificarMFA" bpmnElement="Task_VerificarMFA">
+        <dc:Bounds x="600" y="40" width="120" height="80" />
       </bpmndi:BPMNShape>
 
       <bpmndi:BPMNShape id="Shape_GW_AuthOk" bpmnElement="GW_AuthOk" isMarkerVisible="true">
-        <dc:Bounds x="315" y="195" width="50" height="50" />
-        <bpmndi:BPMNLabel><dc:Bounds x="300" y="252" width="80" height="14" /></bpmndi:BPMNLabel>
+        <dc:Bounds x="800" y="195" width="50" height="50" />
+        <bpmndi:BPMNLabel><dc:Bounds x="785" y="252" width="80" height="14" /></bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
 
       <bpmndi:BPMNShape id="Shape_End_LoginFail" bpmnElement="End_LoginFail">
-        <dc:Bounds x="317" y="100" width="36" height="36" />
-        <bpmndi:BPMNLabel><dc:Bounds x="295" y="75" width="80" height="27" /></bpmndi:BPMNLabel>
+        <dc:Bounds x="802" y="330" width="36" height="36" />
+        <bpmndi:BPMNLabel><dc:Bounds x="780" y="368" width="80" height="27" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Shape_TA_LoginExterno" bpmnElement="TA_LoginExterno">
+        <dc:Bounds x="560" y="280" width="220" height="90" />
       </bpmndi:BPMNShape>
 
       <bpmndi:BPMNShape id="Shape_Task_Dashboard" bpmnElement="Task_Dashboard">
-        <dc:Bounds x="420" y="180" width="120" height="80" />
+        <dc:Bounds x="900" y="180" width="120" height="80" />
       </bpmndi:BPMNShape>
 
       <bpmndi:BPMNShape id="Shape_GW_PacienteExiste" bpmnElement="GW_PacienteExiste" isMarkerVisible="true">
-        <dc:Bounds x="595" y="195" width="50" height="50" />
-        <bpmndi:BPMNLabel><dc:Bounds x="570" y="252" width="100" height="14" /></bpmndi:BPMNLabel>
+        <dc:Bounds x="1075" y="195" width="50" height="50" />
+        <bpmndi:BPMNLabel><dc:Bounds x="1050" y="252" width="100" height="14" /></bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
 
       <bpmndi:BPMNShape id="Shape_Task_CrearPaciente" bpmnElement="Task_CrearPaciente">
-        <dc:Bounds x="700" y="100" width="120" height="80" />
+        <dc:Bounds x="1180" y="100" width="120" height="80" />
       </bpmndi:BPMNShape>
 
       <bpmndi:BPMNShape id="Shape_Task_SeleccionarPaciente" bpmnElement="Task_SeleccionarPaciente">
-        <dc:Bounds x="700" y="270" width="120" height="80" />
+        <dc:Bounds x="1180" y="270" width="120" height="80" />
       </bpmndi:BPMNShape>
 
       <bpmndi:BPMNShape id="Shape_Task_RegistrarEval" bpmnElement="Task_RegistrarEval">
-        <dc:Bounds x="880" y="180" width="120" height="80" />
+        <dc:Bounds x="1360" y="180" width="120" height="80" />
       </bpmndi:BPMNShape>
 
       <bpmndi:BPMNShape id="Shape_Task_VerDashboard" bpmnElement="Task_VerDashboard">
-        <dc:Bounds x="1060" y="180" width="120" height="80" />
+        <dc:Bounds x="1540" y="180" width="120" height="80" />
       </bpmndi:BPMNShape>
 
       <bpmndi:BPMNShape id="Shape_Task_ConfigMacros" bpmnElement="Task_ConfigMacros">
-        <dc:Bounds x="1240" y="180" width="120" height="80" />
+        <dc:Bounds x="1720" y="180" width="120" height="80" />
       </bpmndi:BPMNShape>
 
       <bpmndi:BPMNShape id="Shape_Task_ArmadoPorciones" bpmnElement="Task_ArmadoPorciones">
-        <dc:Bounds x="1240" y="320" width="120" height="80" />
+        <dc:Bounds x="1720" y="320" width="120" height="80" />
       </bpmndi:BPMNShape>
 
       <bpmndi:BPMNShape id="Shape_Task_GuardarPauta" bpmnElement="Task_GuardarPauta">
-        <dc:Bounds x="1420" y="320" width="120" height="80" />
+        <dc:Bounds x="1900" y="320" width="120" height="80" />
       </bpmndi:BPMNShape>
 
       <bpmndi:BPMNShape id="Shape_Task_GuardarPlanificacion" bpmnElement="Task_GuardarPlanificacion">
-        <dc:Bounds x="1420" y="180" width="120" height="80" />
+        <dc:Bounds x="1900" y="180" width="120" height="80" />
       </bpmndi:BPMNShape>
 
       <bpmndi:BPMNShape id="Shape_GW_GenerarMenu" bpmnElement="GW_GenerarMenu" isMarkerVisible="true">
-        <dc:Bounds x="1595" y="195" width="50" height="50" />
-        <bpmndi:BPMNLabel><dc:Bounds x="1570" y="252" width="100" height="14" /></bpmndi:BPMNLabel>
+        <dc:Bounds x="2075" y="195" width="50" height="50" />
+        <bpmndi:BPMNLabel><dc:Bounds x="2050" y="252" width="100" height="14" /></bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
 
       <bpmndi:BPMNShape id="Shape_Task_SolicitarMenus" bpmnElement="Task_SolicitarMenus">
-        <dc:Bounds x="1660" y="100" width="120" height="80" />
+        <dc:Bounds x="2140" y="100" width="120" height="80" />
       </bpmndi:BPMNShape>
 
       <bpmndi:BPMNShape id="Shape_Task_ExportarPDF" bpmnElement="Task_ExportarPDF">
-        <dc:Bounds x="1660" y="270" width="120" height="80" />
+        <dc:Bounds x="2140" y="270" width="120" height="80" />
       </bpmndi:BPMNShape>
 
       <bpmndi:BPMNShape id="Shape_End_FE" bpmnElement="End_FE">
-        <dc:Bounds x="1812" y="292" width="36" height="36" />
-        <bpmndi:BPMNLabel><dc:Bounds x="1790" y="335" width="80" height="27" /></bpmndi:BPMNLabel>
+        <dc:Bounds x="2292" y="292" width="36" height="36" />
+        <bpmndi:BPMNLabel><dc:Bounds x="2270" y="335" width="80" height="27" /></bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
 
       <!-- FE sequence flow edges -->
-      <bpmndi:BPMNEdge id="Edge_sf1"          bpmnElement="sf1"><di:waypoint x="108" y="220"/><di:waypoint x="150" y="220"/></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Edge_sf2"          bpmnElement="sf2"><di:waypoint x="270" y="220"/><di:waypoint x="315" y="220"/></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Edge_sf_authYes"   bpmnElement="sf_authYes"><di:waypoint x="365" y="220"/><di:waypoint x="420" y="220"/></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Edge_sf_authNo"    bpmnElement="sf_authNo"><di:waypoint x="340" y="195"/><di:waypoint x="340" y="136"/></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Edge_sf3"          bpmnElement="sf3"><di:waypoint x="540" y="220"/><di:waypoint x="595" y="220"/></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Edge_sf_pacNuevo"  bpmnElement="sf_pacNuevo"><di:waypoint x="620" y="195"/><di:waypoint x="620" y="140"/><di:waypoint x="700" y="140"/></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Edge_sf_pacExiste" bpmnElement="sf_pacExiste"><di:waypoint x="620" y="245"/><di:waypoint x="620" y="310"/><di:waypoint x="700" y="310"/></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Edge_sf4"          bpmnElement="sf4"><di:waypoint x="820" y="140"/><di:waypoint x="880" y="220" /></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Edge_sf5"          bpmnElement="sf5"><di:waypoint x="820" y="310"/><di:waypoint x="880" y="220" /></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Edge_sf6"          bpmnElement="sf6"><di:waypoint x="1000" y="220"/><di:waypoint x="1060" y="220"/></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Edge_sf7"          bpmnElement="sf7"><di:waypoint x="1180" y="220"/><di:waypoint x="1240" y="220"/></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Edge_sf8"          bpmnElement="sf8"><di:waypoint x="1300" y="260"/><di:waypoint x="1300" y="320"/></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Edge_sf9"          bpmnElement="sf9"><di:waypoint x="1360" y="360"/><di:waypoint x="1420" y="360"/></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Edge_sf10"         bpmnElement="sf10"><di:waypoint x="1480" y="320"/><di:waypoint x="1480" y="260"/></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Edge_sf11"         bpmnElement="sf11"><di:waypoint x="1540" y="220"/><di:waypoint x="1595" y="220"/></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Edge_sf_menuSi"    bpmnElement="sf_menuSi"><di:waypoint x="1620" y="195"/><di:waypoint x="1620" y="140"/><di:waypoint x="1660" y="140"/></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Edge_sf_menuNo"    bpmnElement="sf_menuNo"><di:waypoint x="1620" y="245"/><di:waypoint x="1620" y="310"/><di:waypoint x="1660" y="310"/></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Edge_sf12"         bpmnElement="sf12"><di:waypoint x="1720" y="180"/><di:waypoint x="1720" y="270"/></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Edge_sf_end"       bpmnElement="sf_end"><di:waypoint x="1780" y="310"/><di:waypoint x="1812" y="310"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_sf1"           bpmnElement="sf1"><di:waypoint x="108" y="220"/><di:waypoint x="140" y="220"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_sf_metodoPass" bpmnElement="sf_metodoPass"><di:waypoint x="165" y="208"/><di:waypoint x="230" y="150"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_sf_metodoGoogle" bpmnElement="sf_metodoGoogle"><di:waypoint x="165" y="232"/><di:waypoint x="230" y="330"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_sf_loginMerge1" bpmnElement="sf_loginMerge1"><di:waypoint x="350" y="150"/><di:waypoint x="400" y="210"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_sf_loginMerge2" bpmnElement="sf_loginMerge2"><di:waypoint x="350" y="330"/><di:waypoint x="400" y="230"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_sf_mfaCheck"   bpmnElement="sf_mfaCheck"><di:waypoint x="450" y="220"/><di:waypoint x="500" y="220"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_sf_mfaSi"      bpmnElement="sf_mfaSi"><di:waypoint x="515" y="205"/><di:waypoint x="600" y="90"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_sf_mfaNo"      bpmnElement="sf_mfaNo"><di:waypoint x="515" y="235"/><di:waypoint x="800" y="235"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_sf_mfaDone"    bpmnElement="sf_mfaDone"><di:waypoint x="720" y="80"/><di:waypoint x="800" y="200"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_sf_authYes"   bpmnElement="sf_authYes"><di:waypoint x="850" y="220"/><di:waypoint x="900" y="220"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_sf_authNo"    bpmnElement="sf_authNo"><di:waypoint x="820" y="245"/><di:waypoint x="820" y="330"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_sf3"          bpmnElement="sf3"><di:waypoint x="1020" y="220"/><di:waypoint x="1075" y="220"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_sf_pacNuevo"  bpmnElement="sf_pacNuevo"><di:waypoint x="1100" y="195"/><di:waypoint x="1100" y="140"/><di:waypoint x="1180" y="140"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_sf_pacExiste" bpmnElement="sf_pacExiste"><di:waypoint x="1100" y="245"/><di:waypoint x="1100" y="310"/><di:waypoint x="1180" y="310"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_sf4"          bpmnElement="sf4"><di:waypoint x="1300" y="140"/><di:waypoint x="1360" y="220" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_sf5"          bpmnElement="sf5"><di:waypoint x="1300" y="310"/><di:waypoint x="1360" y="220" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_sf6"          bpmnElement="sf6"><di:waypoint x="1480" y="220"/><di:waypoint x="1540" y="220"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_sf7"          bpmnElement="sf7"><di:waypoint x="1660" y="220"/><di:waypoint x="1720" y="220"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_sf8"          bpmnElement="sf8"><di:waypoint x="1780" y="260"/><di:waypoint x="1780" y="320"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_sf9"          bpmnElement="sf9"><di:waypoint x="1840" y="360"/><di:waypoint x="1900" y="360"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_sf10"         bpmnElement="sf10"><di:waypoint x="1960" y="320"/><di:waypoint x="1960" y="260"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_sf11"         bpmnElement="sf11"><di:waypoint x="2020" y="220"/><di:waypoint x="2075" y="220"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_sf_menuSi"    bpmnElement="sf_menuSi"><di:waypoint x="2100" y="195"/><di:waypoint x="2100" y="140"/><di:waypoint x="2140" y="140"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_sf_menuNo"    bpmnElement="sf_menuNo"><di:waypoint x="2100" y="245"/><di:waypoint x="2100" y="310"/><di:waypoint x="2140" y="310"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_sf12"         bpmnElement="sf12"><di:waypoint x="2200" y="180"/><di:waypoint x="2200" y="270"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_sf_end"       bpmnElement="sf_end"><di:waypoint x="2260" y="310"/><di:waypoint x="2292" y="310"/></bpmndi:BPMNEdge>
+
+      <!-- FE artefacto: asociaciones -->
+      <bpmndi:BPMNEdge id="Edge_assoc_ta_login1" bpmnElement="assoc_ta_login1"><di:waypoint x="350" y="330"/><di:waypoint x="560" y="325"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_assoc_ta_login2" bpmnElement="assoc_ta_login2"><di:waypoint x="660" y="120"/><di:waypoint x="670" y="280"/></bpmndi:BPMNEdge>
 
       <!-- ── Pool Backend-Core (y=460, h=420) ── -->
       <bpmndi:BPMNShape id="Shape_Pool_BackendCore" bpmnElement="Pool_BackendCore" isHorizontal="true">
-        <dc:Bounds x="20" y="460" width="1800" height="420" />
+        <dc:Bounds x="20" y="460" width="2400" height="420" />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Shape_Task_BC_Login" bpmnElement="Task_BC_Login">
+        <dc:Bounds x="150" y="500" width="140" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_End_BC_Login" bpmnElement="End_BC_Login">
+        <dc:Bounds x="332" y="522" width="36" height="36" />
       </bpmndi:BPMNShape>
 
       <bpmndi:BPMNShape id="Shape_Task_BC_ValidarJWT" bpmnElement="Task_BC_ValidarJWT">
@@ -527,7 +641,10 @@
         <dc:Bounds x="1230" y="620" width="140" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Shape_End_BC_Macros" bpmnElement="End_BC_Macros">
-        <dc:Bounds x="1412" y="642" width="36" height="36" />
+        <dc:Bounds x="1412" y="502" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_End_BC_CuadradorDead" bpmnElement="End_BC_CuadradorDead">
+        <dc:Bounds x="1282" y="720" width="36" height="36" />
       </bpmndi:BPMNShape>
 
       <bpmndi:BPMNShape id="Shape_Task_BC_ObtenerDistribucion" bpmnElement="Task_BC_ObtenerDistribucion">
@@ -537,7 +654,10 @@
         <dc:Bounds x="1410" y="620" width="140" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Shape_End_BC_Armador" bpmnElement="End_BC_Armador">
-        <dc:Bounds x="1592" y="642" width="36" height="36" />
+        <dc:Bounds x="1592" y="502" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_End_BC_ArmadorDead" bpmnElement="End_BC_ArmadorDead">
+        <dc:Bounds x="1462" y="720" width="36" height="36" />
       </bpmndi:BPMNShape>
 
       <bpmndi:BPMNShape id="Shape_Task_BC_GuardarDistribucion" bpmnElement="Task_BC_GuardarDistribucion">
@@ -547,7 +667,10 @@
         <dc:Bounds x="1590" y="620" width="140" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Shape_End_BC_Dist" bpmnElement="End_BC_Dist">
-        <dc:Bounds x="1772" y="642" width="36" height="36" />
+        <dc:Bounds x="1772" y="502" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_End_BC_PizarraDead" bpmnElement="End_BC_PizarraDead">
+        <dc:Bounds x="1642" y="720" width="36" height="36" />
       </bpmndi:BPMNShape>
 
       <bpmndi:BPMNShape id="Shape_Task_BC_CrearPlanificacion" bpmnElement="Task_BC_CrearPlanificacion">
@@ -567,25 +690,35 @@
         <dc:Bounds x="1842" y="822" width="36" height="36" />
       </bpmndi:BPMNShape>
 
+      <bpmndi:BPMNShape id="Shape_TA_NoConectado" bpmnElement="TA_NoConectado">
+        <dc:Bounds x="330" y="760" width="320" height="110" />
+      </bpmndi:BPMNShape>
+
       <!-- BC sequence flow edges -->
+      <bpmndi:BPMNEdge id="Edge_bc_sf_login" bpmnElement="bc_sf_login"><di:waypoint x="290" y="540"/><di:waypoint x="332" y="540"/></bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Edge_bc_sf1"  bpmnElement="bc_sf1"><di:waypoint x="290" y="660"/><di:waypoint x="332" y="660"/></bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Edge_bc_sf2"  bpmnElement="bc_sf2"><di:waypoint x="830" y="520"/><di:waypoint x="872" y="520"/></bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Edge_bc_sf3"  bpmnElement="bc_sf3"><di:waypoint x="1010" y="660"/><di:waypoint x="1052" y="660"/></bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Edge_bc_sf4"  bpmnElement="bc_sf4"><di:waypoint x="1120" y="560"/><di:waypoint x="1120" y="620"/></bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Edge_bc_sf5"  bpmnElement="bc_sf5"><di:waypoint x="1190" y="660"/><di:waypoint x="1232" y="660"/></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Edge_bc_sf6"  bpmnElement="bc_sf6"><di:waypoint x="1300" y="560"/><di:waypoint x="1300" y="620"/></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Edge_bc_sf7"  bpmnElement="bc_sf7"><di:waypoint x="1370" y="660"/><di:waypoint x="1412" y="660"/></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Edge_bc_sf8"  bpmnElement="bc_sf8"><di:waypoint x="1480" y="560"/><di:waypoint x="1480" y="620"/></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Edge_bc_sf9"  bpmnElement="bc_sf9"><di:waypoint x="1550" y="660"/><di:waypoint x="1592" y="660"/></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Edge_bc_sf10" bpmnElement="bc_sf10"><di:waypoint x="1660" y="560"/><di:waypoint x="1660" y="620"/></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Edge_bc_sf11" bpmnElement="bc_sf11"><di:waypoint x="1730" y="660"/><di:waypoint x="1772" y="660"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_bc_sf6"  bpmnElement="bc_sf6"><di:waypoint x="1370" y="520"/><di:waypoint x="1412" y="520"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_bc_sf7"  bpmnElement="bc_sf7"><di:waypoint x="1300" y="700"/><di:waypoint x="1300" y="720"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_bc_sf8"  bpmnElement="bc_sf8"><di:waypoint x="1550" y="520"/><di:waypoint x="1592" y="520"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_bc_sf9"  bpmnElement="bc_sf9"><di:waypoint x="1480" y="700"/><di:waypoint x="1480" y="720"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_bc_sf10" bpmnElement="bc_sf10"><di:waypoint x="1730" y="520"/><di:waypoint x="1772" y="520"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_bc_sf11" bpmnElement="bc_sf11"><di:waypoint x="1660" y="700"/><di:waypoint x="1660" y="720"/></bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Edge_bc_sf12" bpmnElement="bc_sf12"><di:waypoint x="1550" y="810"/><di:waypoint x="1592" y="810"/></bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Edge_bc_sf13" bpmnElement="bc_sf13"><di:waypoint x="1730" y="810"/><di:waypoint x="1660" y="840"/></bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Edge_bc_sf14" bpmnElement="bc_sf14"><di:waypoint x="1800" y="840"/><di:waypoint x="1842" y="840"/></bpmndi:BPMNEdge>
 
+      <!-- BC artefacto: asociaciones (peine vía trunk y=600, libre de cajas en todo el ancho del pool) -->
+      <bpmndi:BPMNEdge id="Edge_assoc_ta_nc1" bpmnElement="assoc_ta_nc1"><di:waypoint x="1230" y="660"/><di:waypoint x="1230" y="600"/><di:waypoint x="650" y="600"/><di:waypoint x="650" y="780"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_assoc_ta_nc2" bpmnElement="assoc_ta_nc2"><di:waypoint x="1410" y="660"/><di:waypoint x="1410" y="600"/><di:waypoint x="650" y="600"/><di:waypoint x="650" y="800"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_assoc_ta_nc3" bpmnElement="assoc_ta_nc3"><di:waypoint x="1590" y="660"/><di:waypoint x="1590" y="600"/><di:waypoint x="650" y="600"/><di:waypoint x="650" y="820"/></bpmndi:BPMNEdge>
+
       <!-- ── Pool Backend-Math (y=900, h=300) ── -->
       <bpmndi:BPMNShape id="Shape_Pool_BackendMath" bpmnElement="Pool_BackendMath" isHorizontal="true">
-        <dc:Bounds x="20" y="900" width="1800" height="300" />
+        <dc:Bounds x="20" y="900" width="2400" height="300" />
       </bpmndi:BPMNShape>
 
       <bpmndi:BPMNShape id="Shape_Task_BM_CalcTMB" bpmnElement="Task_BM_CalcTMB">
@@ -639,36 +772,36 @@
       <bpmndi:BPMNEdge id="Edge_bm_sf6"     bpmnElement="bm_sf6"><di:waypoint x="1800" y="1120"/><di:waypoint x="1842" y="1120"/></bpmndi:BPMNEdge>
 
       <!-- ── Message flows (entre pools) ── -->
-      <!-- Auth -->
+      <!-- Auth: login con contraseña -->
       <bpmndi:BPMNEdge id="Edge_mf_login_req"  bpmnElement="mf_login_req">
-        <di:waypoint x="210" y="260"/><di:waypoint x="210" y="620"/>
+        <di:waypoint x="290" y="190"/><di:waypoint x="220" y="500"/>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Edge_mf_login_res"  bpmnElement="mf_login_res">
-        <di:waypoint x="230" y="620"/><di:waypoint x="230" y="260"/>
+        <di:waypoint x="250" y="500"/><di:waypoint x="310" y="190"/>
       </bpmndi:BPMNEdge>
 
       <!-- Crear Paciente -->
       <bpmndi:BPMNEdge id="Edge_mf_crearPac_req" bpmnElement="mf_crearPac_req">
-        <di:waypoint x="760" y="180"/><di:waypoint x="760" y="560"/>
+        <di:waypoint x="1240" y="180"/><di:waypoint x="760" y="480"/>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Edge_mf_crearPac_res" bpmnElement="mf_crearPac_res">
-        <di:waypoint x="780" y="560"/><di:waypoint x="780" y="180"/>
+        <di:waypoint x="780" y="480"/><di:waypoint x="1260" y="180"/>
       </bpmndi:BPMNEdge>
 
-      <!-- Evaluación -->
+      <!-- Evaluación (elbow vía trunk del hueco entre pools, evita cruzar ObtenerMetricas) -->
       <bpmndi:BPMNEdge id="Edge_mf_eval_req" bpmnElement="mf_eval_req">
-        <di:waypoint x="940" y="260"/><di:waypoint x="940" y="620"/>
+        <di:waypoint x="1420" y="260"/><di:waypoint x="1420" y="445"/><di:waypoint x="940" y="445"/><di:waypoint x="940" y="620"/>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Edge_mf_eval_res" bpmnElement="mf_eval_res">
-        <di:waypoint x="960" y="620"/><di:waypoint x="960" y="260"/>
+        <di:waypoint x="960" y="620"/><di:waypoint x="960" y="455"/><di:waypoint x="1440" y="455"/><di:waypoint x="1440" y="260"/>
       </bpmndi:BPMNEdge>
 
       <!-- Dashboard TMB FE → Core -->
       <bpmndi:BPMNEdge id="Edge_mf_tmb_fe_req" bpmnElement="mf_tmb_fe_req">
-        <di:waypoint x="1120" y="260"/><di:waypoint x="1120" y="480"/>
+        <di:waypoint x="1600" y="260"/><di:waypoint x="1120" y="480"/>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Edge_mf_tmb_fe_res" bpmnElement="mf_tmb_fe_res">
-        <di:waypoint x="1140" y="480"/><di:waypoint x="1140" y="260"/>
+        <di:waypoint x="1140" y="480"/><di:waypoint x="1620" y="260"/>
       </bpmndi:BPMNEdge>
 
       <!-- TMB Core → Math -->
@@ -681,13 +814,13 @@
 
       <!-- Macros FE → Core -->
       <bpmndi:BPMNEdge id="Edge_mf_macro_fe_req" bpmnElement="mf_macro_fe_req">
-        <di:waypoint x="1300" y="260"/><di:waypoint x="1300" y="480"/>
+        <di:waypoint x="1780" y="260"/><di:waypoint x="1300" y="480"/>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Edge_mf_macro_fe_res" bpmnElement="mf_macro_fe_res">
-        <di:waypoint x="1320" y="480"/><di:waypoint x="1320" y="260"/>
+        <di:waypoint x="1320" y="480"/><di:waypoint x="1800" y="260"/>
       </bpmndi:BPMNEdge>
 
-      <!-- Cuadrador Core → Math -->
+      <!-- Cuadrador Core → Math (inalcanzable en runtime, pero el cableado existe) -->
       <bpmndi:BPMNEdge id="Edge_mf_macro_req" bpmnElement="mf_macro_req">
         <di:waypoint x="1300" y="700"/><di:waypoint x="1300" y="960"/>
       </bpmndi:BPMNEdge>
@@ -697,13 +830,13 @@
 
       <!-- Pauta FE → Core -->
       <bpmndi:BPMNEdge id="Edge_mf_pauta_fe_req" bpmnElement="mf_pauta_fe_req">
-        <di:waypoint x="1300" y="400"/><di:waypoint x="1480" y="480"/>
+        <di:waypoint x="1780" y="400"/><di:waypoint x="1480" y="480"/>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Edge_mf_pauta_fe_res" bpmnElement="mf_pauta_fe_res">
-        <di:waypoint x="1500" y="480"/><di:waypoint x="1320" y="400"/>
+        <di:waypoint x="1500" y="480"/><di:waypoint x="1800" y="400"/>
       </bpmndi:BPMNEdge>
 
-      <!-- Armador Core → Math -->
+      <!-- Armador Core → Math (NO implementado en backend-core; el endpoint sí existe en backend-math) -->
       <bpmndi:BPMNEdge id="Edge_mf_pauta_req" bpmnElement="mf_pauta_req">
         <di:waypoint x="1480" y="700"/><di:waypoint x="1480" y="960"/>
       </bpmndi:BPMNEdge>
@@ -713,13 +846,13 @@
 
       <!-- Guardar distribución FE → Core -->
       <bpmndi:BPMNEdge id="Edge_mf_guardarDist_req" bpmnElement="mf_guardarDist_req">
-        <di:waypoint x="1480" y="400"/><di:waypoint x="1660" y="480"/>
+        <di:waypoint x="1960" y="400"/><di:waypoint x="1660" y="480"/>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Edge_mf_guardarDist_res" bpmnElement="mf_guardarDist_res">
-        <di:waypoint x="1680" y="480"/><di:waypoint x="1500" y="400"/>
+        <di:waypoint x="1680" y="480"/><di:waypoint x="1980" y="400"/>
       </bpmndi:BPMNEdge>
 
-      <!-- Pizarra Core → Math -->
+      <!-- Pizarra Core → Math (NO implementado en backend-core; el endpoint sí existe en backend-math) -->
       <bpmndi:BPMNEdge id="Edge_mf_pizarra_req" bpmnElement="mf_pizarra_req">
         <di:waypoint x="1660" y="700"/><di:waypoint x="1660" y="960"/>
       </bpmndi:BPMNEdge>
@@ -727,20 +860,20 @@
         <di:waypoint x="1680" y="960"/><di:waypoint x="1680" y="700"/>
       </bpmndi:BPMNEdge>
 
-      <!-- Planificación FE → Core -->
+      <!-- Planificación FE → Core (elbow por el hueco de columna x=1390/1405, evita GuardarDistribucion/ValidarPizarra) -->
       <bpmndi:BPMNEdge id="Edge_mf_plan_req" bpmnElement="mf_plan_req">
-        <di:waypoint x="1480" y="260"/><di:waypoint x="1480" y="770"/>
+        <di:waypoint x="2022" y="220"/><di:waypoint x="2022" y="445"/><di:waypoint x="1390" y="445"/><di:waypoint x="1390" y="790"/><di:waypoint x="1410" y="790"/>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Edge_mf_plan_res" bpmnElement="mf_plan_res">
-        <di:waypoint x="1500" y="770"/><di:waypoint x="1500" y="260"/>
+        <di:waypoint x="1410" y="800"/><di:waypoint x="1405" y="800"/><di:waypoint x="1405" y="455"/><di:waypoint x="2032" y="455"/><di:waypoint x="2032" y="230"/>
       </bpmndi:BPMNEdge>
 
-      <!-- Menús FE → Core -->
+      <!-- Menús FE → Core (elbow por el espacio libre a la derecha de ProxyMenus/GenerarMenus, x=1810/1830) -->
       <bpmndi:BPMNEdge id="Edge_mf_menu_fe_req" bpmnElement="mf_menu_fe_req">
-        <di:waypoint x="1720" y="180"/><di:waypoint x="1730" y="770"/>
+        <di:waypoint x="2260" y="140"/><di:waypoint x="2265" y="140"/><di:waypoint x="2265" y="445"/><di:waypoint x="1810" y="445"/><di:waypoint x="1810" y="790"/><di:waypoint x="1800" y="790"/>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Edge_mf_menu_fe_res" bpmnElement="mf_menu_fe_res">
-        <di:waypoint x="1750" y="770"/><di:waypoint x="1740" y="180"/>
+        <di:waypoint x="1800" y="800"/><di:waypoint x="1830" y="800"/><di:waypoint x="1830" y="455"/><di:waypoint x="2280" y="455"/><di:waypoint x="2280" y="150"/>
       </bpmndi:BPMNEdge>
 
       <!-- Menús Core → Math -->

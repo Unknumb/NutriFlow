@@ -1,8 +1,12 @@
+import logging
+
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from core.config import settings
+
+logger = logging.getLogger(__name__)
 from api.alimentos import router as alimentos_router
 from api.calculos import router as calculos_router
 from api.pautas import router as pautas_router
@@ -28,15 +32,44 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "Accept"],
 )
+
+# Límite de tamaño de payload (1 MB): evita abuso/DoS enviando cuerpos enormes
+# a los endpoints de cálculo (p. ej. /cuadrador o distribución de macros).
+MAX_BODY_BYTES = 1 * 1024 * 1024
+
+
+@app.middleware("http")
+async def limitar_tamano_payload(request: Request, call_next):
+    content_length = request.headers.get("content-length")
+    if content_length is not None:
+        try:
+            if int(content_length) > MAX_BODY_BYTES:
+                return JSONResponse(
+                    status_code=413,
+                    content={
+                        "error": "Payload Too Large",
+                        "message": "El cuerpo de la petición excede el tamaño permitido.",
+                    },
+                )
+        except ValueError:
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "error": "Bad Request",
+                    "message": "Cabecera Content-Length inválida.",
+                },
+            )
+    return await call_next(request)
 
 # Manejador Global de Excepciones No Controladas (500)
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
-    # Logueamos el error internamente (solo visible en consola del servidor)
-    print(f"CRITICAL ERROR: {str(exc)}")
+    # Logueamos el error internamente (solo visible en los logs del servidor),
+    # con traza completa para diagnóstico. El cliente solo recibe un mensaje genérico.
+    logger.error("Excepción no controlada procesando la petición", exc_info=exc)
     return JSONResponse(
         status_code=500,
         content={

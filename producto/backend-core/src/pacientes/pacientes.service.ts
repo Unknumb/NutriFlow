@@ -1,20 +1,13 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { CreatePacienteDto } from './dto/create-paciente.dto';
 import { UpdatePacienteDto } from './dto/update-paciente.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { RedisService } from 'src/redis/redis.service';
 
-/** Detecta violación del índice único parcial (nutricionista_id, rut). */
-function esConflictoRut(error: unknown): boolean {
-  return (
-    error instanceof Prisma.PrismaClientKnownRequestError &&
-    error.code === 'P2002'
-  );
-}
-
 @Injectable()
 export class PacientesService {
+  private readonly logger = new Logger(PacientesService.name);
+
   constructor(
     private prisma: PrismaService,
     private redisService: RedisService,
@@ -41,25 +34,27 @@ export class PacientesService {
             talla_cm: Number(talla_cm),
             nivel_actividad_fisica: 'Sedentario', // Default value
             objetivo: 'Mantención', // Default value
-          }
+          },
         });
       }
 
       // Return patient with their new evaluation
       return prisma.pacientes.findUnique({
         where: { id: paciente.id },
-        include: { Evaluacion: { orderBy: { fecha_evaluacion: 'desc' }, take: 1 } },
+        include: {
+          Evaluacion: { orderBy: { fecha_evaluacion: 'desc' }, take: 1 },
+        },
       });
     });
 
     await this.redisService.client.del(`pacientes:${nutricionista_id}`);
-    
+
     return result;
   }
 
   async findAll(nutricionista_id: string) {
     const cacheKey = `pacientes:${nutricionista_id}`;
-    
+
     const cachedPacientes = await this.redisService.client.get(cacheKey);
     if (cachedPacientes) {
       return cachedPacientes;
@@ -68,7 +63,9 @@ export class PacientesService {
     const pacientes = await this.prisma.pacientes.findMany({
       where: { nutricionista_id },
       orderBy: { fecha_creacion: 'desc' },
-      include: { Evaluacion: { orderBy: { fecha_evaluacion: 'desc' }, take: 1 } },
+      include: {
+        Evaluacion: { orderBy: { fecha_evaluacion: 'desc' }, take: 1 },
+      },
     });
 
     await this.redisService.client.set(cacheKey, pacientes, { ex: 3600 });
@@ -84,13 +81,20 @@ export class PacientesService {
       return cachedPaciente;
     }
 
-    const paciente = await this.prisma.pacientes.findFirst({ 
+    const paciente = await this.prisma.pacientes.findFirst({
       where: { id, nutricionista_id },
-      include: { Evaluacion: { orderBy: { fecha_evaluacion: 'desc' }, take: 1 } },
+      include: {
+        Evaluacion: { orderBy: { fecha_evaluacion: 'desc' }, take: 1 },
+      },
     });
-    
+
     if (!paciente) {
-      throw new NotFoundException(`Paciente con ID ${id} no encontrado o no tienes permisos de acceso`);
+      this.logger.warn(
+        `Acceso denegado: usuario ${nutricionista_id} solicitó el paciente ${id} (inexistente o de otro nutricionista)`,
+      );
+      throw new NotFoundException(
+        `Paciente con ID ${id} no encontrado o no tienes permisos de acceso`,
+      );
     }
 
     await this.redisService.client.set(cacheKey, paciente, { ex: 3600 });
@@ -98,20 +102,24 @@ export class PacientesService {
     return paciente;
   }
 
-  async update(id: string, updatePacienteDto: UpdatePacienteDto, nutricionista_id: string) {
+  async update(
+    id: string,
+    updatePacienteDto: UpdatePacienteDto,
+    nutricionista_id: string,
+  ) {
     await this.findOne(id, nutricionista_id); // Verificar existencia y pertenencia
 
     // talla_cm y peso_kg viven en Evaluacion, no en pacientes: se separan del
     // update del paciente y se aplican a la evaluación más reciente (o se crea una).
     const { talla_cm, peso_kg, ...pacienteData } = updatePacienteDto;
-    const dataToUpdate: any = { ...pacienteData };
+    const dataToUpdate: Record<string, unknown> = { ...pacienteData };
 
     if (pacienteData.fecha_nacimiento) {
       dataToUpdate.fecha_nacimiento = new Date(pacienteData.fecha_nacimiento);
     }
 
     const updatedPaciente = await this.prisma.$transaction(async (prisma) => {
-      const paciente = await prisma.pacientes.update({
+      await prisma.pacientes.update({
         where: { id },
         data: dataToUpdate,
       });
@@ -127,7 +135,9 @@ export class PacientesService {
             where: { id: ultima.id },
             data: {
               ...(talla_cm !== undefined ? { talla_cm: Number(talla_cm) } : {}),
-              ...(peso_kg !== undefined ? { peso_actual: Number(peso_kg) } : {}),
+              ...(peso_kg !== undefined
+                ? { peso_actual: Number(peso_kg) }
+                : {}),
             },
           });
         } else if (talla_cm !== undefined && peso_kg !== undefined) {
@@ -147,7 +157,9 @@ export class PacientesService {
 
       return prisma.pacientes.findUnique({
         where: { id },
-        include: { Evaluacion: { orderBy: { fecha_evaluacion: 'desc' }, take: 1 } },
+        include: {
+          Evaluacion: { orderBy: { fecha_evaluacion: 'desc' }, take: 1 },
+        },
       });
     });
 
@@ -161,11 +173,13 @@ export class PacientesService {
 
   async remove(id: string, nutricionista_id: string) {
     await this.findOne(id, nutricionista_id); // Verificar existencia y pertenencia
-    const deletedPaciente = await this.prisma.pacientes.delete({ where: { id } });
+    const deletedPaciente = await this.prisma.pacientes.delete({
+      where: { id },
+    });
 
     await Promise.all([
       this.redisService.client.del(`paciente:${id}:${nutricionista_id}`),
-      this.redisService.client.del(`pacientes:${nutricionista_id}`)
+      this.redisService.client.del(`pacientes:${nutricionista_id}`),
     ]);
 
     return deletedPaciente;

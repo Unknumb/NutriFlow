@@ -5,6 +5,9 @@ on:
     - cron: '0 3 * * *'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   backup-database:
     runs-on: ubuntu-latest
@@ -26,8 +29,17 @@ jobs:
           /usr/lib/postgresql/17/bin/pg_dump $DB_URL -F c -b -v -f $BACKUP_FILE
           echo "BACKUP_NAME=$BACKUP_FILE" >> $GITHUB_ENV
 
+      - name: Verificar integridad del backup
+        run: |
+          # pg_restore --list falla si el archivo no es un dump válido; además
+          # confirmamos que el backup no está vacío y contiene objetos.
+          test -s "$BACKUP_NAME" || { echo "ERROR: backup vacío"; exit 1; }
+          OBJETOS=$(/usr/lib/postgresql/17/bin/pg_restore --list "$BACKUP_NAME" | grep -c ';' || true)
+          echo "El backup contiene $OBJETOS entradas en su índice."
+          test "$OBJETOS" -gt 0 || { echo "ERROR: el dump no lista objetos"; exit 1; }
+
       - name: Subir archivo de backup como Artefacto a GitHub
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: nutriflow-database-backup
           path: ${{ env.BACKUP_NAME }}

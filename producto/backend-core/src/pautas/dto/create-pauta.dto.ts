@@ -1,5 +1,12 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsNumber, IsObject, IsNotEmpty, IsUUID, IsOptional } from 'class-validator';
+import {
+  IsString,
+  IsNumber,
+  IsObject,
+  IsNotEmpty,
+  IsUUID,
+  IsOptional,
+} from 'class-validator';
 
 export class PorcentajesMacrosDto {
   @ApiProperty({ example: 20 })
@@ -21,19 +28,25 @@ export class CreatePautaDto {
   @IsNotEmpty()
   paciente_id: string;
 
-  @ApiProperty({ description: 'ID de la planificación de origen', example: 'uuid-de-planificacion' })
+  @ApiProperty({
+    description: 'ID de la planificación de origen',
+    example: 'uuid-de-planificacion',
+  })
   @IsUUID()
   @IsNotEmpty()
   planificacion_id: string;
 
-  @ApiPropertyOptional({ description: 'Nombre o descripción de la pauta', example: 'Día de entrenamiento' })
+  @ApiPropertyOptional({
+    description: 'Nombre o descripción de la pauta',
+    example: 'Día de entrenamiento',
+  })
   @IsString()
   @IsOptional()
   descripcion_general?: string;
 
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'Tiempos de comida y porciones distribuidas',
-    example: { desayuno: { lacteos: 1, cereales: 2 } }
+    example: { desayuno: { lacteos: 1, cereales: 2 } },
   })
   @IsObject()
   @IsNotEmpty()

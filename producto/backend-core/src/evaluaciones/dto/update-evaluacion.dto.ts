@@ -8,7 +8,10 @@ export class UpdateEvaluacionDto extends PartialType(CreateEvaluacionDto) {
   @IsNumber()
   tmb?: number;
 
-  @ApiPropertyOptional({ description: 'Gasto energético total en kcal', example: 2200 })
+  @ApiPropertyOptional({
+    description: 'Gasto energético total en kcal',
+    example: 2200,
+  })
   @IsOptional()
   @IsNumber()
   gasto_energetico_total?: number;

@@ -80,7 +80,11 @@ export class PreparacionesService {
     }
   }
 
-  async update(id: string, dto: UpdatePreparacionDto, nutricionista_id: string) {
+  async update(
+    id: string,
+    dto: UpdatePreparacionDto,
+    nutricionista_id: string,
+  ) {
     await this.verificarPropiedad(id, nutricionista_id);
     const { ingredientes, ...data } = dto;
 
@@ -164,7 +168,10 @@ export class PreparacionesService {
         this.logger.log(`Cache de menús invalidada (${keys.length} claves)`);
       }
     } catch (error) {
-      this.logger.error('No se pudo invalidar la cache de menús', error as Error);
+      this.logger.error(
+        'No se pudo invalidar la cache de menús',
+        error as Error,
+      );
     }
   }
 
@@ -182,7 +189,9 @@ export class PreparacionesService {
         cantidad_g,
         calorias: redondear(Number(ing.alimentos.calorias_100g) * factor),
         proteinas: redondear(Number(ing.alimentos.proteinas_100g) * factor),
-        carbohidratos: redondear(Number(ing.alimentos.carbohidratos_100g) * factor),
+        carbohidratos: redondear(
+          Number(ing.alimentos.carbohidratos_100g) * factor,
+        ),
         grasas: redondear(Number(ing.alimentos.grasas_100g) * factor),
       };
     });

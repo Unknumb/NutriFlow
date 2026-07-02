@@ -6,10 +6,17 @@ const mockMutate = vi.hoisted(() => vi.fn());
 const mockUsePerfilNutricionista = vi.hoisted(() => vi.fn());
 const mockUseUpdatePerfil = vi.hoisted(() => vi.fn());
 const mockValidarAvatar = vi.hoisted(() => vi.fn(() => null));
+const mockUseMfa = vi.hoisted(() => vi.fn());
+const mockStartEnroll = vi.hoisted(() => vi.fn());
+const mockUnenroll = vi.hoisted(() => vi.fn());
 
 vi.mock('../hooks/usePerfil', () => ({
   usePerfilNutricionista: mockUsePerfilNutricionista,
   useUpdatePerfil: mockUseUpdatePerfil,
+}));
+
+vi.mock('../../../shared/hooks/useMfa', () => ({
+  useMfa: mockUseMfa,
 }));
 
 vi.mock('../services/avatarPerfil', () => ({
@@ -31,7 +38,26 @@ vi.mock('lucide-react', () => ({
   Mail: () => <span />,
   Camera: () => <span />,
   Trash2: () => <span data-testid="icon-trash" />,
+  Shield: () => <span />,
+  ShieldCheck: () => <span />,
+  ShieldOff: () => <span />,
+  X: () => <span />,
+  Maximize2: () => <span />,
 }));
+
+const MFA_DEFAULT = {
+  verifiedFactor: null,
+  isLoadingFactors: true,
+  enrollData: null,
+  isEnrolling: false,
+  isVerifying: false,
+  isUnenrolling: false,
+  error: null,
+  startEnroll: mockStartEnroll,
+  verifyEnrollment: vi.fn(),
+  cancelEnroll: vi.fn(),
+  unenroll: mockUnenroll,
+};
 
 const PERFIL_BASE = {
   id: 'nut-1',
@@ -46,6 +72,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   mockUseUpdatePerfil.mockReturnValue({ mutate: mockMutate, isPending: false });
   mockUsePerfilNutricionista.mockReturnValue({ data: null, isLoading: false, error: null });
+  mockUseMfa.mockReturnValue({ ...MFA_DEFAULT });
 });
 
 describe('MiPerfil', () => {
@@ -205,6 +232,65 @@ describe('MiPerfil', () => {
       render(<MiPerfil />);
       fireEvent.click(screen.getByRole('button', { name: /Guardar cambios/i }));
       expect(screen.getByText('Fallo al guardar')).toBeInTheDocument();
+    });
+  });
+
+  describe('MFA — ver QR más grande', () => {
+    beforeEach(() => {
+      mockUsePerfilNutricionista.mockReturnValue({ data: PERFIL_BASE, isLoading: false, error: null });
+      mockUseMfa.mockReturnValue({
+        ...MFA_DEFAULT,
+        isLoadingFactors: false,
+        enrollData: { factorId: 'f-1', qrCode: 'data:image/png;base64,QR', secret: 'ABCD1234' },
+      });
+    });
+
+    it('no muestra el QR ampliado hasta pulsar "Ver más grande"', () => {
+      render(<MiPerfil />);
+      expect(
+        screen.queryByAltText('Código QR ampliado para autenticación en dos pasos'),
+      ).not.toBeInTheDocument();
+    });
+
+    it('al pulsar "Ver más grande" muestra el QR ampliado', () => {
+      render(<MiPerfil />);
+      fireEvent.click(screen.getByRole('button', { name: /Ver más grande/i }));
+      expect(
+        screen.getByAltText('Código QR ampliado para autenticación en dos pasos'),
+      ).toBeInTheDocument();
+    });
+  });
+
+  describe('MFA — confirmación al desactivar el doble factor', () => {
+    beforeEach(() => {
+      mockUsePerfilNutricionista.mockReturnValue({ data: PERFIL_BASE, isLoading: false, error: null });
+      mockUseMfa.mockReturnValue({
+        ...MFA_DEFAULT,
+        isLoadingFactors: false,
+        verifiedFactor: { id: 'f-1', status: 'verified' },
+      });
+    });
+
+    it('pulsar "Desactivar" NO desactiva de inmediato: pide confirmación', () => {
+      render(<MiPerfil />);
+      fireEvent.click(screen.getByRole('button', { name: /Desactivar verificación en dos pasos/i }));
+      expect(screen.getByText('¿Desactivar la verificación en dos pasos?')).toBeInTheDocument();
+      expect(mockUnenroll).not.toHaveBeenCalled();
+    });
+
+    it('sólo tras confirmar "Sí, desactivar" se llama a unenroll con el factor', () => {
+      render(<MiPerfil />);
+      fireEvent.click(screen.getByRole('button', { name: /Desactivar verificación en dos pasos/i }));
+      fireEvent.click(screen.getByRole('button', { name: /Sí, desactivar/i }));
+      expect(mockUnenroll).toHaveBeenCalledWith('f-1');
+    });
+
+    it('cancelar cierra la confirmación sin desactivar', () => {
+      render(<MiPerfil />);
+      fireEvent.click(screen.getByRole('button', { name: /Desactivar verificación en dos pasos/i }));
+      fireEvent.click(screen.getByRole('button', { name: /Cancelar/i }));
+      expect(screen.queryByText('¿Desactivar la verificación en dos pasos?')).not.toBeInTheDocument();
+      expect(mockUnenroll).not.toHaveBeenCalled();
     });
   });
 });

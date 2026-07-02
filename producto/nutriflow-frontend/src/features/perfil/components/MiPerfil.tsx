@@ -1,6 +1,6 @@
 // nutriflow-frontend/src/features/perfil/components/MiPerfil.tsx
 import React, { useEffect, useRef, useState } from 'react';
-import { Loader2, Save, UserCircle, BadgeCheck, Mail, Camera, Trash2, Shield, ShieldCheck, ShieldOff } from 'lucide-react';
+import { Loader2, Save, UserCircle, BadgeCheck, Mail, Camera, Trash2, Shield, ShieldCheck, ShieldOff, X, Maximize2 } from 'lucide-react';
 import { usePerfilNutricionista, useUpdatePerfil } from '../hooks/usePerfil';
 import { subirAvatar, eliminarAvatar, validarAvatar, TIPOS_AVATAR_PERMITIDOS } from '../services/avatarPerfil';
 import { PageHeader } from '../../../shared/ui/organisms/PageHeader';
@@ -123,6 +123,8 @@ export const MiPerfil: React.FC = () => {
   };
 
   const [mfaCode, setMfaCode] = useState('');
+  const [qrAmpliado, setQrAmpliado] = useState(false);
+  const [confirmarDesactivar, setConfirmarDesactivar] = useState(false);
   const {
     verifiedFactor,
     isLoadingFactors,
@@ -399,8 +401,16 @@ export const MiPerfil: React.FC = () => {
                   <img
                     src={enrollData.qrCode}
                     alt="Código QR para autenticación en dos pasos"
-                    className="w-44 h-44 border border-mist rounded-md mb-3"
+                    className="w-44 h-44 border border-mist rounded-md mb-2"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setQrAmpliado(true)}
+                    className="inline-flex items-center gap-1.5 text-xs font-medium text-pine-soft hover:text-pine transition-colors duration-150 mb-3"
+                  >
+                    <Maximize2 className="w-3.5 h-3.5" />
+                    Ver más grande
+                  </button>
                   <p className="text-xs text-ink-soft mb-1">
                     ¿No puedes escanear?{' '}
                     <span className="font-mono text-ink bg-mist/60 px-1.5 py-0.5 rounded">
@@ -460,15 +470,11 @@ export const MiPerfil: React.FC = () => {
                     </p>
                     <button
                       type="button"
-                      onClick={() => unenroll(verifiedFactor.id)}
+                      onClick={() => setConfirmarDesactivar(true)}
                       disabled={isUnenrolling}
                       className="inline-flex items-center gap-2 px-4 py-2 border border-clinical-red/40 text-clinical-red hover:bg-clinical-red/5 text-sm font-medium rounded-md transition-colors duration-150 disabled:opacity-60"
                     >
-                      {isUnenrolling ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <ShieldOff className="w-4 h-4" />
-                      )}
+                      <ShieldOff className="w-4 h-4" />
                       Desactivar verificación en dos pasos
                     </button>
                   </div>
@@ -476,6 +482,88 @@ export const MiPerfil: React.FC = () => {
               )}
             </div>
           </div>
+          )}
+
+          {/* Modal: QR ampliado — opción para escanear más fácil */}
+          {qrAmpliado && enrollData && (
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center bg-ink/60 p-4"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Código QR ampliado"
+              onClick={() => setQrAmpliado(false)}
+            >
+              <div
+                className="bg-white rounded-card p-6 shadow-card relative max-w-[90vw]"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button
+                  type="button"
+                  onClick={() => setQrAmpliado(false)}
+                  className="absolute top-3 right-3 text-ink-soft hover:text-ink transition-colors duration-150"
+                  aria-label="Cerrar"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+                <p className="text-sm font-medium text-ink mb-4 text-center">
+                  Escanea este código con tu app autenticadora
+                </p>
+                <img
+                  src={enrollData.qrCode}
+                  alt="Código QR ampliado para autenticación en dos pasos"
+                  className="w-72 h-72 sm:w-80 sm:h-80 mx-auto border border-mist rounded-md"
+                />
+                <p className="text-xs text-ink-soft mt-4 text-center">¿No puedes escanear? Ingresa este código:</p>
+                <p className="font-mono text-sm text-ink text-center mt-1 break-all">{enrollData.secret}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Modal: confirmación de seguridad para desactivar el doble factor */}
+          {confirmarDesactivar && verifiedFactor && (
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center bg-ink/60 p-4"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Confirmar desactivación de verificación en dos pasos"
+            >
+              <div className="bg-white rounded-card p-6 shadow-card max-w-sm w-full">
+                <div className="flex items-start gap-3 mb-5">
+                  <ShieldOff className="w-6 h-6 text-clinical-red shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="font-semibold text-ink text-sm mb-1">
+                      ¿Desactivar la verificación en dos pasos?
+                    </h4>
+                    <p className="text-sm text-ink-soft">
+                      Tu cuenta quedará protegida solo con tu contraseña. Esta acción reduce la
+                      seguridad de tu cuenta; podrás volver a activarla cuando quieras.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setConfirmarDesactivar(false)}
+                    disabled={isUnenrolling}
+                    className="px-4 py-2 text-sm text-ink-soft hover:text-ink border border-mist rounded-md transition-colors duration-150 disabled:opacity-60"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await unenroll(verifiedFactor.id);
+                      setConfirmarDesactivar(false);
+                    }}
+                    disabled={isUnenrolling}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-clinical-red hover:bg-clinical-red/90 text-porcelain text-sm font-medium rounded-md transition-colors duration-150 disabled:opacity-60"
+                  >
+                    {isUnenrolling ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldOff className="w-4 h-4" />}
+                    Sí, desactivar
+                  </button>
+                </div>
+              </div>
+            </div>
           )}
       </div>
     </div>

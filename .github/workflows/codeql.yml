@@ -6,8 +6,8 @@ on:
   pull_request:
     branches: ["main"]
   schedule:
-    # Análisis semanal aunque no haya cambios (lunes 04:00 UTC).
-    - cron: "0 4 * * 1"
+    # Análisis semanal aunque no haya cambios (lunes 09:00 UTC).
+    - cron: "0 9 * * 1"
   workflow_dispatch:
 
 permissions:

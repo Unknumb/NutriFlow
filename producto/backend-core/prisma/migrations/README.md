@@ -43,6 +43,7 @@ aplicarán en orden cronológico.
 | `20260613064337_mover_alimentos_a_ricos_en_grasas` | datos | Mueve palta/frutos secos a "Alimentos ricos en grasas" |
 | `20260613230940_sacar_snacks_fritos_de_ricos_en_grasas` | datos | Saca snacks fritos de ARG a "Otros" |
 | `20260614001540_unificar_verduras` | datos | Une "Verduras en general" + "Verduras libre consumo" → "Verduras" |
+| `20260703000000_normalizacion_3fn_fks_uniques` | schema | Uniques compuestos en detalle_pauta/ingredientes_preparacion + FKs e índices de nutricionista_id (pautas, Evaluacion, planificaciones). Aplicada 2026-07-03 vía MCP de Supabase (ver `documentacion/Normalizacion_3FN.md`) |
 
 > Las migraciones de **datos** referencian alimentos por nombre/id del catálogo
 > importado (Open Food Facts/UDD). En una base sin esos datos no afectan filas

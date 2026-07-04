@@ -6,6 +6,8 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5
+    cooldown:
+      default-days: 7
     labels:
       - "dependencies"
       - "backend-core"
@@ -16,6 +18,8 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5
+    cooldown:
+      default-days: 7
     labels:
       - "dependencies"
       - "frontend"
@@ -26,6 +30,8 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5
+    cooldown:
+      default-days: 7
     labels:
       - "dependencies"
       - "backend-math"
@@ -35,6 +41,8 @@ updates:
     directory: "/producto/backend-core"
     schedule:
       interval: "weekly"
+    cooldown:
+      default-days: 7
     labels:
       - "dependencies"
       - "docker"
@@ -42,6 +50,8 @@ updates:
     directory: "/producto/backend-math"
     schedule:
       interval: "weekly"
+    cooldown:
+      default-days: 7
     labels:
       - "dependencies"
       - "docker"
@@ -49,6 +59,8 @@ updates:
     directory: "/producto/nutriflow-frontend"
     schedule:
       interval: "weekly"
+    cooldown:
+      default-days: 7
     labels:
       - "dependencies"
       - "docker"
@@ -58,6 +70,8 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    cooldown:
+      default-days: 7
     labels:
       - "dependencies"
       - "ci"

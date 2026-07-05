@@ -6,3 +6,7 @@ sqlalchemy==2.0.51
 python-dotenv==1.2.2
 psycopg2-binary==2.9.12
 upstash-redis==1.7.0
+opentelemetry-sdk==1.43.0
+opentelemetry-exporter-otlp-proto-http==1.43.0
+opentelemetry-instrumentation-fastapi==0.64b0
+opentelemetry-instrumentation-sqlalchemy==0.64b0

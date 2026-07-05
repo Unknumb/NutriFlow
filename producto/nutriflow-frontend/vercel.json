@@ -8,7 +8,7 @@
       "headers": [
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; worker-src 'self' blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.onrender.com; frame-ancestors 'none'; base-uri 'self'; object-src 'none'; form-action 'self'"
+          "value": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; worker-src 'self' blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.onrender.com https://faro-collector-prod-sa-east-1.grafana.net; frame-ancestors 'none'; base-uri 'self'; object-src 'none'; form-action 'self'"
         },
         { "key": "X-Content-Type-Options", "value": "nosniff" },
         { "key": "X-Frame-Options", "value": "DENY" },

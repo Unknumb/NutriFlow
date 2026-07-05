@@ -20,11 +20,11 @@ class EnvironmentVariables {
   // ---- Base de datos (Supabase / PostgreSQL) ----
   @IsString()
   @IsNotEmpty()
-  DATABASE_URL: string;
+  DATABASE_URL!: string;
 
   @IsString()
   @IsNotEmpty()
-  DIRECT_URL: string;
+  DIRECT_URL!: string;
 
   // ---- Supabase Auth ----
   // Secreto legado HS256: la validación de tokens usa JWKS/ES256, pero se
@@ -36,20 +36,20 @@ class EnvironmentVariables {
 
   @IsString()
   @IsNotEmpty()
-  SUPABASE_URL: string;
+  SUPABASE_URL!: string;
 
   @IsString()
   @IsNotEmpty()
-  SUPABASE_ANON_KEY: string;
+  SUPABASE_ANON_KEY!: string;
 
   // ---- Redis (Upstash) ----
   @IsString()
   @IsNotEmpty()
-  UPSTASH_REDIS_REST_URL: string;
+  UPSTASH_REDIS_REST_URL!: string;
 
   @IsString()
   @IsNotEmpty()
-  UPSTASH_REDIS_REST_TOKEN: string;
+  UPSTASH_REDIS_REST_TOKEN!: string;
 
   // ---- Configuración no secreta (opcional; tiene defaults en el código) ----
   @IsOptional()
@@ -67,6 +67,20 @@ class EnvironmentVariables {
   @IsOptional()
   @IsIn(['development', 'production', 'test'])
   NODE_ENV?: string;
+
+  // ---- Observabilidad (Grafana Cloud OTLP) ----
+  // Si no se define, `tracing.ts` no inicializa el SDK (no-op).
+  @IsOptional()
+  @IsString()
+  OTEL_EXPORTER_OTLP_ENDPOINT?: string;
+
+  @IsOptional()
+  @IsString()
+  OTEL_EXPORTER_OTLP_HEADERS?: string;
+
+  @IsOptional()
+  @IsString()
+  OTEL_SERVICE_NAME?: string;
 }
 
 export function validateEnv(

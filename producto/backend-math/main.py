@@ -5,6 +5,7 @@ from fastapi.responses import JSONResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from core.config import settings
+from core.tracing import setup_tracing
 
 logger = logging.getLogger(__name__)
 from api.alimentos import router as alimentos_router
@@ -14,6 +15,7 @@ from api.pizarra import router as pizarra_router
 from api.menus import router as menus_router
 
 app = FastAPI(title=settings.PROJECT_NAME)
+setup_tracing(app)
 
 @app.get("/favicon.ico", include_in_schema=False)
 async def favicon():

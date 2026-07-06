@@ -1,4 +1,10 @@
-import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { RedisService } from 'src/redis/redis.service';
 
@@ -6,9 +12,11 @@ import { CreatePlanificacionDto } from './dto/create-planificacion.dto';
 
 @Injectable()
 export class PlanificacionesService {
+  private readonly logger = new Logger(PlanificacionesService.name);
+
   constructor(
     private readonly prisma: PrismaService,
-    private redisService: RedisService
+    private redisService: RedisService,
   ) {}
 
   async create(createPlanificacionDto: CreatePlanificacionDto, userId: string) {
@@ -44,7 +52,8 @@ export class PlanificacionesService {
             nombre,
             activa: true,
             calorias_totales: createPlanificacionDto.calorias_totales,
-            distribucion_macros: createPlanificacionDto.distribucion_macros as any,
+            distribucion_macros:
+              createPlanificacionDto.distribucion_macros as unknown as Prisma.InputJsonValue,
           },
         }),
       ]);
@@ -53,7 +62,7 @@ export class PlanificacionesService {
 
       return planificacion;
     } catch (error) {
-      console.error('Error al crear la planificación:', error);
+      this.logger.error('Error al crear la planificación', error as Error);
       throw new InternalServerErrorException('Error al crear la planificación');
     }
   }
@@ -64,7 +73,12 @@ export class PlanificacionesService {
       where: { id, nutricionista_id: userId },
     });
     if (!planificacion) {
-      throw new NotFoundException('Planificación no encontrada o no tienes permisos');
+      this.logger.warn(
+        `Acceso denegado: usuario ${userId} intentó activar la planificación ${id} (inexistente o de otro nutricionista)`,
+      );
+      throw new NotFoundException(
+        'Planificación no encontrada o no tienes permisos',
+      );
     }
 
     try {
@@ -87,8 +101,10 @@ export class PlanificacionesService {
       await this.redisService.client.del(`planificaciones:${userId}`);
       return updated;
     } catch (error) {
-      console.error('Error al activar la planificación:', error);
-      throw new InternalServerErrorException('Error al activar la planificación');
+      this.logger.error('Error al activar la planificación', error as Error);
+      throw new InternalServerErrorException(
+        'Error al activar la planificación',
+      );
     }
   }
 
@@ -114,11 +130,15 @@ export class PlanificacionesService {
         },
       });
 
-      await this.redisService.client.set(cacheKey, planificaciones, { ex: 3600 });
+      await this.redisService.client.set(cacheKey, planificaciones, {
+        ex: 3600,
+      });
       return planificaciones;
     } catch (error) {
-      console.error('Error al obtener las planificaciones:', error);
-      throw new InternalServerErrorException('Error al obtener las planificaciones');
+      this.logger.error('Error al obtener las planificaciones', error as Error);
+      throw new InternalServerErrorException(
+        'Error al obtener las planificaciones',
+      );
     }
   }
 
@@ -133,8 +153,10 @@ export class PlanificacionesService {
       await this.redisService.client.del(`planificaciones:${userId}`);
       return deleted;
     } catch (error) {
-      console.error('Error al eliminar la planificación:', error);
-      throw new InternalServerErrorException('Error al eliminar la planificación');
+      this.logger.error('Error al eliminar la planificación', error as Error);
+      throw new InternalServerErrorException(
+        'Error al eliminar la planificación',
+      );
     }
   }
 }

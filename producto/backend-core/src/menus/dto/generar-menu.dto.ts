@@ -9,11 +9,15 @@ import {
   IsIn,
   MaxLength,
 } from 'class-validator';
-import { RESTRICCIONES_DIETETICAS, RestriccionDietetica } from '../restricciones.constants';
+import {
+  RESTRICCIONES_DIETETICAS,
+  RestriccionDietetica,
+} from '../restricciones.constants';
 
 export class GenerarMenuDto {
   @ApiProperty({
-    description: 'Objeto con las porciones disponibles agrupadas por grupo de alimento',
+    description:
+      'Objeto con las porciones disponibles agrupadas por grupo de alimento',
     example: {
       cereales_papas_legumbres_frescas: 1.5,
       verduras_general: 2.0,

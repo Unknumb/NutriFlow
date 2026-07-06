@@ -17,14 +17,18 @@ export class CreateAlimentoDto {
   @MaxLength(150)
   nombre: string;
 
-  @ApiPropertyOptional({ description: 'Marca comercial (opcional)', example: 'Genérico' })
+  @ApiPropertyOptional({
+    description: 'Marca comercial (opcional)',
+    example: 'Genérico',
+  })
   @IsString()
   @MaxLength(100)
   @IsOptional()
   marca?: string;
 
   @ApiPropertyOptional({
-    description: 'Categoría: debe ser una de las existentes (GET /alimentos/categorias)',
+    description:
+      'Categoría: debe ser una de las existentes (GET /alimentos/categorias)',
     example: 'Cereales',
   })
   @IsString()

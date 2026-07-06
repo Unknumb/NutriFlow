@@ -31,7 +31,11 @@ describe('PacientesService', () => {
         update: jest.fn(),
         delete: jest.fn(),
       },
-      evaluacion: { create: jest.fn(), findFirst: jest.fn(), update: jest.fn() },
+      evaluacion: {
+        create: jest.fn(),
+        findFirst: jest.fn(),
+        update: jest.fn(),
+      },
     };
 
     // Mock de Redis: sólo se necesita el cliente con get/set/del.
@@ -87,13 +91,18 @@ describe('PacientesService', () => {
       // Se crea el paciente con el nutricionista dueño.
       expect(txMock.pacientes.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.objectContaining({ nombre: 'Juan', nutricionista_id: NUTRI_ID }),
+          data: expect.objectContaining({
+            nombre: 'Juan',
+            nutricionista_id: NUTRI_ID,
+          }),
         }),
       );
       // Como llegaron talla y peso, se crea la evaluación inicial.
       expect(txMock.evaluacion.create).toHaveBeenCalledTimes(1);
       // Y se invalida la caché de la lista del nutricionista.
-      expect(redisMock.client.del).toHaveBeenCalledWith(`pacientes:${NUTRI_ID}`);
+      expect(redisMock.client.del).toHaveBeenCalledWith(
+        `pacientes:${NUTRI_ID}`,
+      );
     });
   });
 
@@ -102,9 +111,9 @@ describe('PacientesService', () => {
       redisMock.client.get.mockResolvedValue(null); // sin caché
       prismaMock.pacientes.findFirst.mockResolvedValue(null); // no existe en DB
 
-      await expect(service.findOne('inexistente', NUTRI_ID)).rejects.toBeInstanceOf(
-        NotFoundException,
-      );
+      await expect(
+        service.findOne('inexistente', NUTRI_ID),
+      ).rejects.toBeInstanceOf(NotFoundException);
       // No debe cachear un resultado nulo.
       expect(redisMock.client.set).not.toHaveBeenCalled();
     });

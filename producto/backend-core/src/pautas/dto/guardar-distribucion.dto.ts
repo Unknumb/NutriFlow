@@ -1,4 +1,10 @@
-import { IsString, IsObject, IsNotEmpty, IsArray, IsOptional } from 'class-validator';
+import {
+  IsString,
+  IsObject,
+  IsNotEmpty,
+  IsArray,
+  IsOptional,
+} from 'class-validator';
 
 export class GuardarDistribucionDto {
   @IsString()

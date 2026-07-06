@@ -1,0 +1,19 @@
+# Dependencias
+**/node_modules/
+**/venv/
+**/__pycache__/
+
+# Artefactos de compilación
+**/dist/
+**/build/
+**/.next/
+**/out/
+
+# Infraestructura pura (sin lógica de negocio a auditar)
+**/Dockerfile
+**/docker-compose.yml
+
+# Tests unitarios
+**/*.spec.ts
+**/*.test.ts
+producto/backend-math/services/test_*.py

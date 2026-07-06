@@ -20,7 +20,11 @@ export class AppController {
   // bloquear rutas llamadas "health", provocando ERR_BLOCKED_BY_CLIENT).
   @Get(['health', 'estado'])
   @ApiOperation({ summary: 'Estado del servidor y de la base de datos' })
-  async health(): Promise<{ servidor: boolean; baseDatos: boolean; hora: string }> {
+  async health(): Promise<{
+    servidor: boolean;
+    baseDatos: boolean;
+    hora: string;
+  }> {
     let baseDatos = false;
     try {
       // Consulta mínima: solo confirma que la base de datos contesta.

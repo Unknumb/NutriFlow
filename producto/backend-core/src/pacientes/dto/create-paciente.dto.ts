@@ -27,7 +27,6 @@ const sanitizeStringArray = ({ value }: { value: unknown }) =>
     : value;
 
 export class CreatePacienteDto {
-
   @ApiProperty({ description: 'Nombre del paciente', example: 'Juan' })
   @IsString()
   @IsNotEmpty()
@@ -38,7 +37,10 @@ export class CreatePacienteDto {
   @IsNotEmpty()
   apellido: string;
 
-  @ApiPropertyOptional({ description: 'Correo electrónico del paciente', example: 'juan@example.com' })
+  @ApiPropertyOptional({
+    description: 'Correo electrónico del paciente',
+    example: 'juan@example.com',
+  })
   @Transform(emptyToUndefined)
   @IsEmail({}, { message: 'El correo del paciente no es válido' })
   @IsOptional()
@@ -48,12 +50,18 @@ export class CreatePacienteDto {
   @IsDateString()
   fecha_nacimiento: string;
 
-  @ApiPropertyOptional({ description: 'Sexo biológico (ej. M o F)', example: 'M' })
+  @ApiPropertyOptional({
+    description: 'Sexo biológico (ej. M o F)',
+    example: 'M',
+  })
   @IsString()
   @IsOptional()
   sexo_biologico?: string;
 
-  @ApiPropertyOptional({ description: 'Teléfono de contacto', example: '+56912345678' })
+  @ApiPropertyOptional({
+    description: 'Teléfono de contacto',
+    example: '+56912345678',
+  })
   @Transform(emptyToUndefined)
   @IsString()
   @MaxLength(20)
@@ -61,7 +69,8 @@ export class CreatePacienteDto {
   telefono?: string;
 
   @ApiPropertyOptional({
-    description: 'RUT chileno (con o sin puntos/guión); se guarda normalizado como "12345678-9"',
+    description:
+      'RUT chileno (con o sin puntos/guión); se guarda normalizado como "12345678-9"',
     example: '12.345.678-5',
   })
   @Transform(({ value }) => {
@@ -74,14 +83,20 @@ export class CreatePacienteDto {
   @IsOptional()
   rut?: string;
 
-  @ApiPropertyOptional({ description: 'Ocupación del paciente', example: 'Profesora' })
+  @ApiPropertyOptional({
+    description: 'Ocupación del paciente',
+    example: 'Profesora',
+  })
   @Transform(emptyToUndefined)
   @IsString()
   @MaxLength(120)
   @IsOptional()
   ocupacion?: string;
 
-  @ApiPropertyOptional({ description: 'Dirección del paciente', example: 'Av. Providencia 1234, Santiago' })
+  @ApiPropertyOptional({
+    description: 'Dirección del paciente',
+    example: 'Av. Providencia 1234, Santiago',
+  })
   @Transform(emptyToUndefined)
   @IsString()
   @MaxLength(250)

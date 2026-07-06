@@ -10,7 +10,12 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AlimentosService } from './alimentos.service';
 import { CreateAlimentoDto } from './dto/create-alimento.dto';
@@ -34,34 +39,54 @@ export class AlimentosController {
   }
 
   @Get('categorias')
-  @ApiOperation({ summary: 'Listar categorías distintas del catálogo de alimentos' })
+  @ApiOperation({
+    summary: 'Listar categorías distintas del catálogo de alimentos',
+  })
   categorias() {
     return this.alimentosService.categorias();
   }
 
   @Post()
-  @ApiOperation({ summary: 'Crear un alimento nuevo en el catálogo (valores por 100 g)' })
+  @ApiOperation({
+    summary: 'Crear un alimento nuevo en el catálogo (valores por 100 g)',
+  })
   @ApiResponse({ status: 201, description: 'Alimento creado exitosamente.' })
-  @ApiResponse({ status: 400, description: 'Datos inválidos o categoría inexistente.' })
-  @ApiResponse({ status: 409, description: 'Ya existe un alimento con ese nombre y marca.' })
+  @ApiResponse({
+    status: 400,
+    description: 'Datos inválidos o categoría inexistente.',
+  })
+  @ApiResponse({
+    status: 409,
+    description: 'Ya existe un alimento con ese nombre y marca.',
+  })
   crear(@Body() createAlimentoDto: CreateAlimentoDto) {
     return this.alimentosService.crear(createAlimentoDto);
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Actualizar un alimento (incluye mover de categoría)' })
+  @ApiOperation({
+    summary: 'Actualizar un alimento (incluye mover de categoría)',
+  })
   @ApiResponse({ status: 200, description: 'Alimento actualizado.' })
   @ApiResponse({ status: 404, description: 'Alimento no encontrado.' })
   @ApiResponse({ status: 409, description: 'Conflicto de nombre y marca.' })
-  actualizar(@Param('id') id: string, @Body() updateAlimentoDto: UpdateAlimentoDto) {
+  actualizar(
+    @Param('id') id: string,
+    @Body() updateAlimentoDto: UpdateAlimentoDto,
+  ) {
     return this.alimentosService.actualizar(id, updateAlimentoDto);
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: 'Eliminar un alimento del catálogo (si no está en uso)' })
+  @ApiOperation({
+    summary: 'Eliminar un alimento del catálogo (si no está en uso)',
+  })
   @ApiResponse({ status: 200, description: 'Alimento eliminado.' })
   @ApiResponse({ status: 404, description: 'Alimento no encontrado.' })
-  @ApiResponse({ status: 409, description: 'El alimento está en uso en preparaciones o pautas.' })
+  @ApiResponse({
+    status: 409,
+    description: 'El alimento está en uso en preparaciones o pautas.',
+  })
   eliminar(@Param('id') id: string) {
     return this.alimentosService.eliminar(id);
   }

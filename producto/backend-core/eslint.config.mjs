@@ -29,7 +29,22 @@ export default tseslint.config(
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-floating-promises': 'warn',
       '@typescript-eslint/no-unsafe-argument': 'warn',
-      "prettier/prettier": ["error", { endOfLine: "auto" }],
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          ignoreRestSiblings: true,
+        },
+      ],
+      'prettier/prettier': ['error', { endOfLine: 'auto' }],
     },
+  },
+  // Los tests (specs y e2e) no están incluidos en el tsconfig del proyecto, así
+  // que se desactivan las reglas con información de tipos para ellos (evita los
+  // "parsing error: ... not found by the project service").
+  {
+    files: ['**/*.spec.ts', 'test/**/*.ts'],
+    ...tseslint.configs.disableTypeChecked,
   },
 );

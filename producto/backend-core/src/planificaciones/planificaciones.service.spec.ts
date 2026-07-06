@@ -32,7 +32,11 @@ describe('PlanificacionesService', () => {
       },
     };
     redisMock = {
-      client: { get: jest.fn(), set: jest.fn(), del: jest.fn().mockResolvedValue(1) },
+      client: {
+        get: jest.fn(),
+        set: jest.fn(),
+        del: jest.fn().mockResolvedValue(1),
+      },
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -67,19 +71,24 @@ describe('PlanificacionesService', () => {
       expect(resultado).toEqual(creada);
       expect(prismaMock.planificacion.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.objectContaining({ nombre: 'Planificación 1', activa: true }),
+          data: expect.objectContaining({
+            nombre: 'Planificación 1',
+            activa: true,
+          }),
         }),
       );
-      expect(redisMock.client.del).toHaveBeenCalledWith(`planificaciones:${USER_ID}`);
+      expect(redisMock.client.del).toHaveBeenCalledWith(
+        `planificaciones:${USER_ID}`,
+      );
     });
   });
 
   describe('setActiva()', () => {
     it('lanza NotFoundException cuando la planificación no existe o no pertenece al nutricionista', async () => {
       prismaMock.planificacion.findFirst.mockResolvedValue(null);
-      await expect(service.setActiva('inexistente', USER_ID)).rejects.toBeInstanceOf(
-        NotFoundException,
-      );
+      await expect(
+        service.setActiva('inexistente', USER_ID),
+      ).rejects.toBeInstanceOf(NotFoundException);
     });
   });
 

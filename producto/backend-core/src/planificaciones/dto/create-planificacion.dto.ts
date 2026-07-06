@@ -1,5 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber, IsObject, IsNotEmpty, IsUUID, IsString, IsOptional } from 'class-validator';
+import {
+  IsNumber,
+  IsObject,
+  IsNotEmpty,
+  IsUUID,
+  IsString,
+  IsOptional,
+} from 'class-validator';
 
 export class PorcentajesMacrosDto {
   @ApiProperty({ example: 20 })
@@ -21,7 +28,12 @@ export class CreatePlanificacionDto {
   @IsNotEmpty()
   paciente_id: string;
 
-  @ApiProperty({ description: 'Nombre de la planificación. Si se omite, se autogenera "Planificación N".', required: false, example: 'Planificación 1' })
+  @ApiProperty({
+    description:
+      'Nombre de la planificación. Si se omite, se autogenera "Planificación N".',
+    required: false,
+    example: 'Planificación 1',
+  })
   @IsString()
   @IsOptional()
   nombre?: string;
@@ -31,9 +43,9 @@ export class CreatePlanificacionDto {
   @IsNotEmpty()
   calorias_totales: number;
 
-  @ApiProperty({ 
+  @ApiProperty({
     description: 'Porcentajes para el cálculo de macronutrientes',
-    example: { proteina: 20, grasa: 30, carbohidratos: 50 } 
+    example: { proteina: 20, grasa: 30, carbohidratos: 50 },
   })
   @IsObject()
   @IsNotEmpty()

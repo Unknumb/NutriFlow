@@ -14,7 +14,10 @@ export class CreateEvaluacionDto {
   @IsNumber()
   talla_cm: number;
 
-  @ApiProperty({ description: 'Nivel de actividad física', example: 'Moderado' })
+  @ApiProperty({
+    description: 'Nivel de actividad física',
+    example: 'Moderado',
+  })
   @IsString()
   nivel_actividad_fisica: string;
 

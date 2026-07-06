@@ -1,0 +1,44 @@
+name: Trivy
+
+on:
+  push:
+    branches: ["main", "develop", "feature/**", "chore/**", "fix/**"]
+  pull_request:
+    branches: ["main", "develop"]
+  schedule:
+    - cron: "0 8 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    name: Escaneo del sistema de archivos
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write # subir SARIF a Code scanning
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      # Escaneo report-only (no rompe el build todavía): detecta CVEs en
+      # dependencias (npm/pip), secretos y malas configuraciones en los
+      # Dockerfiles. Los hallazgos se publican en la pestaña Security.
+      - name: Trivy filesystem scan
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln,secret,misconfig
+          severity: CRITICAL,HIGH
+          format: sarif
+          output: trivy-results.sarif
+          exit-code: "0"
+
+      - name: Subir resultados a Code scanning
+        uses: github/codeql-action/upload-sarif@8aad20d150bbac5944a9f9d289da16a4b0d87c1e # v4.36.2
+        with:
+          sarif_file: trivy-results.sarif
+        if: always()

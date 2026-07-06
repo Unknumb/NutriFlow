@@ -1,17 +1,24 @@
-import { Injectable, NotFoundException, InternalServerErrorException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { CreatePautaDto } from './dto/create-pauta.dto';
 import { UpdatePautaDto } from './dto/update-pauta.dto';
+import { GuardarDistribucionDto } from './dto/guardar-distribucion.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { HttpService } from '@nestjs/axios';
-import { firstValueFrom } from 'rxjs';
 import { RedisService } from 'src/redis/redis.service';
 
 @Injectable()
 export class PautasService {
+  private readonly logger = new Logger(PautasService.name);
+
   constructor(
     private prisma: PrismaService,
     private httpService: HttpService,
-    private redisService: RedisService
+    private redisService: RedisService,
   ) {}
 
   async create(createPautaDto: CreatePautaDto, nutricionista_id: string) {
@@ -21,24 +28,26 @@ export class PautasService {
       include: {
         Evaluacion: {
           orderBy: { fecha_evaluacion: 'desc' },
-          take: 1
-        }
-      }
+          take: 1,
+        },
+      },
     });
 
     if (!paciente) {
-      throw new NotFoundException('Paciente no encontrado o no tienes permisos para crearle pautas');
+      throw new NotFoundException(
+        'Paciente no encontrado o no tienes permisos para crearle pautas',
+      );
     }
 
     if (!paciente.Evaluacion || paciente.Evaluacion.length === 0) {
-      throw new NotFoundException('El paciente debe tener al menos una Evaluación registrada para calcular su dieta');
+      throw new NotFoundException(
+        'El paciente debe tener al menos una Evaluación registrada para calcular su dieta',
+      );
     }
-
-    const pesoKg = paciente.Evaluacion[0].peso_actual;
 
     // 2. (Desactivado temporalmente) Comunicarse con backend-math (Cuadrador)
     // El frontend ya nos envía los porcentajes calculados correctamente
-    
+
     // 3. Guardar la pauta en Prisma
     const pauta = await this.prisma.pauta.create({
       data: {
@@ -46,14 +55,17 @@ export class PautasService {
         nutricionista_id,
         planificacion_id: createPautaDto.planificacion_id,
         descripcion_general: createPautaDto.descripcion_general,
-        tiempos_comida: createPautaDto.tiempos_comida
+        tiempos_comida: createPautaDto.tiempos_comida,
       },
     });
 
     return pauta;
   }
 
-  async guardarDistribucion(dto: any, nutricionista_id: string) {
+  async guardarDistribucion(
+    dto: GuardarDistribucionDto,
+    nutricionista_id: string,
+  ) {
     // P7: la pauta DEBE pertenecer a una planificación válida del paciente.
     if (!dto.planificacion_id) {
       throw new BadRequestException(
@@ -80,7 +92,7 @@ export class PautasService {
       activeGroups: dto.activeGroups || [],
       libreConsumoIds: dto.libreConsumoIds || [],
       customMeals: dto.customMeals || [],
-      mealTimes: dto.mealTimes || {}
+      mealTimes: dto.mealTimes || {},
     };
 
     // P6: si viene pauta_id se actualiza esa pauta; si no, se crea una nueva
@@ -90,12 +102,14 @@ export class PautasService {
         where: { id: dto.pauta_id, nutricionista_id },
       });
       if (!existente) {
-        throw new NotFoundException('Pauta no encontrada o no tienes permisos.');
+        throw new NotFoundException(
+          'Pauta no encontrada o no tienes permisos.',
+        );
       }
       const updated = await this.prisma.pauta.update({
         where: { id: dto.pauta_id },
         data: {
-          estructura_grid_json: estructuraGrid as any,
+          estructura_grid_json: estructuraGrid,
           planificacion_id: dto.planificacion_id,
           tiempos_comida: dto.activeMeals || [],
           ...(dto.nombre?.trim() ? { nombre: dto.nombre.trim() } : {}),
@@ -122,7 +136,7 @@ export class PautasService {
         planificacion_id: dto.planificacion_id,
         nombre,
         tiempos_comida: dto.activeMeals || [],
-        estructura_grid_json: estructuraGrid as any,
+        estructura_grid_json: estructuraGrid,
       },
     });
     await this.redisService.client.del(`planificaciones:${nutricionista_id}`);
@@ -143,14 +157,26 @@ export class PautasService {
     });
   }
 
-  async obtenerDistribucionPorPaciente(paciente_id: string, nutricionista_id: string) {
+  async obtenerDistribucionPorPaciente(
+    paciente_id: string,
+    nutricionista_id: string,
+  ) {
     const pauta = await this.prisma.pauta.findFirst({
       where: { paciente_id, nutricionista_id },
       orderBy: { fecha_creacion: 'desc' },
     });
 
-    if (pauta && pauta.estructura_grid_json && Object.keys(pauta.estructura_grid_json).length > 0) {
-      return { id: pauta.id, nombre: pauta.nombre, planificacion_id: pauta.planificacion_id, estructura: pauta.estructura_grid_json };
+    if (
+      pauta &&
+      pauta.estructura_grid_json &&
+      Object.keys(pauta.estructura_grid_json).length > 0
+    ) {
+      return {
+        id: pauta.id,
+        nombre: pauta.nombre,
+        planificacion_id: pauta.planificacion_id,
+        estructura: pauta.estructura_grid_json,
+      };
     }
 
     // Si no hay guardado, devolvemos null en vez de un mock
@@ -169,19 +195,28 @@ export class PautasService {
     const pauta = await this.prisma.pauta.findFirst({
       where: { id, nutricionista_id },
     });
-    
+
     if (!pauta) {
-      throw new NotFoundException(`Pauta con ID ${id} no encontrada o no tienes permisos`);
+      this.logger.warn(
+        `Acceso denegado: usuario ${nutricionista_id} solicitó la pauta ${id} (inexistente o de otro nutricionista)`,
+      );
+      throw new NotFoundException(
+        `Pauta con ID ${id} no encontrada o no tienes permisos`,
+      );
     }
     return pauta;
   }
 
-  async update(id: string, updatePautaDto: UpdatePautaDto, nutricionista_id: string) {
+  async update(
+    id: string,
+    updatePautaDto: UpdatePautaDto,
+    nutricionista_id: string,
+  ) {
     await this.findOne(id, nutricionista_id); // Verificar existencia y pertenencia
 
     return this.prisma.pauta.update({
       where: { id },
-      data: updatePautaDto as any,
+      data: updatePautaDto,
     });
   }
 

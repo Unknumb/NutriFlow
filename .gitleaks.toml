@@ -1,0 +1,20 @@
+# Configuración de gitleaks para NutriFlow.
+# Extiende las reglas por defecto de gitleaks y añade una allowlist para los
+# placeholders de los archivos .env.example (no son secretos reales).
+title = "NutriFlow gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Plantillas .env.example y valores de ejemplo (no secretos reales)"
+paths = [
+  '''.*\.env\.example$''',
+  '''.*\.md$''',
+]
+regexes = [
+  '''your-.*-here''',
+  '''your-project\.supabase\.co''',
+  '''your-instance\.upstash\.io''',
+  '''user:password@host:port''',
+]

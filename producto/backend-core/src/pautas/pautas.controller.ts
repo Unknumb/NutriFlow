@@ -1,11 +1,28 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+} from '@nestjs/common';
 import { PautasService } from './pautas.service';
 import { CreatePautaDto } from './dto/create-pauta.dto';
 import { UpdatePautaDto } from './dto/update-pauta.dto';
 import { GuardarDistribucionDto } from './dto/guardar-distribucion.dto';
-import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import {
+  CurrentUser,
+  AuthUser,
+} from '../auth/decorators/current-user.decorator';
 
 @ApiTags('Pautas')
 @ApiBearerAuth()
@@ -16,21 +33,34 @@ export class PautasController {
 
   @Post()
   @ApiOperation({ summary: 'Crear una nueva pauta nutricional' })
-  @ApiResponse({ status: 201, description: 'La pauta fue creada exitosamente.' })
-  create(@Body() createPautaDto: CreatePautaDto, @CurrentUser() user: any) {
+  @ApiResponse({
+    status: 201,
+    description: 'La pauta fue creada exitosamente.',
+  })
+  create(
+    @Body() createPautaDto: CreatePautaDto,
+    @CurrentUser() user: AuthUser,
+  ) {
     // 🛡️ Inyectamos automáticamente el nutricionista_id del token
     return this.pautasService.create(createPautaDto, user.userId);
   }
 
   @Get('armador/:id')
-  @ApiOperation({ summary: 'Obtener distribución calculada por el motor matemático' })
-  async getArmadorMock(@Param('id') id: string, @CurrentUser() user: any) {
+  @ApiOperation({
+    summary: 'Obtener distribución calculada por el motor matemático',
+  })
+  async getArmadorMock(@Param('id') id: string, @CurrentUser() user: AuthUser) {
     return this.pautasService.obtenerDistribucionPorPaciente(id, user.userId);
   }
 
   @Get('lista/:pacienteId')
-  @ApiOperation({ summary: 'Listar las pautas (distribuciones) de un paciente' })
-  async listarPorPaciente(@Param('pacienteId') pacienteId: string, @CurrentUser() user: any) {
+  @ApiOperation({
+    summary: 'Listar las pautas (distribuciones) de un paciente',
+  })
+  async listarPorPaciente(
+    @Param('pacienteId') pacienteId: string,
+    @CurrentUser() user: AuthUser,
+  ) {
     return this.pautasService.listarPorPaciente(pacienteId, user.userId);
   }
 
@@ -38,38 +68,47 @@ export class PautasController {
   @ApiOperation({ summary: 'Guardar la distribución de porciones' })
   async guardarDistribucion(
     @Body() payload: GuardarDistribucionDto,
-    @CurrentUser() user: any
+    @CurrentUser() user: AuthUser,
   ) {
-    const pauta = await this.pautasService.guardarDistribucion(payload, user.userId);
-    return { success: true, message: 'Distribución guardada correctamente', pautaId: pauta.id };
+    const pauta = await this.pautasService.guardarDistribucion(
+      payload,
+      user.userId,
+    );
+    return {
+      success: true,
+      message: 'Distribución guardada correctamente',
+      pautaId: pauta.id,
+    };
   }
 
   @Get()
-  @ApiOperation({ summary: 'Obtener todas las pautas del nutricionista logueado' })
-  findAll(@CurrentUser() user: any) {
+  @ApiOperation({
+    summary: 'Obtener todas las pautas del nutricionista logueado',
+  })
+  findAll(@CurrentUser() user: AuthUser) {
     // 🛡️ Pasamos el ID del nutricionista para filtrar en el Service
     return this.pautasService.findAllByNutricionista(user.userId);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Obtener una pauta específica por ID' })
-  findOne(@Param('id') id: string, @CurrentUser() user: any) {
+  findOne(@Param('id') id: string, @CurrentUser() user: AuthUser) {
     return this.pautasService.findOne(id, user.userId);
   }
 
   @Patch(':id')
   @ApiOperation({ summary: 'Actualizar una pauta' })
   update(
-    @Param('id') id: string, 
-    @Body() updatePautaDto: UpdatePautaDto, 
-    @CurrentUser() user: any
+    @Param('id') id: string,
+    @Body() updatePautaDto: UpdatePautaDto,
+    @CurrentUser() user: AuthUser,
   ) {
     return this.pautasService.update(id, updatePautaDto, user.userId);
   }
 
   @Delete(':id')
   @ApiOperation({ summary: 'Eliminar una pauta' })
-  remove(@Param('id') id: string, @CurrentUser() user: any) {
+  remove(@Param('id') id: string, @CurrentUser() user: AuthUser) {
     return this.pautasService.remove(id, user.userId);
   }
 }

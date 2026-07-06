@@ -12,7 +12,11 @@ import {
 
 /** Quita puntos, guiones y espacios; deja el cuerpo + DV en mayúscula. */
 export function limpiarRut(rut: string): string {
-  return rut.replace(/\./g, '').replace(/-/g, '').replace(/\s/g, '').toUpperCase();
+  return rut
+    .replace(/\./g, '')
+    .replace(/-/g, '')
+    .replace(/\s/g, '')
+    .toUpperCase();
 }
 
 /** Calcula el dígito verificador del cuerpo numérico usando módulo 11. */

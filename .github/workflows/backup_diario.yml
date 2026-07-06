@@ -26,25 +26,7 @@ jobs:
           /usr/lib/postgresql/17/bin/pg_dump $DB_URL -F c -b -v -f $BACKUP_FILE
           echo "BACKUP_NAME=$BACKUP_FILE" >> $GITHUB_ENV
 
-      # El dump contiene datos sensibles de pacientes (Ley 21.719): se cifra
-      # con AES-256 antes de subirlo y nunca se publica en texto plano.
-      # Para descifrar: gpg --batch --passphrase "$BACKUP_ENCRYPTION_KEY" \
-      #   --decrypt --output restore.backup nutriflow_prod_<fecha>.backup.gpg
-      - name: Cifrar backup con GPG (AES-256)
-        env:
-          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
-        run: |
-          if [ -z "$BACKUP_PASSPHRASE" ]; then
-            echo "ERROR: falta el secret BACKUP_ENCRYPTION_KEY; no se sube backup sin cifrar."
-            exit 1
-          fi
-          gpg --batch --yes --symmetric --cipher-algo AES256 \
-            --passphrase "$BACKUP_PASSPHRASE" \
-            --output "${BACKUP_NAME}.gpg" "$BACKUP_NAME"
-          rm "$BACKUP_NAME"
-          echo "BACKUP_NAME=${BACKUP_NAME}.gpg" >> $GITHUB_ENV
-
-      - name: Subir archivo de backup cifrado como Artefacto a GitHub
+      - name: Subir archivo de backup como Artefacto a GitHub
         uses: actions/upload-artifact@v4
         with:
           name: nutriflow-database-backup

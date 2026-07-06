@@ -85,7 +85,7 @@ async function main() {
           }
         }
       } catch (e: any) {
-        console.warn(`  [!] Advertencia: Falló la petición para "${keyword}" ->`, e.message);
+        console.warn('  [!] Advertencia: Falló la petición para "%s" ->', keyword, e.message);
         failedKeywords.push(keyword);
       }
 
@@ -121,7 +121,7 @@ async function main() {
             }
           }
         } catch (e: any) {
-          console.warn(`  [!] Falló definitivamente el reintento para "${keyword}" ->`, e.message);
+          console.warn('  [!] Falló definitivamente el reintento para "%s" ->', keyword, e.message);
         }
 
         console.log('  -> Esperando 2 segundos...');

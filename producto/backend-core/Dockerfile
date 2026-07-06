@@ -19,8 +19,15 @@ COPY . .
 # Construir la aplicación
 RUN npm run build
 
+# Ejecutar como usuario no root (node:node, ya presente en la imagen base)
+RUN chown -R node:node /app
+USER node
+
 # Exponer el puerto
 EXPOSE 3000
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1
 
 # Iniciar la aplicación
 CMD ["npm", "run", "start:prod"]

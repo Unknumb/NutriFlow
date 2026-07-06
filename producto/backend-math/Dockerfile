@@ -19,8 +19,15 @@ RUN uv pip install --system -r requirements.txt
 # Copiar el resto del código
 COPY . .
 
+# Ejecutar como usuario no root
+RUN useradd --create-home --shell /bin/bash appuser && chown -R appuser:appuser /app
+USER appuser
+
 # Exponer el puerto
 EXPOSE 8000
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+  CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/')" || exit 1
 
 # Iniciar la aplicación FastAPI
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

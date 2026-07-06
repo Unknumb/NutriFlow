@@ -12,6 +12,7 @@ import { RedisService } from '../redis/redis.service';
 import { CreateAlimentoDto } from './dto/create-alimento.dto';
 import { UpdateAlimentoDto } from './dto/update-alimento.dto';
 import { QueryAlimentosDto } from './dto/query-alimentos.dto';
+import { sanitizeForLog } from '../common/utils/log.util';
 
 /** Fila devuelta por la búsqueda raw (valores numéricos ya casteados a float8/int). */
 interface AlimentoBusquedaRow {
@@ -184,7 +185,9 @@ export class AlimentosService {
       });
 
       await this.invalidarCaches();
-      this.logger.log(`Alimento creado: ${creado.nombre} (${creado.id})`);
+      this.logger.log(
+        `Alimento creado: ${sanitizeForLog(creado.nombre)} (${creado.id})`,
+      );
       return this.toResponse(creado);
     } catch (error) {
       if (esErrorDeUnique(error)) {
@@ -240,15 +243,22 @@ export class AlimentosService {
     if (dto.marca !== undefined) data.marca = nuevaMarca;
     if (dto.categoria !== undefined) data.categoria = dto.categoria ?? null;
     if (dto.calorias_100g !== undefined) data.calorias_100g = dto.calorias_100g;
-    if (dto.proteinas_100g !== undefined) data.proteinas_100g = dto.proteinas_100g;
-    if (dto.carbohidratos_100g !== undefined) data.carbohidratos_100g = dto.carbohidratos_100g;
+    if (dto.proteinas_100g !== undefined)
+      data.proteinas_100g = dto.proteinas_100g;
+    if (dto.carbohidratos_100g !== undefined)
+      data.carbohidratos_100g = dto.carbohidratos_100g;
     if (dto.grasas_100g !== undefined) data.grasas_100g = dto.grasas_100g;
     if (dto.restricciones !== undefined) data.restricciones = dto.restricciones;
 
     try {
-      const actualizado = await this.prisma.alimentos.update({ where: { id }, data });
+      const actualizado = await this.prisma.alimentos.update({
+        where: { id },
+        data,
+      });
       await this.invalidarCaches();
-      this.logger.log(`Alimento actualizado: ${actualizado.nombre} (${id})`);
+      this.logger.log(
+        `Alimento actualizado: ${sanitizeForLog(actualizado.nombre)} (${id})`,
+      );
       return this.toResponse(actualizado);
     } catch (error) {
       if (esErrorDeUnique(error)) {
@@ -275,7 +285,9 @@ export class AlimentosService {
     }
 
     const [usosEnPreparaciones, usosEnPautas] = await Promise.all([
-      this.prisma.ingredientes_preparacion.count({ where: { alimento_id: id } }),
+      this.prisma.ingredientes_preparacion.count({
+        where: { alimento_id: id },
+      }),
       this.prisma.detalle_pauta.count({ where: { alimento_id: id } }),
     ]);
 
@@ -291,7 +303,9 @@ export class AlimentosService {
 
     await this.prisma.alimentos.delete({ where: { id } });
     await this.invalidarCaches();
-    this.logger.log(`Alimento eliminado: ${existente.nombre} (${id})`);
+    this.logger.log(
+      `Alimento eliminado: ${sanitizeForLog(existente.nombre)} (${id})`,
+    );
     return { id, eliminado: true };
   }
 
@@ -309,7 +323,10 @@ export class AlimentosService {
       }
       this.logger.log('Caches de catálogo de alimentos y menús invalidadas');
     } catch (error) {
-      this.logger.error('No se pudo invalidar la cache de alimentos/menús', error as Error);
+      this.logger.error(
+        'No se pudo invalidar la cache de alimentos/menús',
+        error as Error,
+      );
     }
   }
 

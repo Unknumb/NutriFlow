@@ -58,7 +58,11 @@ describe('AlimentosService', () => {
         },
       ]);
 
-      const resultado = await service.buscar({ search: 'platano', limit: 20, offset: 0 });
+      const resultado = await service.buscar({
+        search: 'platano',
+        limit: 20,
+        offset: 0,
+      });
 
       expect(resultado.total).toBe(3);
       expect(resultado.limit).toBe(20);
@@ -70,7 +74,11 @@ describe('AlimentosService', () => {
 
     it('devuelve total 0 cuando no hay resultados', async () => {
       prismaMock.$queryRaw.mockResolvedValue([]);
-      const resultado = await service.buscar({ search: 'inexistente', limit: 20, offset: 0 });
+      const resultado = await service.buscar({
+        search: 'inexistente',
+        limit: 20,
+        offset: 0,
+      });
       expect(resultado.total).toBe(0);
       expect(resultado.items).toEqual([]);
     });
@@ -87,7 +95,9 @@ describe('AlimentosService', () => {
       const cats = await service.categorias();
 
       expect(cats.filter((c) => c === 'Cereales')).toHaveLength(1); // sin duplicados
-      expect(cats).toEqual(expect.arrayContaining(['Cereales', 'Frutas', 'Suplementos']));
+      expect(cats).toEqual(
+        expect.arrayContaining(['Cereales', 'Frutas', 'Suplementos']),
+      );
       // El resultado viene ordenado alfabéticamente (locale es).
       const ordenada = [...cats].sort((a, b) => a.localeCompare(b, 'es'));
       expect(cats).toEqual(ordenada);
@@ -106,7 +116,9 @@ describe('AlimentosService', () => {
 
     it('rechaza con 400 una categoría inexistente', async () => {
       // 'Cereales' es canónica y sería válida; usamos una categoría realmente inexistente.
-      prismaMock.alimentos.findMany.mockResolvedValue([{ categoria: 'Frutas' }]);
+      prismaMock.alimentos.findMany.mockResolvedValue([
+        { categoria: 'Frutas' },
+      ]);
       await expect(
         service.crear({ ...dto, categoria: 'CategoríaInventada' }),
       ).rejects.toBeInstanceOf(BadRequestException);
@@ -114,14 +126,20 @@ describe('AlimentosService', () => {
     });
 
     it('rechaza con 409 un duplicado (nombre, marca) — incluye marca NULL', async () => {
-      prismaMock.alimentos.findMany.mockResolvedValue([{ categoria: 'Cereales' }]);
+      prismaMock.alimentos.findMany.mockResolvedValue([
+        { categoria: 'Cereales' },
+      ]);
       prismaMock.alimentos.findFirst.mockResolvedValue({ id: ALIMENTO_ID });
-      await expect(service.crear(dto)).rejects.toBeInstanceOf(ConflictException);
+      await expect(service.crear(dto)).rejects.toBeInstanceOf(
+        ConflictException,
+      );
       expect(prismaMock.alimentos.create).not.toHaveBeenCalled();
     });
 
     it('crea el alimento, normaliza Decimal→number e invalida las caches', async () => {
-      prismaMock.alimentos.findMany.mockResolvedValue([{ categoria: 'Cereales' }]);
+      prismaMock.alimentos.findMany.mockResolvedValue([
+        { categoria: 'Cereales' },
+      ]);
       prismaMock.alimentos.findFirst.mockResolvedValue(null);
       prismaMock.alimentos.create.mockResolvedValue({
         id: ALIMENTO_ID,
@@ -141,7 +159,9 @@ describe('AlimentosService', () => {
       expect(creado.calorias_100g).toBe(120);
       expect(typeof creado.proteinas_100g).toBe('number');
       // Invalida el catálogo que cachea backend-math y los menús generados
-      expect(redisMock.client.del).toHaveBeenCalledWith('alimentos:catalogo_completo');
+      expect(redisMock.client.del).toHaveBeenCalledWith(
+        'alimentos:catalogo_completo',
+      );
       expect(redisMock.client.del).toHaveBeenCalledWith('menus:abc');
     });
   });

@@ -66,8 +66,14 @@ const KEYWORDS_A_RESTRICCION: ReadonlyArray<[RegExp, RestriccionDietetica]> = [
   [/vegetarian/, 'vegetariano'],
   [/gluten|celiac|celiaqu/, 'sin_gluten'],
   [/lactosa|lacteo/, 'sin_lactosa'],
-  [/marisco|camaron|ostion|chorito|almeja|jaiba|mejillon|crustaceo/, 'sin_mariscos'],
-  [/fruto.?s? seco|nuez|nueces|\bmani\b|almendra|avellana|pistacho|castana|anacardo|caju/, 'sin_frutos_secos'],
+  [
+    /marisco|camaron|ostion|chorito|almeja|jaiba|mejillon|crustaceo/,
+    'sin_mariscos',
+  ],
+  [
+    /fruto.?s? seco|nuez|nueces|\bmani\b|almendra|avellana|pistacho|castana|anacardo|caju/,
+    'sin_frutos_secos',
+  ],
   [/huevo/, 'sin_huevo'],
   [/cerdo|chancho/, 'sin_cerdo'],
   [/sodio|hipertens/, 'bajo_sodio'],

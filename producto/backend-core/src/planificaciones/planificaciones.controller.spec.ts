@@ -30,7 +30,9 @@ describe('PlanificacionesController', () => {
       .useValue({ canActivate: () => true })
       .compile();
 
-    controller = module.get<PlanificacionesController>(PlanificacionesController);
+    controller = module.get<PlanificacionesController>(
+      PlanificacionesController,
+    );
   });
 
   it('debería estar definido', () => {
@@ -41,7 +43,9 @@ describe('PlanificacionesController', () => {
     const dto: any = { paciente_id: 'pac-1' };
     service.create.mockResolvedValue({ id: 'plan-1' });
 
-    await expect(controller.create(dto, USER)).resolves.toEqual({ id: 'plan-1' });
+    await expect(controller.create(dto, USER)).resolves.toEqual({
+      id: 'plan-1',
+    });
     expect(service.create).toHaveBeenCalledWith(dto, USER.userId);
   });
 

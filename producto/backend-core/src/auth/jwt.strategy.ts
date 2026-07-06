@@ -3,13 +3,24 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
 import { passportJwtSecret } from 'jwks-rsa';
+import { AuthUser } from './decorators/current-user.decorator';
+
+/** Claims relevantes del JWT de Supabase (ES256). */
+interface SupabaseJwtPayload {
+  sub?: string;
+  email?: string;
+  role?: string;
+  aal?: string;
+}
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(private configService: ConfigService) {
     const supabaseUrl = configService.get<string>('SUPABASE_URL');
     if (!supabaseUrl) {
-      throw new Error('FATAL ERROR: SUPABASE_URL is not defined in the environment variables.');
+      throw new Error(
+        'FATAL ERROR: SUPABASE_URL is not defined in the environment variables.',
+      );
     }
 
     super({
@@ -30,10 +41,15 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: any) {
+  validate(payload: SupabaseJwtPayload): AuthUser {
     if (!payload.sub) {
       throw new UnauthorizedException('Token inválido o sin ID de usuario');
     }
-    return { userId: payload.sub, email: payload.email, role: payload.role, aal: payload.aal };
+    return {
+      userId: payload.sub,
+      email: payload.email,
+      role: payload.role,
+      aal: payload.aal,
+    };
   }
 }

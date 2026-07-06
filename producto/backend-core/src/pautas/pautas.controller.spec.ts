@@ -47,7 +47,10 @@ describe('PautasController', () => {
     const payload = { paciente_id: 'pac-1', planificacion_id: 'plan-1' } as any;
     const resp = await controller.guardarDistribucion(payload, USER);
 
-    expect(service.guardarDistribucion).toHaveBeenCalledWith(payload, USER.userId);
+    expect(service.guardarDistribucion).toHaveBeenCalledWith(
+      payload,
+      USER.userId,
+    );
     expect(resp).toEqual({
       success: true,
       message: 'Distribución guardada correctamente',

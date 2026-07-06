@@ -62,11 +62,16 @@ export class MenusService {
 
     const url = `${process.env.MATH_ENGINE_URL ?? 'http://localhost:8000'}/api/menus/generar-menu`;
     try {
-      const { data } = await firstValueFrom(this.httpService.post(url, payload));
+      const { data } = await firstValueFrom(
+        this.httpService.post<Record<string, unknown>>(url, payload),
+      );
       await this.redisService.client.set(cacheKey, data, { ex: 7200 }); // 2 horas
       return data;
     } catch (error) {
-      this.logger.error('Error al generar menú desde backend-math', error as Error);
+      this.logger.error(
+        'Error al generar menú desde backend-math',
+        error as Error,
+      );
       throw new InternalServerErrorException(
         'Error al generar el menú. Verifica el backend matemático.',
       );

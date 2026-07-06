@@ -1,5 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNumber, IsObject, ValidateNested, IsNotEmpty } from 'class-validator';
+import {
+  IsString,
+  IsNumber,
+  IsObject,
+  ValidateNested,
+  IsNotEmpty,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class MacroDetailDto {
@@ -8,7 +14,10 @@ export class MacroDetailDto {
   @IsNotEmpty()
   gramos: number;
 
-  @ApiProperty({ description: 'Porcentaje respecto a las calorías totales', example: 30 })
+  @ApiProperty({
+    description: 'Porcentaje respecto a las calorías totales',
+    example: 30,
+  })
   @IsNumber()
   @IsNotEmpty()
   porcentaje: number;
@@ -35,22 +44,33 @@ export class MacrosDistribucionDto {
 }
 
 export class GuardarDistribucionMacrosDto {
-  @ApiProperty({ description: 'UUID del paciente', example: 'uuid-del-paciente' })
+  @ApiProperty({
+    description: 'UUID del paciente',
+    example: 'uuid-del-paciente',
+  })
   @IsString()
   @IsNotEmpty()
   pacienteId: string;
 
-  @ApiProperty({ description: 'Calorías totales objetivo de la pauta', example: 2000 })
+  @ApiProperty({
+    description: 'Calorías totales objetivo de la pauta',
+    example: 2000,
+  })
   @IsNumber()
   @IsNotEmpty()
   caloriasTotales: number;
 
-  @ApiProperty({ description: 'Peso de referencia utilizado para el cálculo (kg)', example: 70 })
+  @ApiProperty({
+    description: 'Peso de referencia utilizado para el cálculo (kg)',
+    example: 70,
+  })
   @IsNumber()
   @IsNotEmpty()
   pesoReferencia: number;
 
-  @ApiProperty({ description: 'Distribución estructurada de los macronutrientes' })
+  @ApiProperty({
+    description: 'Distribución estructurada de los macronutrientes',
+  })
   @IsObject()
   @ValidateNested()
   @Type(() => MacrosDistribucionDto)

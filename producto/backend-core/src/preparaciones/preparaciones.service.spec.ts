@@ -90,7 +90,9 @@ describe('PreparacionesService', () => {
 
       expect(prismaMock.preparaciones.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { OR: [{ nutricionista_id: null }, { nutricionista_id: NUTRI_ID }] },
+          where: {
+            OR: [{ nutricionista_id: null }, { nutricionista_id: NUTRI_ID }],
+          },
         }),
       );
       expect(prep.es_sistema).toBe(true);
@@ -106,30 +108,45 @@ describe('PreparacionesService', () => {
   describe('update / remove (propiedad)', () => {
     it('lanza 404 si la preparación no existe', async () => {
       prismaMock.preparaciones.findUnique.mockResolvedValue(null);
-      await expect(service.remove(PREP_ID, NUTRI_ID)).rejects.toThrow(NotFoundException);
-    });
-
-    it('lanza 403 si la preparación es del sistema', async () => {
-      prismaMock.preparaciones.findUnique.mockResolvedValue({ nutricionista_id: null });
-      await expect(service.remove(PREP_ID, NUTRI_ID)).rejects.toThrow(ForbiddenException);
-    });
-
-    it('lanza 404 (sin revelar existencia) si es de otro nutricionista', async () => {
-      prismaMock.preparaciones.findUnique.mockResolvedValue({ nutricionista_id: OTRO_NUTRI_ID });
-      await expect(service.update(PREP_ID, { nombre: 'X' }, NUTRI_ID)).rejects.toThrow(
+      await expect(service.remove(PREP_ID, NUTRI_ID)).rejects.toThrow(
         NotFoundException,
       );
     });
 
+    it('lanza 403 si la preparación es del sistema', async () => {
+      prismaMock.preparaciones.findUnique.mockResolvedValue({
+        nutricionista_id: null,
+      });
+      await expect(service.remove(PREP_ID, NUTRI_ID)).rejects.toThrow(
+        ForbiddenException,
+      );
+    });
+
+    it('lanza 404 (sin revelar existencia) si es de otro nutricionista', async () => {
+      prismaMock.preparaciones.findUnique.mockResolvedValue({
+        nutricionista_id: OTRO_NUTRI_ID,
+      });
+      await expect(
+        service.update(PREP_ID, { nombre: 'X' }, NUTRI_ID),
+      ).rejects.toThrow(NotFoundException);
+    });
+
     it('elimina una preparación propia e invalida la cache de menús', async () => {
-      prismaMock.preparaciones.findUnique.mockResolvedValue({ nutricionista_id: NUTRI_ID });
+      prismaMock.preparaciones.findUnique.mockResolvedValue({
+        nutricionista_id: NUTRI_ID,
+      });
       prismaMock.preparaciones.delete.mockResolvedValue({ id: PREP_ID });
       redisMock.client.keys.mockResolvedValue(['menus:abc', 'menus:def']);
 
       await service.remove(PREP_ID, NUTRI_ID);
 
-      expect(prismaMock.preparaciones.delete).toHaveBeenCalledWith({ where: { id: PREP_ID } });
-      expect(redisMock.client.del).toHaveBeenCalledWith('menus:abc', 'menus:def');
+      expect(prismaMock.preparaciones.delete).toHaveBeenCalledWith({
+        where: { id: PREP_ID },
+      });
+      expect(redisMock.client.del).toHaveBeenCalledWith(
+        'menus:abc',
+        'menus:def',
+      );
     });
   });
 });

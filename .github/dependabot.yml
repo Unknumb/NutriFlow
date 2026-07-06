@@ -1,0 +1,77 @@
+version: 2
+updates:
+  # --- Backend Core (NestJS / npm) ---
+  - package-ecosystem: "npm"
+    directory: "/producto/backend-core"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    cooldown:
+      default-days: 7
+    labels:
+      - "dependencies"
+      - "backend-core"
+
+  # --- Frontend (React + Vite / npm) ---
+  - package-ecosystem: "npm"
+    directory: "/producto/nutriflow-frontend"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    cooldown:
+      default-days: 7
+    labels:
+      - "dependencies"
+      - "frontend"
+
+  # --- Backend Math (FastAPI / pip) ---
+  - package-ecosystem: "pip"
+    directory: "/producto/backend-math"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    cooldown:
+      default-days: 7
+    labels:
+      - "dependencies"
+      - "backend-math"
+
+  # --- Imágenes base de Docker ---
+  - package-ecosystem: "docker"
+    directory: "/producto/backend-core"
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 7
+    labels:
+      - "dependencies"
+      - "docker"
+  - package-ecosystem: "docker"
+    directory: "/producto/backend-math"
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 7
+    labels:
+      - "dependencies"
+      - "docker"
+  - package-ecosystem: "docker"
+    directory: "/producto/nutriflow-frontend"
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 7
+    labels:
+      - "dependencies"
+      - "docker"
+
+  # --- GitHub Actions ---
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 7
+    labels:
+      - "dependencies"
+      - "ci"

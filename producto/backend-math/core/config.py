@@ -12,6 +12,11 @@ class Settings(BaseSettings):
     # dominio del frontend y del backend-core desplegados. Se suman a los de localhost.
     ALLOWED_ORIGINS: str = ""
 
+    # ---- Observabilidad (Grafana Cloud OTLP) ----
+    # Si queda vacío, `core/tracing.py` no inicializa el exportador (no-op).
+    OTEL_EXPORTER_OTLP_ENDPOINT: str = ""
+    OTEL_SERVICE_NAME: str = "nutriflow-backend-math"
+
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
 @lru_cache()

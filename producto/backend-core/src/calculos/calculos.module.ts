@@ -5,10 +5,10 @@ import { MathEngineService } from './math.engine.service';
 
 @Module({
   // 🚨 IMPORTANTE: Necesitamos HttpModule para que el servicio pueda usar Axios
-  imports: [HttpModule], 
+  imports: [HttpModule],
   controllers: [CalculosController],
   providers: [MathEngineService],
   // Exportamos el servicio por si otros módulos lo necesitan después
-  exports: [MathEngineService], 
+  exports: [MathEngineService],
 })
 export class CalculosModule {}

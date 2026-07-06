@@ -61,7 +61,10 @@ describe('PautasService', () => {
     it('crea una pauta nueva con nombre autosugerido "Pauta N" e invalida la caché', async () => {
       prismaMock.planificacion.findFirst.mockResolvedValue({ id: 'plan-1' });
       prismaMock.pauta.count.mockResolvedValue(2); // ya existen 2 -> debe nombrar "Pauta 3"
-      prismaMock.pauta.create.mockResolvedValue({ id: 'pauta-3', nombre: 'Pauta 3' });
+      prismaMock.pauta.create.mockResolvedValue({
+        id: 'pauta-3',
+        nombre: 'Pauta 3',
+      });
 
       const dto = {
         paciente_id: 'pac-1',
@@ -74,19 +77,24 @@ describe('PautasService', () => {
       expect(creada).toEqual({ id: 'pauta-3', nombre: 'Pauta 3' });
       expect(prismaMock.pauta.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.objectContaining({ nombre: 'Pauta 3', planificacion_id: 'plan-1' }),
+          data: expect.objectContaining({
+            nombre: 'Pauta 3',
+            planificacion_id: 'plan-1',
+          }),
         }),
       );
-      expect(redisMock.client.del).toHaveBeenCalledWith(`planificaciones:${NUTRI_ID}`);
+      expect(redisMock.client.del).toHaveBeenCalledWith(
+        `planificaciones:${NUTRI_ID}`,
+      );
     });
   });
 
   describe('findOne()', () => {
     it('lanza NotFoundException cuando la pauta no existe o no pertenece al nutricionista', async () => {
       prismaMock.pauta.findFirst.mockResolvedValue(null);
-      await expect(service.findOne('inexistente', NUTRI_ID)).rejects.toBeInstanceOf(
-        NotFoundException,
-      );
+      await expect(
+        service.findOne('inexistente', NUTRI_ID),
+      ).rejects.toBeInstanceOf(NotFoundException);
     });
   });
 });

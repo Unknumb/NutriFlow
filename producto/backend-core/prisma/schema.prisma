@@ -549,6 +549,7 @@ model detalle_pauta {
   alimentos   alimentos @relation(fields: [alimento_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   pauta       Pauta     @relation(fields: [pauta_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
+  @@unique([pauta_id, alimento_id, momento_dia])
   @@index([pauta_id], map: "idx_detalle_pauta_pauta")
   @@schema("public")
 }
@@ -556,30 +557,30 @@ model detalle_pauta {
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model pacientes {
-  id                      String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  nutricionista_id        String                  @db.Uuid
-  nombre                  String
-  apellido                String
-  fecha_nacimiento        DateTime                @db.Date
-  sexo_biologico          String?                 @db.Char(1)
-  email                   String?
-  telefono                String?
+  id                        String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nutricionista_id          String                  @db.Uuid
+  nombre                    String
+  apellido                  String
+  fecha_nacimiento          DateTime                @db.Date
+  sexo_biologico            String?                 @db.Char(1)
+  email                     String?
+  telefono                  String?
   /// RUT chileno normalizado "12345678-9" (validado en backend-core).
   /// Existe un índice UNIQUE parcial (nutricionista_id, rut) WHERE rut IS NOT NULL
   /// creado por migración SQL (Prisma no soporta índices parciales en el schema).
   rut                       String?
   ocupacion                 String?
   direccion                 String?
-  enfermedades              String[]              @default([])
-  alergias                  String[]              @default([])
-  preferencias_alimentarias String[]              @default([])
+  enfermedades              String[]                @default([])
+  alergias                  String[]                @default([])
+  preferencias_alimentarias String[]                @default([])
   notas_preferencias        String?
-  fecha_creacion          DateTime?               @default(now()) @db.Timestamptz(6)
-  Evaluacion              Evaluacion[]
-  consultas               consultas[]
-  perfiles_nutricionistas perfiles_nutricionistas @relation(fields: [nutricionista_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  Pauta                   Pauta[]
-  Planificacion           Planificacion[]
+  fecha_creacion            DateTime?               @default(now()) @db.Timestamptz(6)
+  Evaluacion                Evaluacion[]
+  consultas                 consultas[]
+  perfiles_nutricionistas   perfiles_nutricionistas @relation(fields: [nutricionista_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  Pauta                     Pauta[]
+  Planificacion             Planificacion[]
 
   @@index([nutricionista_id], map: "idx_pacientes_nutricionista")
   @@schema("public")
@@ -587,70 +588,79 @@ model pacientes {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model perfiles_nutricionistas {
-  id                   String      @id @db.Uuid
+  id                   String          @id @db.Uuid
   nombre               String
   apellido             String
-  registro_profesional String?     @unique
-  email                String      @unique
+  registro_profesional String?         @unique
+  email                String          @unique
   avatar_url           String?
   fecha_creacion       DateTime?       @default(now()) @db.Timestamptz(6)
   pacientes            pacientes[]
   preparaciones        preparaciones[]
+  pautas               Pauta[]
+  evaluaciones         Evaluacion[]
+  planificaciones      Planificacion[]
   users                users           @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@schema("public")
 }
 
 model Pauta {
-  id                   String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  consulta_id          String?         @db.Uuid
+  id                   String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  consulta_id          String?                 @db.Uuid
   nombre               String?
   descripcion_general  String?
-  estructura_grid_json Json?           @default("{}")
-  fecha_creacion       DateTime?       @default(now()) @db.Timestamptz(6)
-  nutricionista_id     String          @db.Uuid
-  paciente_id          String          @db.Uuid
+  estructura_grid_json Json?                   @default("{}")
+  fecha_creacion       DateTime?               @default(now()) @db.Timestamptz(6)
+  nutricionista_id     String                  @db.Uuid
+  paciente_id          String                  @db.Uuid
   tiempos_comida       Json
-  planificacion_id     String?         @db.Uuid
+  planificacion_id     String?                 @db.Uuid
   detalle_pauta        detalle_pauta[]
-  consulta             consultas?      @relation(fields: [consulta_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  paciente             pacientes       @relation(fields: [paciente_id], references: [id], onDelete: Cascade)
-  planificacion        Planificacion?  @relation(fields: [planificacion_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  consulta             consultas?              @relation(fields: [consulta_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  paciente             pacientes               @relation(fields: [paciente_id], references: [id], onDelete: Cascade)
+  planificacion        Planificacion?          @relation(fields: [planificacion_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  nutricionista        perfiles_nutricionistas @relation(fields: [nutricionista_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([consulta_id], map: "idx_pautas_consulta")
   @@index([planificacion_id], map: "idx_pautas_planificacion")
+  @@index([nutricionista_id], map: "idx_pautas_nutricionista")
   @@map("pautas")
   @@schema("public")
 }
 
 model Evaluacion {
-  id                     String    @id @default(uuid()) @db.Uuid
-  paciente_id            String    @db.Uuid
-  nutricionista_id       String    @db.Uuid
-  fecha_evaluacion       DateTime  @default(now()) @db.Timestamptz(6)
+  id                     String                  @id @default(uuid()) @db.Uuid
+  paciente_id            String                  @db.Uuid
+  nutricionista_id       String                  @db.Uuid
+  fecha_evaluacion       DateTime                @default(now()) @db.Timestamptz(6)
   peso_actual            Float
   talla_cm               Float
   nivel_actividad_fisica String
   objetivo               String
   tmb                    Float?
   gasto_energetico_total Float?
-  paciente               pacientes @relation(fields: [paciente_id], references: [id], onDelete: Cascade)
+  paciente               pacientes               @relation(fields: [paciente_id], references: [id], onDelete: Cascade)
+  nutricionista          perfiles_nutricionistas @relation(fields: [nutricionista_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
+  @@index([nutricionista_id], map: "idx_evaluacion_nutricionista")
   @@schema("public")
 }
 
 model Planificacion {
-  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  paciente_id         String    @db.Uuid
-  nutricionista_id    String    @db.Uuid
+  id                  String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  paciente_id         String                  @db.Uuid
+  nutricionista_id    String                  @db.Uuid
   nombre              String?
-  activa              Boolean   @default(true)
+  activa              Boolean                 @default(true)
   calorias_totales    Float
   distribucion_macros Json
-  fecha_creacion      DateTime? @default(now()) @db.Timestamptz(6)
+  fecha_creacion      DateTime?               @default(now()) @db.Timestamptz(6)
   pautas              Pauta[]
-  paciente            pacientes @relation(fields: [paciente_id], references: [id], onDelete: Cascade)
+  paciente            pacientes               @relation(fields: [paciente_id], references: [id], onDelete: Cascade)
+  nutricionista       perfiles_nutricionistas @relation(fields: [nutricionista_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
+  @@index([nutricionista_id], map: "idx_planificaciones_nutricionista")
   @@map("planificaciones")
   @@schema("public")
 }
@@ -681,6 +691,7 @@ model ingredientes_preparacion {
   alimentos      alimentos     @relation(fields: [alimento_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   preparaciones  preparaciones @relation(fields: [preparacion_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
+  @@unique([preparacion_id, alimento_id])
   @@schema("public")
 }
 

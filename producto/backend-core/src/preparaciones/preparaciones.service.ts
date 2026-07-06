@@ -28,6 +28,14 @@ function esErrorDeFk(error: unknown): boolean {
   );
 }
 
+/** Detecta violación de UNIQUE (ej. mismo alimento repetido en los ingredientes). */
+function esErrorDeUnique(error: unknown): boolean {
+  return (
+    error instanceof Prisma.PrismaClientKnownRequestError &&
+    error.code === 'P2002'
+  );
+}
+
 @Injectable()
 export class PreparacionesService {
   private readonly logger = new Logger(PreparacionesService.name);
@@ -76,6 +84,11 @@ export class PreparacionesService {
           'Uno o más alimentos indicados no existen en la base de datos',
         );
       }
+      if (esErrorDeUnique(error)) {
+        throw new BadRequestException(
+          'La preparación tiene ingredientes repetidos',
+        );
+      }
       throw error;
     }
   }
@@ -113,6 +126,11 @@ export class PreparacionesService {
       if (esErrorDeFk(error)) {
         throw new BadRequestException(
           'Uno o más alimentos indicados no existen en la base de datos',
+        );
+      }
+      if (esErrorDeUnique(error)) {
+        throw new BadRequestException(
+          'La preparación tiene ingredientes repetidos',
         );
       }
       throw error;

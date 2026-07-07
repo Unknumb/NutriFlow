@@ -1,9 +1,7 @@
-import { useEffect } from "react";
 import { Download, Loader2 } from "lucide-react";
-import { usePDF } from "@react-pdf/renderer";
+import { PDFDownloadLink, PDFViewer } from "@react-pdf/renderer";
 import { usePortions } from "../hooks/usePortions";
 import { PautaDocumentPDF } from "./PautaDocumentPDF";
-import { PdfPreview } from "./PdfPreview";
 import { useClinicalStore } from "../../../shared/store/useClinicalStore";
 import { usePacientes } from "../../pacientes/hooks/usePacientes";
 import { usePerfilNutricionista } from "../../perfil/hooks/usePerfil";
@@ -84,16 +82,6 @@ export const ExportarPDF = () => {
 
   const fileName = `Pauta_${patientContext.name.replace(/\s+/g, "_")}.pdf`;
 
-  // Un solo render del documento alimenta la descarga y la vista previa.
-  const [instance, updateInstance] = usePDF({ document: <PautaDocumentPDF data={pdfData} /> });
-
-  // Regenera el PDF cuando cambian los datos (paciente, porciones, objetivos…).
-  const pdfDataKey = JSON.stringify(pdfData);
-  useEffect(() => {
-    updateInstance(<PautaDocumentPDF data={pdfData} />);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pdfDataKey]);
-
   return (
     <div className="animate-in fade-in duration-300 outline-none flex-1 overflow-auto m-0 p-6 bg-porcelain">
       <div className="flex items-center justify-between mb-5 max-w-[820px] mx-auto">
@@ -102,29 +90,34 @@ export const ExportarPDF = () => {
           <p className="text-sm text-ink-soft mt-0.5">Documento para el paciente y la ficha clínica</p>
         </div>
 
-        <a
-          href={instance.url ?? undefined}
-          download={fileName}
-          aria-disabled={instance.loading || !instance.url}
-          className={`inline-flex items-center gap-2 bg-pine hover:bg-pine-soft text-porcelain px-6 py-2.5 rounded-md text-sm font-semibold transition-colors duration-150 shadow-sm cursor-pointer ${
-            instance.loading || !instance.url ? "opacity-60 pointer-events-none" : ""
-          }`}
-        >
-          {instance.loading ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" /> Procesando...
-            </>
-          ) : (
-            <>
-              <Download className="w-4 h-4" /> Descargar PDF
-            </>
+        <PDFDownloadLink document={<PautaDocumentPDF data={pdfData} />} fileName={fileName}>
+          {({ loading }) => (
+            <button
+              disabled={loading}
+              className="inline-flex items-center gap-2 bg-pine hover:bg-pine-soft disabled:opacity-60 text-porcelain px-6 py-2.5 rounded-md text-sm font-semibold transition-colors duration-150 shadow-sm cursor-pointer"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" /> Procesando...
+                </>
+              ) : (
+                <>
+                  <Download className="w-4 h-4" /> Descargar PDF
+                </>
+              )}
+            </button>
           )}
-        </a>
+        </PDFDownloadLink>
       </div>
 
       {/* Vista previa real: renderiza el mismo documento que se descarga. */}
       <div className="flex justify-center pb-12">
-        <PdfPreview blob={instance.blob} />
+        <PDFViewer
+          showToolbar={false}
+          style={{ width: "820px", height: "1160px", border: "1px solid #E8EAE3", borderRadius: 8 }}
+        >
+          <PautaDocumentPDF data={pdfData} />
+        </PDFViewer>
       </div>
     </div>
   );

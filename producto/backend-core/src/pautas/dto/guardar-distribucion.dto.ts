@@ -58,4 +58,14 @@ export class GuardarDistribucionDto {
   @IsObject()
   @IsOptional()
   mealTimes?: Record<string, string>;
+
+  /** Sugerencias del generador ancladas por tiempo de comida
+   *  ({ almuerzo: [{id, nombre, ingredientes}] }). Se muestran como
+   *  ejemplos de preparación en la pauta. */
+  @IsObject()
+  @IsOptional()
+  sugerenciasComida?: Record<
+    string,
+    { id: string; nombre: string; ingredientes: string }[]
+  >;
 }

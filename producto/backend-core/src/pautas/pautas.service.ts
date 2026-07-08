@@ -93,6 +93,7 @@ export class PautasService {
       libreConsumoIds: dto.libreConsumoIds || [],
       customMeals: dto.customMeals || [],
       mealTimes: dto.mealTimes || {},
+      sugerenciasComida: dto.sugerenciasComida || {},
     };
 
     // P6: si viene pauta_id se actualiza esa pauta; si no, se crea una nueva

@@ -13,7 +13,7 @@ const GROUP_IDS = ["cer", "fru", "veg", "cag", "cbg", "leg", "lag", "lmg", "lbg"
 
 export const ExportarPDF = () => {
   const { state, computed } = usePortions();
-  const { patientContext, distributions, targets, activeMeals, customMeals, mealTimes } = state;
+  const { patientContext, distributions, targets, activeMeals, customMeals, mealTimes, sugerenciasComida } = state;
   const { getGroupTotal } = computed;
 
   const activePatient = useClinicalStore((s) => s.activePatient);
@@ -72,6 +72,7 @@ export const ExportarPDF = () => {
         },
     distributions,
     targets,
+    sugerenciasComida,
     // Comidas activas resueltas y ordenadas por horario (predefinidas + personalizadas)
     comidas: comidasOrdenadas(activeMeals, customMeals, mealTimes),
     totals: GROUP_IDS.reduce((acc, id) => {

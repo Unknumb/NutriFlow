@@ -8,6 +8,8 @@ const mockUseGenerarMenu = vi.hoisted(() => vi.fn());
 const mockUsePortionsStore = vi.hoisted(() => vi.fn());
 const mockUsePreparaciones = vi.hoisted(() => vi.fn());
 const mockUsePacientes = vi.hoisted(() => vi.fn());
+const mockUseBuscarAlimentos = vi.hoisted(() => vi.fn());
+const mockAddSugerenciaComida = vi.hoisted(() => vi.fn());
 const mockTraducirPorciones = vi.hoisted(() => vi.fn(() => ({})));
 
 vi.mock('../../menus/hooks/useMenus', () => ({
@@ -26,16 +28,21 @@ vi.mock('../../pacientes/hooks/usePacientes', () => ({
   usePacientes: mockUsePacientes,
 }));
 
+vi.mock('../../alimentos/hooks/useBuscarAlimentos', () => ({
+  useBuscarAlimentos: mockUseBuscarAlimentos,
+}));
+
 vi.mock('../../porciones/gruposMath', () => ({
   traducirPorcionesParaMath: mockTraducirPorciones,
+  GRUPO_A_MATH: { fru: 'frutas' },
 }));
 
 vi.mock('../../preparaciones/types/preparacion.types', () => ({
   TIPO_COMIDA_LABELS: {
     desayuno: 'Desayuno',
     almuerzo: 'Almuerzo',
-    once: 'Once',
     cena: 'Cena',
+    colacion: 'Colación',
   },
 }));
 
@@ -104,10 +111,31 @@ const PACIENTES = [
   },
 ];
 
+const RECETA_GENERADA = {
+  id: 'm-1',
+  nombre: 'Pollo con arroz',
+  descripcion: null,
+  instrucciones: 'Cocinar el arroz y hornear el pollo.',
+  tipo_comida: 'almuerzo',
+  imagen_url: null,
+  calorias_totales: 420,
+  cobertura: 87,
+  ingredientes: [{ nombre: 'Pollo', cantidad_g: 150, sin_etiquetar: false }],
+  porciones_requeridas: { frutas: 1.5 },
+};
+
 // distributions sin porciones → Generar deshabilitado
 const DISTRIBUTIONS_EMPTY = {};
 // distributions con porciones para 'almuerzo'
 const DISTRIBUTIONS_WITH_PORCIONES = { almuerzo: { fru: 2 } };
+
+const storeState = (overrides: Record<string, unknown> = {}) => ({
+  distributions: DISTRIBUTIONS_EMPTY,
+  activeMeals: ['desayuno', 'almuerzo', 'once', 'cena'],
+  sugerenciasComida: {},
+  addSugerenciaComida: mockAddSugerenciaComida,
+  ...overrides,
+});
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -116,15 +144,13 @@ beforeEach(() => {
     data: undefined,
     isPending: false,
   });
-  mockUsePortionsStore.mockReturnValue({
-    distributions: DISTRIBUTIONS_EMPTY,
-    activeMeals: ['desayuno', 'almuerzo', 'once', 'cena'],
-  });
+  mockUsePortionsStore.mockReturnValue(storeState());
   mockUsePreparaciones.mockReturnValue({
     data: PREPARACIONES,
     isLoading: false,
   });
   mockUsePacientes.mockReturnValue({ data: PACIENTES });
+  mockUseBuscarAlimentos.mockReturnValue({ data: undefined });
 });
 
 describe('GeneradorPreparaciones', () => {
@@ -177,6 +203,14 @@ describe('GeneradorPreparaciones', () => {
       expect(screen.getByText('Generar para')).toBeInTheDocument();
     });
 
+    it('indica el tipo de preparación que filtra la comida elegida', () => {
+      render(<GeneradorPreparaciones />);
+      // default = almuerzo → filtra por tipo Almuerzo
+      expect(
+        screen.getByText(/Solo se sugieren preparaciones de tipo Almuerzo/),
+      ).toBeInTheDocument();
+    });
+
     it('el botón "Generar Sugerencias" está deshabilitado sin porciones', () => {
       render(<GeneradorPreparaciones />);
       expect(
@@ -192,26 +226,26 @@ describe('GeneradorPreparaciones', () => {
     });
 
     it('el botón "Generar Sugerencias" se habilita cuando hay porciones para la comida', () => {
-      mockUsePortionsStore.mockReturnValue({
-        distributions: DISTRIBUTIONS_WITH_PORCIONES,
-        activeMeals: ['desayuno', 'almuerzo', 'once', 'cena'],
-      });
+      mockUsePortionsStore.mockReturnValue(
+        storeState({ distributions: DISTRIBUTIONS_WITH_PORCIONES }),
+      );
       render(<GeneradorPreparaciones />);
       expect(
         screen.getByRole('button', { name: /Generar Sugerencias/i }),
       ).not.toBeDisabled();
     });
 
-    it('llama a mutate con los datos al hacer clic en "Generar Sugerencias"', () => {
-      mockUsePortionsStore.mockReturnValue({
-        distributions: DISTRIBUTIONS_WITH_PORCIONES,
-        activeMeals: ['desayuno', 'almuerzo', 'once', 'cena'],
-      });
+    it('llama a mutate con porciones y tipo_comida al hacer clic en "Generar Sugerencias"', () => {
+      mockUsePortionsStore.mockReturnValue(
+        storeState({ distributions: DISTRIBUTIONS_WITH_PORCIONES }),
+      );
       render(<GeneradorPreparaciones />);
       fireEvent.click(screen.getByRole('button', { name: /Generar Sugerencias/i }));
       expect(mockMutate).toHaveBeenCalledWith(
         expect.objectContaining({
           porciones_disponibles: expect.any(Object),
+          tipo_comida: 'almuerzo',
+          alimentos_rechazados: [],
         }),
       );
     });
@@ -222,32 +256,98 @@ describe('GeneradorPreparaciones', () => {
         data: undefined,
         isPending: true,
       });
-      mockUsePortionsStore.mockReturnValue({
-        distributions: DISTRIBUTIONS_WITH_PORCIONES,
-        activeMeals: ['desayuno', 'almuerzo', 'once', 'cena'],
-      });
+      mockUsePortionsStore.mockReturnValue(
+        storeState({ distributions: DISTRIBUTIONS_WITH_PORCIONES }),
+      );
       render(<GeneradorPreparaciones />);
       expect(screen.getByRole('button', { name: /Generando/i })).toBeDisabled();
     });
 
-    it('muestra resultados cuando menusGenerados tiene datos', () => {
+    it('muestra resultados con cobertura y kcal cuando menusGenerados tiene datos', () => {
       mockUseGenerarMenu.mockReturnValue({
         mutate: mockMutate,
-        data: {
-          matches_exactos: [
-            {
-              id: 'm-1',
-              nombre: 'Pollo con arroz',
-              ingredientes: [{ nombre: 'Pollo', cantidad_g: 150 }],
-            },
-          ],
-          matches_parciales: [],
-        },
+        data: { matches_exactos: [RECETA_GENERADA], matches_parciales: [] },
         isPending: false,
       });
       render(<GeneradorPreparaciones />);
       expect(screen.getByText('Pollo con arroz')).toBeInTheDocument();
       expect(screen.getByText('Sugerencias Exactas')).toBeInTheDocument();
+      expect(screen.getByText('Cubre 87%')).toBeInTheDocument();
+      expect(screen.getByText('420 kcal')).toBeInTheDocument();
+    });
+
+    it('expande el detalle de una sugerencia con "Ver detalle"', () => {
+      mockUseGenerarMenu.mockReturnValue({
+        mutate: mockMutate,
+        data: { matches_exactos: [RECETA_GENERADA], matches_parciales: [] },
+        isPending: false,
+      });
+      render(<GeneradorPreparaciones />);
+      fireEvent.click(screen.getByRole('button', { name: /Ver detalle/i }));
+      expect(
+        screen.getByText('Cocinar el arroz y hornear el pollo.'),
+      ).toBeInTheDocument();
+      expect(screen.getByText('Porciones que utiliza')).toBeInTheDocument();
+    });
+  });
+
+  describe('usar en pauta', () => {
+    beforeEach(() => {
+      mockUseGenerarMenu.mockReturnValue({
+        mutate: mockMutate,
+        data: { matches_exactos: [RECETA_GENERADA], matches_parciales: [] },
+        isPending: false,
+      });
+    });
+
+    it('agrega la sugerencia a la comida elegida', () => {
+      render(<GeneradorPreparaciones />);
+      fireEvent.click(screen.getByRole('button', { name: /Usar en pauta/i }));
+      expect(mockAddSugerenciaComida).toHaveBeenCalledWith('almuerzo', {
+        id: 'm-1',
+        nombre: 'Pollo con arroz',
+        ingredientes: 'Pollo (150g)',
+      });
+    });
+
+    it('muestra "En la pauta" cuando la sugerencia ya fue agregada', () => {
+      mockUsePortionsStore.mockReturnValue(
+        storeState({
+          sugerenciasComida: {
+            almuerzo: [{ id: 'm-1', nombre: 'Pollo con arroz', ingredientes: '' }],
+          },
+        }),
+      );
+      render(<GeneradorPreparaciones />);
+      expect(screen.getByRole('button', { name: /En la pauta/i })).toBeDisabled();
+      expect(screen.getByText(/1 sugerencia\(s\) agregada\(s\)/)).toBeInTheDocument();
+    });
+  });
+
+  describe('alimentos rechazados', () => {
+    it('agrega chips con Enter y los envía en la generación', () => {
+      mockUsePortionsStore.mockReturnValue(
+        storeState({ distributions: DISTRIBUTIONS_WITH_PORCIONES }),
+      );
+      render(<GeneradorPreparaciones />);
+      const input = screen.getByPlaceholderText(/Escribe y presiona Enter/);
+      fireEvent.change(input, { target: { value: 'salmón' } });
+      fireEvent.keyDown(input, { key: 'Enter' });
+      expect(screen.getByText('salmón')).toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole('button', { name: /Generar Sugerencias/i }));
+      expect(mockMutate).toHaveBeenCalledWith(
+        expect.objectContaining({ alimentos_rechazados: ['salmón'] }),
+      );
+    });
+
+    it('quita un chip con su botón de cierre', () => {
+      render(<GeneradorPreparaciones />);
+      const input = screen.getByPlaceholderText(/Escribe y presiona Enter/);
+      fireEvent.change(input, { target: { value: 'pan' } });
+      fireEvent.keyDown(input, { key: 'Enter' });
+      fireEvent.click(screen.getByRole('button', { name: 'Quitar pan' }));
+      expect(screen.queryByText('pan')).not.toBeInTheDocument();
     });
   });
 
@@ -281,6 +381,34 @@ describe('GeneradorPreparaciones', () => {
       expect(
         screen.getByRole('button', { name: 'Vegetariano' }),
       ).toHaveAttribute('aria-pressed', 'false');
+    });
+
+    it('muestra el aviso de cobertura de etiquetado al activar una restricción', () => {
+      render(<GeneradorPreparaciones />);
+      expect(screen.queryByRole('note')).not.toBeInTheDocument();
+      fireEvent.click(screen.getByRole('button', { name: 'Vegetariano' }));
+      expect(screen.getByRole('note')).toHaveTextContent(/etiquetado del catálogo/);
+    });
+
+    it('marca los ingredientes sin etiquetar en la sugerencia cuando hay restricciones', () => {
+      mockUseGenerarMenu.mockReturnValue({
+        mutate: mockMutate,
+        data: {
+          matches_exactos: [
+            {
+              ...RECETA_GENERADA,
+              ingredientes: [{ nombre: 'Pollo', cantidad_g: 150, sin_etiquetar: true }],
+            },
+          ],
+          matches_parciales: [],
+        },
+        isPending: false,
+      });
+      render(<GeneradorPreparaciones />);
+      fireEvent.click(screen.getByRole('button', { name: 'Vegetariano' }));
+      expect(
+        screen.getByText(/Sin etiquetas de restricción: Pollo/),
+      ).toBeInTheDocument();
     });
   });
 

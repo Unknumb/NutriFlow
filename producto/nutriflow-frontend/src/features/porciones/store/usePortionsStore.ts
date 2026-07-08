@@ -10,6 +10,15 @@ export interface CustomFoodDef extends FoodGroupDef {
     textBtn: string;
 }
 
+/** Sugerencia del generador anclada a un tiempo de comida de la pauta. */
+export interface SugerenciaComida {
+    /** id de la preparación sugerida. */
+    id: string;
+    nombre: string;
+    /** Resumen legible de ingredientes ("Arroz (100g), Pollo (120g)"). */
+    ingredientes: string;
+}
+
 export interface PortionsState {
     targets: Record<string, number>;
     distributions: Record<string, Record<string, number>>;
@@ -26,6 +35,10 @@ export interface PortionsState {
     /** Grupos marcados como libre consumo (ad libitum); no cuentan en los totales. */
     libreConsumoIds: string[];
     toggleLibreConsumo: (groupId: string) => void;
+    /** Sugerencias del generador por tiempo de comida; se guardan con la pauta. */
+    sugerenciasComida: Record<string, SugerenciaComida[]>;
+    addSugerenciaComida: (mealId: string, sugerencia: SugerenciaComida) => void;
+    removeSugerenciaComida: (mealId: string, sugerenciaId: string) => void;
     incrementPortion: (mealId: string, groupId: string) => void;
     decrementPortion: (mealId: string, groupId: string) => void;
     setPortion: (mealId: string, groupId: string, value: number) => void;
@@ -34,7 +47,7 @@ export interface PortionsState {
     resetPlan: () => void;
     resetDistributions: () => void;
     setTargets: (targets: Record<string, number>) => void;
-    setInitialPortions: (data: { targets: Record<string, number>, distributions: Record<string, Record<string, number>>, activeMeals: string[], activeGroups: string[], libreConsumoIds?: string[], customMeals?: { id: string; name: string; time: string }[], mealTimes?: Record<string, string> }) => void;
+    setInitialPortions: (data: { targets: Record<string, number>, distributions: Record<string, Record<string, number>>, activeMeals: string[], activeGroups: string[], libreConsumoIds?: string[], customMeals?: { id: string; name: string; time: string }[], mealTimes?: Record<string, string>, sugerenciasComida?: Record<string, SugerenciaComida[]> }) => void;
     addCustomFood: (food: CustomFoodDef) => void;
     updateCustomFood: (id: string, data: Partial<CustomFoodDef>) => void;
     removeCustomFood: (id: string) => void;
@@ -89,7 +102,26 @@ export const usePortionsStore = create<PortionsState>((set) => ({
     })),
     loadedPatientId: null,
     setLoadedPatientId: (id) => set({ loadedPatientId: id }),
-    
+
+    // Sugerencias del generador por comida (persisten en estructura_grid_json).
+    sugerenciasComida: {},
+    addSugerenciaComida: (mealId, sugerencia) => set((state) => {
+        const actuales = state.sugerenciasComida[mealId] || [];
+        if (actuales.some((s) => s.id === sugerencia.id)) return {};
+        return {
+            sugerenciasComida: {
+                ...state.sugerenciasComida,
+                [mealId]: [...actuales, sugerencia],
+            },
+        };
+    }),
+    removeSugerenciaComida: (mealId, sugerenciaId) => set((state) => ({
+        sugerenciasComida: {
+            ...state.sugerenciasComida,
+            [mealId]: (state.sugerenciasComida[mealId] || []).filter((s) => s.id !== sugerenciaId),
+        },
+    })),
+
     setInitialPortions: (data) => set({
         targets: data.targets,
         distributions: data.distributions,
@@ -99,6 +131,7 @@ export const usePortionsStore = create<PortionsState>((set) => ({
         libreConsumoIds: data.libreConsumoIds || [],
         customMeals: data.customMeals || [],
         mealTimes: data.mealTimes || {},
+        sugerenciasComida: data.sugerenciasComida || {},
     }),
 
     toggleMeal: (mealId) => set((state) => ({
@@ -182,7 +215,7 @@ export const usePortionsStore = create<PortionsState>((set) => ({
     }),
 
     resetPlan: () => set({ targets: {} }),
-    resetDistributions: () => set({ distributions: {} }),
+    resetDistributions: () => set({ distributions: {}, sugerenciasComida: {} }),
     setTargets: (newTargets) => set({ targets: newTargets }),
     addCustomFood: (food) => set((state) => ({ customFoods: [...state.customFoods, food] })),
     updateCustomFood: (id, data) => set((state) => ({

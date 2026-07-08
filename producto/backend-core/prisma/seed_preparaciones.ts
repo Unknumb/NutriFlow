@@ -276,6 +276,162 @@ const preparacionesSistema: PreparacionSeed[] = [
       ['Aceite de oliva', 'Genérico', 10],
     ],
   },
+  // --- Ampliación 2026-07-08: más volumen para el generador, con foco en los
+  // --- tiempos con menos recetas (cena y colación). Solo alimentos existentes.
+  {
+    nombre: 'Tortilla de espinaca al horno',
+    tipo_comida: 'cena',
+    descripcion: 'Tortilla de huevo con espinaca y cebolla, al horno.',
+    instrucciones: 'Batir los huevos, mezclar con la espinaca picada y la cebolla; hornear 15 min a 180 °C.',
+    ingredientes: [
+      ['Huevo (entero)', 'Genérico', 100],
+      ['Espinaca', 'Genérico', 80],
+      ['Cebolla', 'Genérico', 30],
+      ['Aceite de oliva', 'Genérico', 5],
+    ],
+  },
+  {
+    nombre: 'Merluza a la plancha con puré',
+    tipo_comida: 'cena',
+    descripcion: 'Filete de merluza a la plancha con puré de papas suave.',
+    ingredientes: [
+      ['Pescado blanco / Merluza', 'Genérico', 120],
+      ['Papa', 'Genérico', 150],
+      ['Leche descremada', 'Genérico', 30],
+      ['Aceite de oliva', 'Genérico', 5],
+    ],
+  },
+  {
+    nombre: 'Ensalada tibia de quinoa y verduras',
+    tipo_comida: 'cena',
+    descripcion: 'Quinoa cocida con zanahoria, pimiento y cebolla salteados.',
+    ingredientes: [
+      ['Quinoa (cruda)', 'Genérico', 40],
+      ['Zanahoria', 'Genérico', 50],
+      ['Pimiento morrón', 'Genérico', 50],
+      ['Cebolla', 'Genérico', 30],
+      ['Aceite de oliva', 'Genérico', 5],
+    ],
+  },
+  {
+    nombre: 'Omelette de quesillo y tomate',
+    tipo_comida: 'cena',
+    descripcion: 'Omelette liviano relleno con quesillo y tomate fresco.',
+    ingredientes: [
+      ['Huevo (entero)', 'Genérico', 100],
+      ['Quesillo', 'Genérico', 40],
+      ['Tomate', 'Genérico', 80],
+    ],
+  },
+  {
+    nombre: 'Sopa de verduras con pollo',
+    tipo_comida: 'cena',
+    descripcion: 'Sopa casera de verduras con pechuga de pollo desmenuzada.',
+    ingredientes: [
+      ['Pechuga de pollo (cruda)', 'Genérico', 80],
+      ['Zanahoria', 'Genérico', 60],
+      ['Apio', 'Genérico', 40],
+      ['Papa', 'Genérico', 100],
+      ['Cebolla', 'Genérico', 30],
+    ],
+  },
+  {
+    nombre: 'Salmón al horno con brócoli',
+    tipo_comida: 'cena',
+    descripcion: 'Filete de salmón al horno acompañado de brócoli al vapor.',
+    ingredientes: [
+      ['Salmón (filete)', 'Genérico', 100],
+      ['Brócoli', 'Genérico', 100],
+      ['Aceite de oliva', 'Genérico', 5],
+    ],
+  },
+  {
+    nombre: 'Manzana con almendras',
+    tipo_comida: 'colacion',
+    descripcion: 'Manzana fresca con una porción de almendras.',
+    ingredientes: [
+      ['Manzana', 'Genérico', 120],
+      ['Almendras', 'Genérico', 15],
+    ],
+  },
+  {
+    nombre: 'Plátano con nueces',
+    tipo_comida: 'colacion',
+    descripcion: 'Plátano con un puñado pequeño de nueces.',
+    ingredientes: [
+      ['Plátano', 'Genérico', 100],
+      ['Nueces', 'Genérico', 15],
+    ],
+  },
+  {
+    nombre: 'Quesillo con tomate',
+    tipo_comida: 'colacion',
+    descripcion: 'Quesillo fresco con tomate en rodajas.',
+    ingredientes: [
+      ['Quesillo', 'Genérico', 60],
+      ['Tomate', 'Genérico', 80],
+    ],
+  },
+  {
+    nombre: 'Naranja con nueces',
+    tipo_comida: 'colacion',
+    descripcion: 'Naranja en gajos con nueces.',
+    ingredientes: [
+      ['Naranja', 'Genérico', 130],
+      ['Nueces', 'Genérico', 12],
+    ],
+  },
+  {
+    nombre: 'Huevo duro con apio',
+    tipo_comida: 'colacion',
+    descripcion: 'Huevo duro con bastones de apio.',
+    ingredientes: [
+      ['Huevo (entero)', 'Genérico', 50],
+      ['Apio', 'Genérico', 60],
+    ],
+  },
+  {
+    nombre: 'Leche con avena y plátano',
+    tipo_comida: 'desayuno',
+    descripcion: 'Leche descremada con avena tradicional y plátano en rodajas.',
+    ingredientes: [
+      ['Leche descremada', 'Genérico', 200],
+      ['Avena tradicional', 'Genérico', 30],
+      ['Plátano', 'Genérico', 80],
+    ],
+  },
+  {
+    nombre: 'Marraqueta con quesillo',
+    tipo_comida: 'desayuno',
+    descripcion: 'Media marraqueta con quesillo fresco.',
+    ingredientes: [
+      ['Marraqueta', 'Genérico', 50],
+      ['Quesillo', 'Genérico', 50],
+    ],
+  },
+  {
+    nombre: 'Lentejas guisadas con verduras',
+    tipo_comida: 'almuerzo',
+    descripcion: 'Lentejas guisadas con zanahoria, cebolla y pimiento.',
+    ingredientes: [
+      ['Lentejas (crudas)', 'Genérico', 70],
+      ['Zanahoria', 'Genérico', 50],
+      ['Cebolla', 'Genérico', 30],
+      ['Pimiento morrón', 'Genérico', 40],
+      ['Aceite de oliva', 'Genérico', 5],
+    ],
+  },
+  {
+    nombre: 'Garbanzos con espinaca',
+    tipo_comida: 'almuerzo',
+    descripcion: 'Guiso de garbanzos con espinaca y cebolla.',
+    ingredientes: [
+      ['Garbanzos (crudos)', 'Genérico', 70],
+      ['Espinaca', 'Genérico', 80],
+      ['Cebolla', 'Genérico', 30],
+      ['Aceite de oliva', 'Genérico', 5],
+    ],
+  },
 ];
 
 async function upsertAlimentosFaltantes() {

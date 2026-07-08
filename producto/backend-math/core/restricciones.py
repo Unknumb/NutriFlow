@@ -18,10 +18,18 @@ CONVENCIÓN SEMÁNTICA de `alimentos.restricciones` (text[]):
 
 POLÍTICA ANTE ALIMENTOS SIN TAGS:
   Solo se excluyen alimentos explícitamente taggeados. Un alimento sin tags
-  NO se considera "seguro" — simplemente no hay datos (~600/886 sin taggear al
-  cierre de F5). Se eligió no excluir lo no-taggeado porque haría inutilizable
-  el generador con la cobertura actual; la nutricionista valida la sugerencia
-  final. Si la cobertura de tags llega a ser total, puede endurecerse aquí.
+  NO se considera "seguro" — simplemente no hay datos. Se eligió no excluir
+  lo no-taggeado porque haría inutilizable el generador; la nutricionista
+  valida la sugerencia final (el generador marca `sin_etiquetar` esos
+  ingredientes cuando hay restricciones activas).
+
+MARCADOR `verificado_sin_restricciones`:
+  Documenta que el alimento FUE evaluado y no le aplica ninguna restricción
+  (frutas, verduras, aceites vegetales, arroz...). No participa del filtrado
+  (ninguna entrada de RESTRICCION_A_TAGS_EXCLUIDOS lo referencia); su único
+  efecto es que el alimento deja de contar como "sin etiquetar". Cobertura al
+  2026-07-08: ~880/885 evaluados (tag_restricciones.ts heurístico +
+  tags_manuales.ts revisión explícita).
 """
 
 import re

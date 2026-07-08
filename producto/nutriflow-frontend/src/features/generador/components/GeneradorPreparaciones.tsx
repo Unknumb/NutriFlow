@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { AlertTriangle, Check, ChevronDown, ChevronUp, Info, Plus, X } from 'lucide-react';
 import { useGenerarMenu } from '../../menus/hooks/useMenus';
@@ -184,8 +184,6 @@ const SugerenciaCard = ({
 
 export const GeneradorPreparaciones: React.FC = () => {
   const [activeTab, setActiveTab] = useState('generador');
-  const [pacienteId, setPacienteId] = useState('');
-  const [restriccionesSel, setRestriccionesSel] = useState<Set<RestriccionDietetica>>(new Set());
 
   // Alimentos rechazados como chips, con autocomplete contra el catálogo real.
   const [rechazados, setRechazados] = useState<string[]>([]);
@@ -220,47 +218,46 @@ export const GeneradorPreparaciones: React.FC = () => {
     ? comidaSeleccionada
     : comidasDisponibles[0]?.id ?? comidaSeleccionada;
 
+  // El generador trabaja SIEMPRE con el paciente activo: las porciones vienen
+  // de su pauta (Distribución de Porciones), así que no tiene sentido generar
+  // para otro paciente. Su ficha completa se busca en el listado.
   const pacienteSeleccionado = useMemo(
-    () => (pacientes ?? []).find((p) => p.id === pacienteId),
-    [pacientes, pacienteId],
+    () => (pacientes ?? []).find((p) => p.id === activePatient?.id),
+    [pacientes, activePatient?.id],
   );
 
-  // Al elegir paciente se precargan sus restricciones derivadas de la ficha
-  // (alergias + preferencias alimentarias). La selección queda editable solo
-  // para esta sesión: nunca se escribe de vuelta en la ficha.
-  const handleSeleccionPaciente = (id: string) => {
-    setPacienteId(id);
-    const paciente = (pacientes ?? []).find((p) => p.id === id);
-    if (!paciente) {
-      setRestriccionesSel(new Set());
-      return;
-    }
-    setRestriccionesSel(
-      new Set(
-        derivarRestriccionesDePaciente([
-          ...paciente.alergias,
-          ...paciente.preferencias_alimentarias,
-        ]),
+  // Restricciones: se derivan de la ficha del paciente activo y la nutricionista
+  // puede editarlas solo para esta sesión (override por paciente; nunca se
+  // escribe de vuelta en la ficha). Al cambiar de paciente activo, el override
+  // deja de aplicar y vuelven las derivadas — sin efectos correctores.
+  const restriccionesDerivadas = useMemo(
+    () =>
+      new Set<RestriccionDietetica>(
+        pacienteSeleccionado
+          ? derivarRestriccionesDePaciente([
+              ...pacienteSeleccionado.alergias,
+              ...pacienteSeleccionado.preferencias_alimentarias,
+            ])
+          : [],
       ),
-    );
-  };
-
-  // El generador se relaciona con el paciente activo: al entrar (o al cambiar de
-  // paciente activo) se preselecciona y se cargan sus restricciones. Queda
-  // editable para la sesión; la nutricionista puede cambiarlo si lo necesita.
-  useEffect(() => {
-    if (activePatient?.id && (pacientes ?? []).some((p) => p.id === activePatient.id)) {
-      handleSeleccionPaciente(activePatient.id);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activePatient?.id, pacientes]);
+    [pacienteSeleccionado],
+  );
+  const [restriccionesOverride, setRestriccionesOverride] = useState<{
+    pacienteId: string | null;
+    seleccion: Set<RestriccionDietetica>;
+  } | null>(null);
+  const restriccionesSel =
+    restriccionesOverride && restriccionesOverride.pacienteId === (pacienteSeleccionado?.id ?? null)
+      ? restriccionesOverride.seleccion
+      : restriccionesDerivadas;
 
   const toggleRestriccion = (restriccion: RestriccionDietetica) => {
-    setRestriccionesSel((prev) => {
-      const siguiente = new Set(prev);
-      if (siguiente.has(restriccion)) siguiente.delete(restriccion);
-      else siguiente.add(restriccion);
-      return siguiente;
+    const siguiente = new Set(restriccionesSel);
+    if (siguiente.has(restriccion)) siguiente.delete(restriccion);
+    else siguiente.add(restriccion);
+    setRestriccionesOverride({
+      pacienteId: pacienteSeleccionado?.id ?? null,
+      seleccion: siguiente,
     });
   };
 
@@ -315,7 +312,7 @@ export const GeneradorPreparaciones: React.FC = () => {
     mutate({
       porciones_disponibles: porcionesDisponibles,
       tipo_comida: tipoComidaGenerar,
-      paciente_id: pacienteId || undefined,
+      paciente_id: activePatient?.id || undefined,
       restricciones_dieteticas: Array.from(restriccionesSel),
       alimentos_rechazados: rechazados,
     });
@@ -432,20 +429,25 @@ export const GeneradorPreparaciones: React.FC = () => {
                   </h2>
                   <div className="space-y-4">
 
-                    {/* Selector de Paciente */}
+                    {/* Paciente activo (las porciones provienen de SU pauta) */}
                     <div>
-                      <label className="text-xs font-medium text-ink-soft mb-1.5 block">Paciente (opcional)</label>
-                      <select
-                        className="flex h-9 w-full rounded-md border border-mist px-3 py-1 bg-white text-sm outline-none focus-visible:ring-2 focus-visible:ring-pine-soft text-ink-soft"
-                        value={pacienteId}
-                        onChange={(e) => handleSeleccionPaciente(e.target.value)}
-                      >
-                        <option value="">Sin paciente asociado</option>
-                        {(pacientes ?? []).map((p) => (
-                          <option key={p.id} value={p.id}>{p.nombre} {p.apellido}</option>
-                        ))}
-                      </select>
-                      <p className="text-xs text-ink-soft/60 mt-1">Al elegir, se precargan sus restricciones (editables solo para esta sesión)</p>
+                      <label className="text-xs font-medium text-ink-soft mb-1.5 block">Paciente activo</label>
+                      {pacienteSeleccionado ? (
+                        <>
+                          <div className="flex h-9 w-full items-center rounded-md border border-mist px-3 bg-white text-sm text-ink font-medium">
+                            {pacienteSeleccionado.nombre} {pacienteSeleccionado.apellido}
+                          </div>
+                          <p className="text-xs text-ink-soft/60 mt-1">Sus restricciones se precargan desde la ficha (editables solo para esta sesión)</p>
+                        </>
+                      ) : (
+                        <div className="rounded-md border border-dashed border-mist bg-white px-3 py-2.5">
+                          <p className="text-xs text-ink-soft">
+                            No hay paciente activo. Actívalo desde{' '}
+                            <Link to="/pacientes" className="font-semibold text-pine-soft hover:underline">Pacientes</Link>{' '}
+                            para precargar sus restricciones.
+                          </p>
+                        </div>
+                      )}
                     </div>
 
                     {/* Contexto de la ficha del paciente */}

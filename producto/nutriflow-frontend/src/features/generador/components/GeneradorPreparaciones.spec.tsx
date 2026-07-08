@@ -11,6 +11,7 @@ const mockUsePacientes = vi.hoisted(() => vi.fn());
 const mockUseBuscarAlimentos = vi.hoisted(() => vi.fn());
 const mockAddSugerenciaComida = vi.hoisted(() => vi.fn());
 const mockTraducirPorciones = vi.hoisted(() => vi.fn(() => ({})));
+const mockClinicalState = vi.hoisted(() => ({ activePatient: null as { id: string } | null }));
 
 vi.mock('../../menus/hooks/useMenus', () => ({
   useGenerarMenu: mockUseGenerarMenu,
@@ -30,6 +31,11 @@ vi.mock('../../pacientes/hooks/usePacientes', () => ({
 
 vi.mock('../../alimentos/hooks/useBuscarAlimentos', () => ({
   useBuscarAlimentos: mockUseBuscarAlimentos,
+}));
+
+vi.mock('../../../shared/store/useClinicalStore', () => ({
+  useClinicalStore: (selector: (s: typeof mockClinicalState) => unknown) =>
+    selector(mockClinicalState),
 }));
 
 vi.mock('../../porciones/gruposMath', () => ({
@@ -139,6 +145,7 @@ const storeState = (overrides: Record<string, unknown> = {}) => ({
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mockClinicalState.activePatient = null;
   mockUseGenerarMenu.mockReturnValue({
     mutate: mockMutate,
     data: undefined,
@@ -412,29 +419,43 @@ describe('GeneradorPreparaciones', () => {
     });
   });
 
-  describe('selector de paciente', () => {
-    it('muestra la opción "Sin paciente asociado"', () => {
+  describe('paciente activo', () => {
+    it('sin paciente activo muestra el aviso con link a Pacientes', () => {
       render(<GeneradorPreparaciones />);
-      expect(
-        screen.getByRole('option', { name: 'Sin paciente asociado' }),
-      ).toBeInTheDocument();
-    });
-
-    it('muestra los pacientes como opciones', () => {
-      render(<GeneradorPreparaciones />);
-      expect(
-        screen.getByRole('option', { name: 'Ana García' }),
-      ).toBeInTheDocument();
-    });
-
-    it('al seleccionar un paciente muestra su información de alergias', () => {
-      render(<GeneradorPreparaciones />);
-      fireEvent.change(
-        screen.getByDisplayValue('Sin paciente asociado'),
-        { target: { value: 'pac-1' } },
+      expect(screen.getByText(/No hay paciente activo/)).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'Pacientes' })).toHaveAttribute(
+        'href',
+        '/pacientes',
       );
+    });
+
+    it('muestra el nombre del paciente activo y su ficha de alergias', () => {
+      mockClinicalState.activePatient = { id: 'pac-1' };
+      render(<GeneradorPreparaciones />);
+      expect(screen.getByText('Ana García')).toBeInTheDocument();
       // gluten → deriva restricción sin_gluten, pero la ficha muestra "Alergias: gluten"
       expect(screen.getByText('gluten')).toBeInTheDocument();
+    });
+
+    it('envía el paciente activo como paciente_id al generar', () => {
+      mockClinicalState.activePatient = { id: 'pac-1' };
+      mockUsePortionsStore.mockReturnValue(
+        storeState({ distributions: DISTRIBUTIONS_WITH_PORCIONES }),
+      );
+      render(<GeneradorPreparaciones />);
+      fireEvent.click(screen.getByRole('button', { name: /Generar Sugerencias/i }));
+      expect(mockMutate).toHaveBeenCalledWith(
+        expect.objectContaining({ paciente_id: 'pac-1' }),
+      );
+    });
+
+    it('precarga las restricciones derivadas de la ficha del paciente activo', () => {
+      mockClinicalState.activePatient = { id: 'pac-1' };
+      render(<GeneradorPreparaciones />);
+      // derivarRestriccionesDePaciente (mock) devuelve ['vegetariano']
+      expect(
+        screen.getByRole('button', { name: 'Vegetariano' }),
+      ).toHaveAttribute('aria-pressed', 'true');
     });
   });
 

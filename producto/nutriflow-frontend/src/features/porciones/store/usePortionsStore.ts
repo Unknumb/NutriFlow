@@ -122,16 +122,28 @@ export const usePortionsStore = create<PortionsState>((set) => ({
         },
     })),
 
-    setInitialPortions: (data) => set({
-        targets: data.targets,
-        distributions: data.distributions,
-        activeMeals: data.activeMeals || [],
-        activeGroups: data.activeGroups || [],
-        // Restauramos libre consumo guardado (si la pauta no trae, queda vacío).
-        libreConsumoIds: data.libreConsumoIds || [],
-        customMeals: data.customMeals || [],
-        mealTimes: data.mealTimes || {},
-        sugerenciasComida: data.sugerenciasComida || {},
+    setInitialPortions: (data) => set((state) => {
+        // Las sugerencias agregadas desde el Generador y aún no guardadas deben
+        // sobrevivir a la recarga de la pauta: unión por comida (las guardadas
+        // en la pauta primero; las locales no duplicadas después).
+        const guardadas = data.sugerenciasComida || {};
+        const sugerenciasComida: Record<string, SugerenciaComida[]> = { ...guardadas };
+        for (const [mealId, locales] of Object.entries(state.sugerenciasComida)) {
+            const previas = sugerenciasComida[mealId] || [];
+            const nuevas = locales.filter((s) => !previas.some((p) => p.id === s.id));
+            if (nuevas.length > 0) sugerenciasComida[mealId] = [...previas, ...nuevas];
+        }
+        return {
+            targets: data.targets,
+            distributions: data.distributions,
+            activeMeals: data.activeMeals || [],
+            activeGroups: data.activeGroups || [],
+            // Restauramos libre consumo guardado (si la pauta no trae, queda vacío).
+            libreConsumoIds: data.libreConsumoIds || [],
+            customMeals: data.customMeals || [],
+            mealTimes: data.mealTimes || {},
+            sugerenciasComida,
+        };
     }),
 
     toggleMeal: (mealId) => set((state) => ({

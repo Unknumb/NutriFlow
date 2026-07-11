@@ -14,9 +14,9 @@ export const PorcionesPage = () => {
     const { state, actions } = usePortions();
     const {
         activeTab, isSaving, hayPacienteActivo, hayPlanificacionActiva,
-        pautas, selectedPautaId, pautaSeleccionada, nombrePautaSugerido,
+        pautas, selectedPautaId, pautaSeleccionada, nombrePautaSugerido, dirty,
     } = state;
-    const { setActiveTab, resetDistributions, guardarPauta, setSelectedPautaId, nuevaPauta } = actions;
+    const { setActiveTab, resetDistributions, guardarPauta, seleccionarPauta, nuevaPauta } = actions;
 
     const [aviso, setAviso] = useState<{ ok: boolean; message: string } | null>(null);
     const [modalOpen, setModalOpen] = useState(false);
@@ -38,9 +38,13 @@ export const PorcionesPage = () => {
     const onSelectorChange = (value: string) => {
         if (value === 'nueva') {
             nuevaPauta();
-        } else {
-            setSelectedPautaId(value);
+            return;
         }
+        // Cargar otra pauta descarta los cambios locales: pedir confirmación.
+        if (dirty && !window.confirm('Tienes cambios sin guardar que se perderán al cargar otra pauta. ¿Continuar?')) {
+            return;
+        }
+        seleccionarPauta(value);
     };
 
     return (
@@ -67,6 +71,11 @@ export const PorcionesPage = () => {
                         </div>
                     </div>
                     <div className="flex flex-wrap items-center gap-2 md:justify-end">
+                        {dirty && (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#8a5a2a] bg-apricot/10 border border-apricot/40 rounded-md px-2 py-1">
+                                <AlertTriangle className="w-3 h-3" /> Cambios sin guardar
+                            </span>
+                        )}
                         {/* Selector de pautas de la planificación activa */}
                         <select
                             value={selectedPautaId ?? 'nueva'}

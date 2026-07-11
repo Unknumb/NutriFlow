@@ -7,9 +7,15 @@ vi.mock('lucide-react', () => ({
   Save: () => <span data-testid="icon-save" />,
 }));
 
+const PLANIFICACIONES = [
+  { id: 'plan-1', nombre: 'Planificación 1', calorias_totales: 1800, activa: false },
+  { id: 'plan-2', nombre: 'Planificación 2', calorias_totales: 2000, activa: true },
+];
+
 const BASE_PROPS = {
   open: true,
   suggestedName: 'Planificación 1',
+  planificaciones: [],
   isSaving: false,
   onClose: vi.fn(),
   onConfirm: vi.fn(),
@@ -91,13 +97,13 @@ describe('SavePlanificacionModal', () => {
     });
   });
 
-  describe('confirmación', () => {
-    it('clic en Guardar llama a onConfirm con el nombre escrito', () => {
+  describe('confirmación — crear nueva', () => {
+    it('clic en Guardar llama a onConfirm con mode create y el nombre escrito', () => {
       const onConfirm = vi.fn();
       render(<SavePlanificacionModal {...BASE_PROPS} onConfirm={onConfirm} />);
       fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Plan de entrenamiento' } });
       fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
-      expect(onConfirm).toHaveBeenCalledWith('Plan de entrenamiento');
+      expect(onConfirm).toHaveBeenCalledWith({ mode: 'create', nombre: 'Plan de entrenamiento' });
     });
 
     it('usa suggestedName como fallback cuando el input queda en blanco', () => {
@@ -111,7 +117,7 @@ describe('SavePlanificacionModal', () => {
       );
       fireEvent.change(screen.getByRole('textbox'), { target: { value: '   ' } });
       fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
-      expect(onConfirm).toHaveBeenCalledWith('Planificación 1');
+      expect(onConfirm).toHaveBeenCalledWith({ mode: 'create', nombre: 'Planificación 1' });
     });
 
     it('Enter en el input llama a onConfirm', () => {
@@ -124,7 +130,45 @@ describe('SavePlanificacionModal', () => {
         />,
       );
       fireEvent.keyDown(screen.getByRole('textbox'), { key: 'Enter' });
-      expect(onConfirm).toHaveBeenCalledWith('Planificación 1');
+      expect(onConfirm).toHaveBeenCalledWith({ mode: 'create', nombre: 'Planificación 1' });
+    });
+  });
+
+  describe('confirmación — sobrescribir existente', () => {
+    it('la opción de sobrescribir está deshabilitada sin planificaciones previas', () => {
+      render(<SavePlanificacionModal {...BASE_PROPS} planificaciones={[]} />);
+      const radios = screen.getAllByRole('radio');
+      expect(radios[1]).toBeDisabled();
+      expect(screen.getByText('El paciente aún no tiene planificaciones guardadas.')).toBeInTheDocument();
+    });
+
+    it('preselecciona la planificación activa del paciente en el selector', () => {
+      render(<SavePlanificacionModal {...BASE_PROPS} planificaciones={PLANIFICACIONES} />);
+      const select = screen.getByRole('combobox', { name: 'Planificación a sobrescribir' });
+      expect(select).toHaveValue('plan-2'); // plan-2 es la activa
+    });
+
+    it('al elegir sobrescribir, confirma con mode overwrite y el id seleccionado', () => {
+      const onConfirm = vi.fn();
+      render(
+        <SavePlanificacionModal
+          {...BASE_PROPS}
+          planificaciones={PLANIFICACIONES}
+          onConfirm={onConfirm}
+        />,
+      );
+      fireEvent.click(screen.getAllByRole('radio')[1]);
+      const select = screen.getByRole('combobox', { name: 'Planificación a sobrescribir' });
+      fireEvent.change(select, { target: { value: 'plan-1' } });
+      fireEvent.click(screen.getByRole('button', { name: 'Sobrescribir' }));
+      expect(onConfirm).toHaveBeenCalledWith({ mode: 'overwrite', planificacionId: 'plan-1' });
+    });
+
+    it('en modo sobrescribir el botón cambia su etiqueta a "Sobrescribir"', () => {
+      render(<SavePlanificacionModal {...BASE_PROPS} planificaciones={PLANIFICACIONES} />);
+      fireEvent.click(screen.getAllByRole('radio')[1]);
+      expect(screen.getByRole('button', { name: 'Sobrescribir' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Guardar' })).not.toBeInTheDocument();
     });
   });
 

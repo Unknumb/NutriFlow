@@ -77,6 +77,10 @@ const makeStoreReturnValue = (
     overrides: {
         targets?: Record<string, number>;
         distributions?: Record<string, Record<string, number>>;
+        dirty?: boolean;
+        selectedPautaId?: string | null;
+        loadedPautaId?: string | null;
+        autoSelectedPlanifId?: string | null;
     } = {},
 ) => ({
     targets: { cer: 2 },
@@ -87,6 +91,11 @@ const makeStoreReturnValue = (
     libreConsumoIds: [],
     customMeals: [],
     mealTimes: {},
+    sugerenciasComida: {},
+    dirty: false,
+    selectedPautaId: null,
+    loadedPautaId: null,
+    autoSelectedPlanifId: null,
     addCustomMeal: vi.fn(),
     removeCustomMeal: vi.fn(),
     setMealTime: vi.fn(),
@@ -98,6 +107,12 @@ const makeStoreReturnValue = (
     toggleMeal: vi.fn(),
     toggleGroup: vi.fn(),
     resetDistributions: vi.fn(),
+    removeSugerenciaComida: vi.fn(),
+    seleccionarPauta: vi.fn(),
+    marcarPautaGuardada: vi.fn(),
+    setLoadedPautaId: vi.fn(),
+    setAutoSelectedPlanifId: vi.fn(),
+    switchPatient: vi.fn(),
     ...overrides,
 });
 
@@ -111,6 +126,10 @@ interface SetupOptions {
     targets?: Record<string, number>;
     distributions?: Record<string, Record<string, number>>;
     pautas?: typeof PAUTAS;
+    dirty?: boolean;
+    selectedPautaId?: string | null;
+    loadedPautaId?: string | null;
+    pautaDetalle?: any;
 }
 
 const setupMocks = ({
@@ -119,6 +138,10 @@ const setupMocks = ({
     targets = { cer: 2 },
     distributions = {},
     pautas = PAUTAS,
+    dirty = false,
+    selectedPautaId = null,
+    loadedPautaId = null,
+    pautaDetalle = undefined,
 }: SetupOptions = {}) => {
     // useClinicalStore() — llamado sin selector en el hook
     vi.mocked(useClinicalStore).mockReturnValue({ activePatient } as any);
@@ -130,14 +153,14 @@ const setupMocks = ({
         isLoading: false,
     } as any);
 
-    // usePortionsStore() — devuelve estado controlado
-    vi.mocked(usePortionsStore).mockReturnValue(
-        makeStoreReturnValue({ targets, distributions }) as any,
-    );
+    // usePortionsStore() — devuelve estado controlado (se retorna para asserts)
+    const store = makeStoreReturnValue({ targets, distributions, dirty, selectedPautaId, loadedPautaId });
+    vi.mocked(usePortionsStore).mockReturnValue(store as any);
 
     // useQuery — diferencia las dos llamadas por la primera clave
     vi.mocked(useQuery).mockImplementation(({ queryKey }: any) => {
         if (queryKey[0] === 'pautas-lista') return { data: pautas } as any;
+        if (queryKey[0] === 'pauta-detalle') return { data: pautaDetalle } as any;
         return { data: undefined } as any;
     });
 
@@ -145,6 +168,8 @@ const setupMocks = ({
     vi.mocked(useQueryClient).mockReturnValue({
         invalidateQueries: vi.fn(),
     } as any);
+
+    return store;
 };
 
 // ---------------------------------------------------------------------------
@@ -289,6 +314,83 @@ describe('usePortions', () => {
     // -------------------------------------------------------------------------
     // 3. Filtrado de state.pautas (pautasDeActiva)
     // -------------------------------------------------------------------------
+
+    // -------------------------------------------------------------------------
+    // 3. Protección de cambios locales (dirty) — bug "azúcar vuelve a 0"
+    // -------------------------------------------------------------------------
+
+    describe('protección de cambios sin guardar (dirty)', () => {
+        const GRID_GUARDADO = {
+            estructura_grid_json: {
+                targets: { cer: 4 },
+                distributions: { desayuno: { cer: 1 } },
+                activeMeals: ['desayuno'],
+                activeGroups: ['cer'],
+            },
+        };
+
+        it('auto-selecciona la pauta más reciente de la planificación cuando el estado está limpio', () => {
+            const store = setupMocks({ dirty: false });
+            renderHook(() => usePortions());
+
+            expect(store.setAutoSelectedPlanifId).toHaveBeenCalledWith('plan-1');
+            // pauta-1 es la primera de la lista filtrada por plan-1
+            expect(store.seleccionarPauta).toHaveBeenCalledWith('pauta-1');
+        });
+
+        it('NO auto-selecciona pauta cuando hay cambios sin guardar (dirty=true)', () => {
+            const store = setupMocks({ dirty: true });
+            renderHook(() => usePortions());
+
+            expect(store.seleccionarPauta).not.toHaveBeenCalled();
+        });
+
+        it('carga el detalle de la pauta seleccionada al store cuando está limpio', () => {
+            const store = setupMocks({
+                dirty: false,
+                selectedPautaId: 'pauta-1',
+                loadedPautaId: null,
+                pautaDetalle: GRID_GUARDADO,
+            });
+            renderHook(() => usePortions());
+
+            expect(store.setInitialPortions).toHaveBeenCalledWith(
+                expect.objectContaining({ targets: { cer: 4 } }),
+            );
+            expect(store.setLoadedPautaId).toHaveBeenCalledWith('pauta-1');
+        });
+
+        it('NO pisa el store con la pauta guardada cuando dirty=true', () => {
+            const store = setupMocks({
+                dirty: true,
+                selectedPautaId: 'pauta-1',
+                loadedPautaId: null,
+                pautaDetalle: GRID_GUARDADO,
+            });
+            renderHook(() => usePortions());
+
+            expect(store.setInitialPortions).not.toHaveBeenCalled();
+        });
+
+        it('NO recarga una pauta que ya está cargada (loadedPautaId === selectedPautaId)', () => {
+            const store = setupMocks({
+                dirty: false,
+                selectedPautaId: 'pauta-1',
+                loadedPautaId: 'pauta-1',
+                pautaDetalle: GRID_GUARDADO,
+            });
+            renderHook(() => usePortions());
+
+            expect(store.setInitialPortions).not.toHaveBeenCalled();
+        });
+
+        it('registra el paciente activo en el store (switchPatient) al montar', () => {
+            const store = setupMocks();
+            renderHook(() => usePortions());
+
+            expect(store.switchPatient).toHaveBeenCalledWith('paciente-1');
+        });
+    });
 
     describe('state.pautas — filtrado por planificación activa', () => {
         it('retorna TODAS las pautas cuando planificacionActiva es null', () => {

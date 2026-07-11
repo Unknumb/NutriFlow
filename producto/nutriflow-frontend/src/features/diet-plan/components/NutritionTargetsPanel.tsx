@@ -1,9 +1,11 @@
-import { Target, RefreshCw, TriangleAlert } from 'lucide-react';
+import { Target, RefreshCw, TriangleAlert, Wand2 } from 'lucide-react';
 
 interface TargetsProps {
     targets: { kcal: number; prot: number; cho: number; fat: number };
     current: { kcal: number; prot: number; cho: number; fat: number };
     onSuggest?: () => void;
+    /** Completa lo que falta hasta las metas sin pisar lo ya colocado. */
+    onComplete?: () => void;
     onReset?: () => void;
 }
 
@@ -51,7 +53,7 @@ const BarraMacro = ({
     );
 };
 
-export const NutritionTargetsPanel = ({ targets, current, onSuggest, onReset }: TargetsProps) => {
+export const NutritionTargetsPanel = ({ targets, current, onSuggest, onComplete, onReset }: TargetsProps) => {
     return (
         <div className="col-span-full lg:col-span-3 space-y-4">
             {/* TARJETA 1: Inputs de Objetivos */}
@@ -71,6 +73,13 @@ export const NutritionTargetsPanel = ({ targets, current, onSuggest, onReset }: 
 
                     <button onClick={onSuggest} className="w-full bg-pine hover:bg-pine-soft text-white flex items-center justify-center gap-2 h-8 text-xs font-medium rounded-md transition-colors shadow-sm">
                         <RefreshCw className="w-3 h-3" /> Sugerir Distribución
+                    </button>
+                    <button
+                        onClick={onComplete}
+                        title="Completa lo que falta para llegar a las metas sin modificar las porciones que ya asignaste"
+                        className="w-full bg-white hover:bg-pine-soft/5 text-pine-soft border-2 border-pine flex items-center justify-center gap-2 h-8 text-xs font-bold rounded-md transition-colors"
+                    >
+                        <Wand2 className="w-3 h-3" /> Completar al 100%
                     </button>
                     <button onClick={onReset} className="w-full bg-white hover:bg-porcelain text-ink-soft border border-mist flex items-center justify-center gap-2 h-8 text-xs font-medium rounded-md transition-colors">
                         Resetear

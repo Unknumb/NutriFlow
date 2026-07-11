@@ -16,16 +16,26 @@ export interface PautaResumen {
 export const usePortions = () => {
     // 1. Estado de Navegación UI
     const [activeTab, setActiveTab] = useState<'tabla' | 'pauta' | 'opciones' | 'pdf'>('tabla');
-    // Pauta seleccionada en el selector (null = pauta nueva sin guardar).
-    const [selectedPautaId, setSelectedPautaId] = useState<string | null>(null);
     const queryClient = useQueryClient();
 
     // 2. Estado Global de Zustand
-    const { targets, distributions, activeMeals, activeGroups, customFoods, libreConsumoIds, customMeals, mealTimes, sugerenciasComida, addCustomMeal, removeCustomMeal, setMealTime, incrementPortion, decrementPortion, setPortion, removeTargetGroup, setInitialPortions, toggleMeal, toggleGroup, resetDistributions, removeSugerenciaComida } = usePortionsStore();
+    const {
+        targets, distributions, activeMeals, activeGroups, customFoods, libreConsumoIds, customMeals, mealTimes, sugerenciasComida,
+        dirty, selectedPautaId, loadedPautaId, autoSelectedPlanifId,
+        addCustomMeal, removeCustomMeal, setMealTime, incrementPortion, decrementPortion, setPortion, removeTargetGroup,
+        setInitialPortions, toggleMeal, toggleGroup, resetDistributions, removeSugerenciaComida,
+        seleccionarPauta, marcarPautaGuardada, setLoadedPautaId, setAutoSelectedPlanifId, switchPatient,
+    } = usePortionsStore();
 
     // 3. Datos del paciente conectado con backend
     const { activePatient } = useClinicalStore();
     usePaciente(activePatient?.id || '');
+
+    // El plan en construcción pertenece a un paciente: si cambió el paciente
+    // activo, se descarta el estado anterior (switchPatient es idempotente).
+    useEffect(() => {
+        switchPatient(activePatient?.id || null);
+    }, [activePatient?.id, switchPatient]);
 
     // Objetivos y planificación activa (fuente única; obligatoria para guardar).
     const { planificacionActiva, objetivos } = useObjetivosActivos();
@@ -54,15 +64,19 @@ export const usePortions = () => {
         (p) => !planificacionActiva || p.planificacion_id === planificacionActiva.id,
     );
 
-    // Al cambiar de paciente o de planificación activa, seleccionar por defecto
-    // la pauta más reciente de esa planificación (o "nueva" si no hay ninguna).
-    const [loadedKey, setLoadedKey] = useState<string | null>(null);
+    // Auto-selección de pauta: cuando se conoce la lista de pautas de la
+    // planificación activa se selecciona la más reciente, UNA sola vez por
+    // planificación, y solo si no hay trabajo local sin guardar (dirty). Antes
+    // esto corría en cada montaje y pisaba lo hecho en el Armador de Pautas.
     useEffect(() => {
+        if (!activePatient?.id || !planificacionActiva || pautasList === undefined) return;
+        if (autoSelectedPlanifId === planificacionActiva.id) return;
+        setAutoSelectedPlanifId(planificacionActiva.id);
+        if (dirty) return; // conserva los cambios del armador aún no guardados
         const defaultId = pautasDeActiva.length > 0 ? pautasDeActiva[0].id : null;
-        setSelectedPautaId(defaultId);
-        setLoadedKey(null); // fuerza recargar el detalle de la nueva selección
+        seleccionarPauta(defaultId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [activePatient?.id, planificacionActiva?.id]);
+    }, [activePatient?.id, planificacionActiva?.id, pautasList, autoSelectedPlanifId, dirty]);
 
     // 5. Cargar el detalle de la pauta seleccionada en el store de Zustand.
     const { data: pautaDetalle } = useQuery({
@@ -77,8 +91,10 @@ export const usePortions = () => {
 
     useEffect(() => {
         if (!selectedPautaId) return;
+        if (loadedPautaId === selectedPautaId) return; // ya cargada
+        if (dirty) return; // NUNCA pisar cambios locales sin guardar
         const grid = pautaDetalle?.estructura_grid_json;
-        if (pautaDetalle && grid && grid.targets && loadedKey !== selectedPautaId) {
+        if (pautaDetalle && grid && grid.targets) {
             setInitialPortions({
                 targets: grid.targets,
                 distributions: grid.distributions || {},
@@ -89,15 +105,11 @@ export const usePortions = () => {
                 mealTimes: grid.mealTimes || {},
                 sugerenciasComida: grid.sugerenciasComida || {}
             });
-            setLoadedKey(selectedPautaId);
+            setLoadedPautaId(selectedPautaId);
         }
-    }, [pautaDetalle, selectedPautaId, loadedKey, setInitialPortions]);
+    }, [pautaDetalle, selectedPautaId, loadedPautaId, dirty, setInitialPortions, setLoadedPautaId]);
 
-
-
-    // 6. Mutación para guardar la pizarra actual (removida por no ser leída)
-
-    // 7. Cálculos Derivados (Totales y Balances)
+    // 6. Cálculos Derivados (Totales y Balances)
     const getGroupTotal = (groupId: string) => {
         return Object.values(distributions).reduce((acc, meal) => acc + (meal[groupId] || 0), 0);
     };
@@ -149,10 +161,11 @@ export const usePortions = () => {
             });
             const nuevaId = data?.pautaId;
             if (nuevaId) {
-                setSelectedPautaId(nuevaId);
-                setLoadedKey(nuevaId); // ya está cargada en el store, no recargar
+                // Queda como seleccionada/cargada y el estado local pasa a limpio.
+                marcarPautaGuardada(nuevaId);
             }
             queryClient.invalidateQueries({ queryKey: ['pautas-lista', activePatient.id] });
+            queryClient.invalidateQueries({ queryKey: ['pauta-detalle', nuevaId || selectedPautaId] });
             // Las pautas se muestran anidadas en planificaciones (ficha del paciente).
             queryClient.invalidateQueries({ queryKey: ['planificaciones'] });
             return { ok: true, message: 'Pauta guardada en la ficha del paciente.' };
@@ -166,8 +179,7 @@ export const usePortions = () => {
 
     // Empieza una pauta nueva (vacía) dentro de la planificación activa.
     const nuevaPauta = () => {
-        setSelectedPautaId(null);
-        setLoadedKey(null);
+        seleccionarPauta(null);
         resetDistributions();
     };
 
@@ -178,6 +190,7 @@ export const usePortions = () => {
     return {
         state: {
             activeTab, patientContext, targets, distributions, activeMeals, activeGroups, customFoods, customMeals, mealTimes, libreConsumoIds, sugerenciasComida, isSaving,
+            dirty,
             hayPacienteActivo: !!activePatient?.id,
             hayPlanificacionActiva: !!planificacionActiva,
             pautas: pautasDeActiva,
@@ -185,7 +198,7 @@ export const usePortions = () => {
             pautaSeleccionada,
             nombrePautaSugerido,
         },
-        actions: { setActiveTab, incrementPortion, decrementPortion, setPortion, guardarPauta, removeTargetGroup, toggleMeal, toggleGroup, resetDistributions, addCustomMeal, removeCustomMeal, setMealTime, setSelectedPautaId, nuevaPauta, removeSugerenciaComida },
+        actions: { setActiveTab, incrementPortion, decrementPortion, setPortion, guardarPauta, removeTargetGroup, toggleMeal, toggleGroup, resetDistributions, addCustomMeal, removeCustomMeal, setMealTime, seleccionarPauta, nuevaPauta, removeSugerenciaComida },
         computed: { getGroupTotal, getGroupBalance }
     };
 };

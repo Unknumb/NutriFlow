@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useClinicalStore } from '../../../shared/store/useClinicalStore';
-import { useCreatePlanificacion } from '../../planificaciones/hooks/usePlanificaciones';
+import { useCreatePlanificacion, useUpdatePlanificacion } from '../../planificaciones/hooks/usePlanificaciones';
 
 // Claves de localStorage namespaced por paciente, para no mezclar los macros
 // editados entre pacientes distintos.
@@ -67,6 +67,7 @@ export const useMacronutrientsSetup = () => {
     }, [macrosPct, tmbPromedio]);
 
     const createPlanificacion = useCreatePlanificacion();
+    const updatePlanificacion = useUpdatePlanificacion();
     const setActivePlanificacionId = useClinicalStore((state) => state.setActivePlanificacionId);
 
     // Ajuste MANUAL: mover un macro cambia solo ese macro; la suma puede quedar
@@ -97,27 +98,37 @@ export const useMacronutrientsSetup = () => {
         updateFromGrams(key, gPerKg * pesoActivo);
     }, [updateFromGrams, pesoActivo]);
 
-    const handleSave = (nombre?: string) => {
+    // Valida que se pueda persistir y arma calorías/macros, común a crear y
+    // sobrescribir. Devuelve null (con aviso) si el contexto aún no está listo.
+    const buildPayload = () => {
         if (!activePatient?.id) {
             alert('Selecciona un paciente primero');
-            return;
+            return null;
         }
         // No se guarda una planificación sin TMB real calculada: evita persistir
         // calorías fabricadas/arrastradas. La TMB se calcula automáticamente al
         // activar el paciente (useSyncActivePatientTmb); si aún es 0, no está lista.
         if (tmbPromedio <= 0 || pesoActivo <= 0) {
             alert('Aún no se ha calculado la TMB del paciente. Espera unos segundos o revísala en el Dashboard antes de guardar.');
-            return;
+            return null;
         }
-        createPlanificacion.mutate({
-            paciente_id: activePatient.id,
-            nombre: nombre?.trim() || undefined,
+        return {
             calorias_totales: totals.summary.percent === 100 ? totals.prot.kcal + totals.cho.kcal + totals.fat.kcal : tmbPromedio,
             distribucion_macros: {
                 proteina:      macrosPct.prot,
                 grasa:         macrosPct.fat,
                 carbohidratos: macrosPct.cho,
             }
+        };
+    };
+
+    const handleSave = (nombre?: string) => {
+        const payload = buildPayload();
+        if (!payload || !activePatient?.id) return;
+        createPlanificacion.mutate({
+            paciente_id: activePatient.id,
+            nombre: nombre?.trim() || undefined,
+            ...payload,
         }, {
             onSuccess: (data: any) => {
                 // El backend marca la nueva planificación como activa y devuelve su id.
@@ -125,6 +136,16 @@ export const useMacronutrientsSetup = () => {
                     setActivePlanificacionId(data.id);
                 }
             }
+        });
+    };
+
+    // Sobrescribe una planificación existente del paciente con los macros
+    // actuales; el backend la deja como la activa del paciente.
+    const handleOverwrite = (planificacionId: string) => {
+        const payload = buildPayload();
+        if (!payload) return;
+        updatePlanificacion.mutate({ id: planificacionId, data: payload }, {
+            onSuccess: () => setActivePlanificacionId(planificacionId),
         });
     };
 
@@ -179,10 +200,10 @@ export const useMacronutrientsSetup = () => {
     return {
         context: { pesoActivo, tmbPromedio },
         inputs: { protGkg, protPct: macrosPct.prot, choPct, fatPct },
-        actions: { setMacro, updateFromGrams, updateFromGramsPerKg, setProtGkg, setChoPct, setFatPct, handleReset, handleSave, autoBalance },
+        actions: { setMacro, updateFromGrams, updateFromGramsPerKg, setProtGkg, setChoPct, setFatPct, handleReset, handleSave, handleOverwrite, autoBalance },
         totals,
         isBalanced,
         canSave,
-        isSaving: createPlanificacion.isPending
+        isSaving: createPlanificacion.isPending || updatePlanificacion.isPending
     };
 };

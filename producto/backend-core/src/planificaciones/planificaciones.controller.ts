@@ -16,6 +16,7 @@ import {
 } from '../auth/decorators/current-user.decorator';
 
 import { CreatePlanificacionDto } from './dto/create-planificacion.dto';
+import { UpdatePlanificacionDto } from './dto/update-planificacion.dto';
 
 @Controller('planificaciones')
 @UseGuards(JwtAuthGuard)
@@ -43,6 +44,19 @@ export class PlanificacionesController {
   @Patch(':id/activa')
   setActiva(@Param('id') id: string, @CurrentUser() user: AuthUser) {
     return this.planificacionesService.setActiva(id, user.userId);
+  }
+
+  @Patch(':id')
+  update(
+    @Param('id') id: string,
+    @Body() updatePlanificacionDto: UpdatePlanificacionDto,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.planificacionesService.update(
+      id,
+      updatePlanificacionDto,
+      user.userId,
+    );
   }
 
   @Delete(':id')

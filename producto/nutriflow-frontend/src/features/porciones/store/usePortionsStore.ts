@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import { FoodGroupDef } from '../../diet-plan/constants/foodGroups';
 
 export interface CustomFoodDef extends FoodGroupDef {
@@ -54,28 +55,59 @@ export interface PortionsState {
     toggleMeal: (mealId: string) => void;
     toggleGroup: (groupId: string) => void;
     removeTargetGroup: (groupId: string) => void;
+
+    /** true cuando hay cambios locales (armador o porciones) que aún no se han
+     *  guardado en una pauta. Mientras esté activo, NO se debe pisar el estado
+     *  cargando una pauta guardada (causa raíz del bug "azúcar vuelve a 0"). */
+    dirty: boolean;
+    /** Pauta seleccionada en Distribución de Porciones (null = pauta nueva). */
+    selectedPautaId: string | null;
+    /** Última pauta cuyo detalle ya se cargó al store; evita recargas dobles. */
+    loadedPautaId: string | null;
+    setLoadedPautaId: (id: string | null) => void;
+    /** Planificación para la que ya se hizo la auto-selección de pauta. */
+    autoSelectedPlanifId: string | null;
+    setAutoSelectedPlanifId: (id: string | null) => void;
+    /** Selección explícita de pauta: descarta cambios locales y fuerza recarga. */
+    seleccionarPauta: (id: string | null) => void;
+    /** Tras guardar: deja la pauta como seleccionada/cargada y limpia dirty. */
+    marcarPautaGuardada: (id: string) => void;
     loadedPatientId: string | null;
     setLoadedPatientId: (id: string | null) => void;
+    /** Descarta el plan en construcción si cambia el paciente activo (barrera
+     *  anti-mezcla entre pacientes). Idempotente para el mismo paciente. */
+    switchPatient: (patientId: string | null) => void;
 }
 
-export const usePortionsStore = create<PortionsState>((set) => ({
-    // Las metas diarias calculadas en el armador de pautas
-    targets: {},
-    // El estado actual de porciones por comida
-    distributions: {},
-    // Grupos y comidas activas
+/** Estado clínico reseteable al cambiar de paciente. */
+const PLAN_INICIAL = {
+    targets: {} as Record<string, number>,
+    distributions: {} as Record<string, Record<string, number>>,
     activeMeals: ['desayuno', 'colacion_am', 'almuerzo', 'colacion_pm', 'once', 'cena'],
     activeGroups: ['cer', 'veg', 'fru', 'cbg', 'lmg', 'ace'],
-    // Alimentos personalizados añadidos
-    customFoods: [],
-    // Tiempos de comida personalizados y overrides de horario
-    customMeals: [],
-    mealTimes: {},
+    customFoods: [] as CustomFoodDef[],
+    customMeals: [] as { id: string; name: string; time: string }[],
+    mealTimes: {} as Record<string, string>,
+    libreConsumoIds: [] as string[],
+    sugerenciasComida: {} as Record<string, SugerenciaComida[]>,
+    dirty: false,
+    selectedPautaId: null as string | null,
+    loadedPautaId: null as string | null,
+    autoSelectedPlanifId: null as string | null,
+};
+
+export const usePortionsStore = create<PortionsState>()(
+    persist(
+        (set) => ({
+    // Las metas diarias calculadas en el armador de pautas + distribución por
+    // comida. Se persisten en localStorage para que un F5 no pierda el trabajo.
+    ...PLAN_INICIAL,
     addCustomMeal: (name, time) => set((state) => {
         const id = 'meal-' + Date.now();
         return {
             customMeals: [...state.customMeals, { id, name: name.trim(), time: time.trim() }],
             activeMeals: [...state.activeMeals, id],
+            dirty: true,
         };
     }),
     removeCustomMeal: (id) => set((state) => {
@@ -88,23 +120,43 @@ export const usePortionsStore = create<PortionsState>((set) => ({
             activeMeals: state.activeMeals.filter((m) => m !== id),
             distributions: newDistributions,
             mealTimes: newMealTimes,
+            dirty: true,
         };
     }),
     setMealTime: (mealId, time) => set((state) => ({
         mealTimes: { ...state.mealTimes, [mealId]: time },
+        dirty: true,
     })),
     // Por defecto ningún grupo es libre consumo; la nutricionista lo activa por grupo.
-    libreConsumoIds: [],
     toggleLibreConsumo: (groupId) => set((state) => ({
         libreConsumoIds: state.libreConsumoIds.includes(groupId)
             ? state.libreConsumoIds.filter((id) => id !== groupId)
             : [...state.libreConsumoIds, groupId],
+        dirty: true,
     })),
     loadedPatientId: null,
     setLoadedPatientId: (id) => set({ loadedPatientId: id }),
+    switchPatient: (patientId) =>
+        set((state) =>
+            state.loadedPatientId === patientId
+                ? state
+                : { ...PLAN_INICIAL, loadedPatientId: patientId }
+        ),
+
+    setLoadedPautaId: (id) => set({ loadedPautaId: id }),
+    setAutoSelectedPlanifId: (id) => set({ autoSelectedPlanifId: id }),
+    seleccionarPauta: (id) => set({
+        selectedPautaId: id,
+        loadedPautaId: null,
+        dirty: false,
+    }),
+    marcarPautaGuardada: (id) => set({
+        selectedPautaId: id,
+        loadedPautaId: id,
+        dirty: false,
+    }),
 
     // Sugerencias del generador por comida (persisten en estructura_grid_json).
-    sugerenciasComida: {},
     addSugerenciaComida: (mealId, sugerencia) => set((state) => {
         const actuales = state.sugerenciasComida[mealId] || [];
         if (actuales.some((s) => s.id === sugerencia.id)) return {};
@@ -113,6 +165,7 @@ export const usePortionsStore = create<PortionsState>((set) => ({
                 ...state.sugerenciasComida,
                 [mealId]: [...actuales, sugerencia],
             },
+            dirty: true,
         };
     }),
     removeSugerenciaComida: (mealId, sugerenciaId) => set((state) => ({
@@ -120,6 +173,7 @@ export const usePortionsStore = create<PortionsState>((set) => ({
             ...state.sugerenciasComida,
             [mealId]: (state.sugerenciasComida[mealId] || []).filter((s) => s.id !== sugerenciaId),
         },
+        dirty: true,
     })),
 
     setInitialPortions: (data) => set((state) => {
@@ -143,19 +197,23 @@ export const usePortionsStore = create<PortionsState>((set) => ({
             customMeals: data.customMeals || [],
             mealTimes: data.mealTimes || {},
             sugerenciasComida,
+            // Lo cargado refleja lo guardado en la pauta: estado limpio.
+            dirty: false,
         };
     }),
 
     toggleMeal: (mealId) => set((state) => ({
         activeMeals: state.activeMeals.includes(mealId)
             ? state.activeMeals.filter(id => id !== mealId)
-            : [...state.activeMeals, mealId]
+            : [...state.activeMeals, mealId],
+        dirty: true,
     })),
 
     toggleGroup: (groupId) => set((state) => ({
         activeGroups: state.activeGroups.includes(groupId)
             ? state.activeGroups.filter(id => id !== groupId)
-            : [...state.activeGroups, groupId]
+            : [...state.activeGroups, groupId],
+        dirty: true,
     })),
 
     removeTargetGroup: (groupId) => set((state) => {
@@ -169,7 +227,8 @@ export const usePortionsStore = create<PortionsState>((set) => ({
         });
         return {
             targets: newTargets,
-            distributions: newDistributions
+            distributions: newDistributions,
+            dirty: true,
         };
     }),
 
@@ -180,13 +239,14 @@ export const usePortionsStore = create<PortionsState>((set) => ({
                 ...(state.distributions[mealId] || {}),
                 [groupId]: (state.distributions[mealId]?.[groupId] || 0) + 0.5
             }
-        }
+        },
+        dirty: true,
     })),
-    
+
     decrementPortion: (mealId, groupId) => set((state) => {
         const current = state.distributions[mealId]?.[groupId] || 0;
         if (current <= 0) return state; // Evita valores negativos
-        
+
         return {
             distributions: {
                 ...state.distributions,
@@ -194,7 +254,8 @@ export const usePortionsStore = create<PortionsState>((set) => ({
                     ...state.distributions[mealId],
                     [groupId]: Math.max(0, current - 0.5)
                 }
-            }
+            },
+            dirty: true,
         };
     }),
 
@@ -205,16 +266,18 @@ export const usePortionsStore = create<PortionsState>((set) => ({
                 ...(state.distributions[mealId] || {}),
                 [groupId]: Math.max(0, value)
             }
-        }
+        },
+        dirty: true,
     })),
-    
+
     incrementTarget: (groupId) => set((state) => ({
         targets: {
             ...state.targets,
             [groupId]: (state.targets[groupId] || 0) + 0.5
-        }
+        },
+        dirty: true,
     })),
-    
+
     decrementTarget: (groupId) => set((state) => {
         const current = state.targets[groupId] || 0;
         if (current <= 0) return state;
@@ -222,16 +285,18 @@ export const usePortionsStore = create<PortionsState>((set) => ({
             targets: {
                 ...state.targets,
                 [groupId]: current - 0.5
-            }
+            },
+            dirty: true,
         };
     }),
 
-    resetPlan: () => set({ targets: {} }),
-    resetDistributions: () => set({ distributions: {}, sugerenciasComida: {} }),
-    setTargets: (newTargets) => set({ targets: newTargets }),
-    addCustomFood: (food) => set((state) => ({ customFoods: [...state.customFoods, food] })),
+    resetPlan: () => set({ targets: {}, dirty: true }),
+    resetDistributions: () => set({ distributions: {}, sugerenciasComida: {}, dirty: true }),
+    setTargets: (newTargets) => set({ targets: newTargets, dirty: true }),
+    addCustomFood: (food) => set((state) => ({ customFoods: [...state.customFoods, food], dirty: true })),
     updateCustomFood: (id, data) => set((state) => ({
         customFoods: state.customFoods.map(f => f.id === id ? { ...f, ...data } : f),
+        dirty: true,
     })),
     removeCustomFood: (id) => set((state) => {
         // Also remove its portion distributions and targets
@@ -244,7 +309,32 @@ export const usePortionsStore = create<PortionsState>((set) => ({
         return {
             customFoods: state.customFoods.filter(f => f.id !== id),
             targets: newTargets,
-            distributions: newDistributions
+            distributions: newDistributions,
+            dirty: true,
         };
     })
-}));
+        }),
+        {
+            name: 'portions-storage', // nombre en localStorage
+            // Se persiste el plan en construcción completo (scopeado al paciente
+            // vía loadedPatientId + switchPatient) para que un F5 o el cierre de
+            // la pestaña no pierdan el trabajo del armador/porciones.
+            partialize: (state) => ({
+                targets: state.targets,
+                distributions: state.distributions,
+                activeMeals: state.activeMeals,
+                activeGroups: state.activeGroups,
+                customFoods: state.customFoods,
+                customMeals: state.customMeals,
+                mealTimes: state.mealTimes,
+                libreConsumoIds: state.libreConsumoIds,
+                sugerenciasComida: state.sugerenciasComida,
+                dirty: state.dirty,
+                selectedPautaId: state.selectedPautaId,
+                loadedPautaId: state.loadedPautaId,
+                autoSelectedPlanifId: state.autoSelectedPlanifId,
+                loadedPatientId: state.loadedPatientId,
+            }),
+        }
+    )
+);

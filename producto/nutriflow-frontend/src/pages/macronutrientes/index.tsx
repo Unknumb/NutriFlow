@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { MacronutrientSetupCard } from "../../features/macronutrients/components/MacronutrientSetupCard";
 import { MacronutrientsChartsColumn } from "../../features/macronutrients/components/MacronutrientsChartsColumn";
 import { MacronutrientsHeader } from "../../features/macronutrients/components/MacronutrientsHeader";
-import { SavePlanificacionModal } from "../../features/macronutrients/components/SavePlanificacionModal";
+import { SavePlanificacionModal, SaveDecision } from "../../features/macronutrients/components/SavePlanificacionModal";
 import { useMacronutrientsSetup } from "../../features/macronutrients/hooks/useMacronutrientsSetup";
 import { usePlanificaciones } from "../../features/planificaciones/hooks/usePlanificaciones";
 import { useClinicalStore } from "../../shared/store/useClinicalStore";
@@ -19,16 +19,22 @@ export const MacronutrientesPage = () => {
     // 2. Ejecutamos nuestra lógica de cálculos
     const setup = useMacronutrientsSetup();
 
-    // 3. Modal de nombre. El sugerido es "Planificación N" según las del paciente activo.
+    // 3. Modal de guardado: crear nueva ("Planificación N" sugerido) o
+    //    sobrescribir una de las planificaciones existentes del paciente.
     const [modalOpen, setModalOpen] = useState(false);
     const { data: planificaciones } = usePlanificaciones();
-    const suggestedName = useMemo(() => {
-        const delPaciente = (planificaciones || []).filter((p) => p.paciente_id === activePatient?.id);
-        return `Planificación ${delPaciente.length + 1}`;
-    }, [planificaciones, activePatient?.id]);
+    const planificacionesDelPaciente = useMemo(
+        () => (planificaciones || []).filter((p) => p.paciente_id === activePatient?.id),
+        [planificaciones, activePatient?.id],
+    );
+    const suggestedName = `Planificación ${planificacionesDelPaciente.length + 1}`;
 
-    const handleConfirmSave = (nombre: string) => {
-        setup.actions.handleSave(nombre);
+    const handleConfirmSave = (decision: SaveDecision) => {
+        if (decision.mode === "overwrite") {
+            setup.actions.handleOverwrite(decision.planificacionId);
+        } else {
+            setup.actions.handleSave(decision.nombre);
+        }
         setModalOpen(false);
     };
 
@@ -67,6 +73,12 @@ export const MacronutrientesPage = () => {
             <SavePlanificacionModal
                 open={modalOpen}
                 suggestedName={suggestedName}
+                planificaciones={planificacionesDelPaciente.map((p) => ({
+                    id: p.id,
+                    nombre: p.nombre,
+                    calorias_totales: p.calorias_totales,
+                    activa: p.activa,
+                }))}
                 isSaving={setup.isSaving}
                 onClose={() => setModalOpen(false)}
                 onConfirm={handleConfirmSave}

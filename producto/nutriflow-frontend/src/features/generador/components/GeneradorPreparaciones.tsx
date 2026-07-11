@@ -10,7 +10,7 @@ import { usePacientes } from '../../pacientes/hooks/usePacientes';
 import { useBuscarAlimentos } from '../../alimentos/hooks/useBuscarAlimentos';
 import { useDebouncedValue } from '../../../shared/hooks/useDebouncedValue';
 import { TIPO_COMIDA_LABELS, type TipoComida } from '../../preparaciones/types/preparacion.types';
-import { MEALS, NUTRITION_GROUPS } from '../../porciones/constants';
+import { comidasOrdenadas, NUTRITION_GROUPS } from '../../porciones/constants';
 import { traducirPorcionesParaMath, GRUPO_A_MATH } from '../../porciones/gruposMath';
 import {
   RESTRICCIONES_DIETETICAS,
@@ -197,15 +197,18 @@ export const GeneradorPreparaciones: React.FC = () => {
   const [busquedaBiblioteca, setBusquedaBiblioteca] = useState('');
   const [filtroTiempo, setFiltroTiempo] = useState<'todos' | TipoComida>('todos');
 
-  const { distributions, activeMeals, sugerenciasComida, addSugerenciaComida } = usePortionsStore();
+  const { distributions, activeMeals, customMeals, mealTimes, sugerenciasComida, addSugerenciaComida } = usePortionsStore();
   const { mutate, data: menusGenerados, isPending, isError } = useGenerarMenu();
   const { data: preparaciones, isLoading: cargandoBiblioteca } = usePreparaciones();
   const { data: pacientes } = usePacientes();
   const activePatient = useClinicalStore((s) => s.activePatient);
 
+  // Comidas activas resueltas y ordenadas por horario, INCLUYENDO las
+  // personalizadas de la pizarra (ej. "Comida preentreno"): también se puede
+  // generar para ellas — sin filtro por tipo, solo por porciones.
   const comidasDisponibles = useMemo(
-    () => MEALS.filter((m) => activeMeals.includes(m.id)),
-    [activeMeals],
+    () => comidasOrdenadas(activeMeals, customMeals, mealTimes),
+    [activeMeals, customMeals, mealTimes],
   );
 
   // Comida sobre la que se generan las sugerencias (sus porciones alimentan al
@@ -298,7 +301,7 @@ export const GeneradorPreparaciones: React.FC = () => {
 
   const tienePorciones = porcionesComida.length > 0;
   const tipoComidaGenerar = COMIDA_A_TIPO[comidaGenerar];
-  const nombreComidaGenerar = MEALS.find((m) => m.id === comidaGenerar)?.name ?? 'la comida';
+  const nombreComidaGenerar = comidasDisponibles.find((m) => m.id === comidaGenerar)?.name ?? 'la comida';
   const idsEnPauta = useMemo(
     () => new Set((sugerenciasComida[comidaGenerar] || []).map((s) => s.id)),
     [sugerenciasComida, comidaGenerar],
@@ -395,7 +398,7 @@ export const GeneradorPreparaciones: React.FC = () => {
                 <div className="bg-white rounded-card border border-mist overflow-hidden shadow-sm">
                   <div className="flex items-center gap-2 px-4 py-3 border-b border-mist/70">
                     <span className="text-sm font-semibold text-ink">
-                      {MEALS.find((m) => m.id === comidaGenerar)?.name ?? 'Comida'}
+                      {nombreComidaGenerar}
                     </span>
                     <span className="ml-auto text-xs text-pine-soft font-medium bg-pine-soft/5 px-2 py-0.5 rounded-full tnum">
                       {porcionesComida.reduce((acc, [, c]) => acc + c, 0)} porciones

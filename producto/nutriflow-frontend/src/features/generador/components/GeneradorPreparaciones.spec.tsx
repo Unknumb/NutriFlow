@@ -52,17 +52,23 @@ vi.mock('../../preparaciones/types/preparacion.types', () => ({
   },
 }));
 
-vi.mock('../../porciones/constants', () => ({
-  MEALS: [
+vi.mock('../../porciones/constants', () => {
+  const MEALS = [
     { id: 'desayuno', name: 'Desayuno', time: '07:00' },
     { id: 'almuerzo', name: 'Almuerzo', time: '13:00' },
     { id: 'once', name: 'Once', time: '18:30' },
     { id: 'cena', name: 'Cena', time: '21:00' },
-  ],
-  NUTRITION_GROUPS: [
-    { id: 'fru', label: 'Frutas', emoji: '🍎', textBtn: 'text-red-700' },
-  ],
-}));
+  ];
+  return {
+    MEALS,
+    // Misma semántica que la real: activas (predefinidas + personalizadas).
+    comidasOrdenadas: (activeMeals: string[], customMeals: { id: string; name: string; time: string }[] = []) =>
+      [...MEALS, ...customMeals].filter((m) => activeMeals.includes(m.id)),
+    NUTRITION_GROUPS: [
+      { id: 'fru', label: 'Frutas', emoji: '🍎', textBtn: 'text-red-700' },
+    ],
+  };
+});
 
 vi.mock('../constants/restricciones', () => ({
   RESTRICCIONES_DIETETICAS: ['vegetariano', 'vegano', 'sin_gluten'],
@@ -138,6 +144,8 @@ const DISTRIBUTIONS_WITH_PORCIONES = { almuerzo: { fru: 2 } };
 const storeState = (overrides: Record<string, unknown> = {}) => ({
   distributions: DISTRIBUTIONS_EMPTY,
   activeMeals: ['desayuno', 'almuerzo', 'once', 'cena'],
+  customMeals: [],
+  mealTimes: {},
   sugerenciasComida: {},
   addSugerenciaComida: mockAddSugerenciaComida,
   ...overrides,
@@ -216,6 +224,32 @@ describe('GeneradorPreparaciones', () => {
       expect(
         screen.getByText(/Solo se sugieren preparaciones de tipo Almuerzo/),
       ).toBeInTheDocument();
+    });
+
+    it('las comidas personalizadas aparecen en el selector y no filtran por tipo', () => {
+      mockUsePortionsStore.mockReturnValue(
+        storeState({
+          activeMeals: ['desayuno', 'almuerzo', 'meal-99'],
+          customMeals: [{ id: 'meal-99', name: 'Comida preentreno', time: '17:00' }],
+          distributions: { 'meal-99': { fru: 2 } },
+        }),
+      );
+      render(<GeneradorPreparaciones />);
+      const opcion = screen.getByRole('option', { name: 'Comida preentreno' });
+      expect(opcion).toBeInTheDocument();
+
+      fireEvent.change(screen.getByDisplayValue('Almuerzo'), {
+        target: { value: 'meal-99' },
+      });
+      expect(
+        screen.getByText('Este tiempo de comida no filtra por tipo de preparación'),
+      ).toBeInTheDocument();
+
+      // Genera sin tipo_comida (undefined = sin filtro) para la comida personalizada
+      fireEvent.click(screen.getByRole('button', { name: /Generar Sugerencias/i }));
+      expect(mockMutate).toHaveBeenCalledWith(
+        expect.objectContaining({ tipo_comida: undefined }),
+      );
     });
 
     it('el botón "Generar Sugerencias" está deshabilitado sin porciones', () => {

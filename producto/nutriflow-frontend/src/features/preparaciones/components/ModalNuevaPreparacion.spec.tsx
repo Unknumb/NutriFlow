@@ -227,11 +227,28 @@ describe('ModalNuevaPreparacion', () => {
   });
 
   describe('búsqueda de alimentos', () => {
-    it('muestra el aviso inicial antes de buscar', () => {
+    it('lista el catálogo sin necesidad de filtro (permitirSinFiltro)', () => {
+      mockUseBuscarAlimentos.mockReturnValue({
+        data: { items: [ALIMENTO_AVENA], total: 1 },
+        isFetching: false,
+        isError: false,
+      });
       render(<ModalNuevaPreparacion isOpen={true} onClose={vi.fn()} />);
-      expect(
-        screen.getByText('Escribe un nombre o elige una categoría para buscar'),
-      ).toBeInTheDocument();
+      // Sin escribir ni elegir categoría, ya se muestran alimentos
+      expect(screen.getByText('Avena')).toBeInTheDocument();
+      expect(mockUseBuscarAlimentos).toHaveBeenCalledWith(
+        expect.objectContaining({ permitirSinFiltro: true }),
+      );
+    });
+
+    it('indica cuando hay más resultados que los mostrados', () => {
+      mockUseBuscarAlimentos.mockReturnValue({
+        data: { items: [ALIMENTO_AVENA], total: 885 },
+        isFetching: false,
+        isError: false,
+      });
+      render(<ModalNuevaPreparacion isOpen={true} onClose={vi.fn()} />);
+      expect(screen.getByText(/Mostrando 1 de 885 — escribe para afinar/)).toBeInTheDocument();
     });
 
     it('muestra resultados cuando hay filtro activo y useBuscarAlimentos devuelve items', () => {

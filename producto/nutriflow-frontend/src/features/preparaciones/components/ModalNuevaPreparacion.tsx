@@ -106,8 +106,10 @@ const FormularioPreparacion: React.FC<{
   } = useBuscarAlimentos({
     search: busquedaDebounced,
     categoria: categoriaFiltro,
+    // Sin texto ni categoría se navega el catálogo completo paginado, para que
+    // "Todas las categorías" liste alimentos en vez de quedar en blanco.
+    permitirSinFiltro: true,
   });
-  const hayFiltroActivo = busquedaDebounced.trim().length > 0 || !!categoriaFiltro;
 
   // --- Imagen ---
   const [imagenFile, setImagenFile] = useState<File | null>(null);
@@ -359,9 +361,9 @@ const FormularioPreparacion: React.FC<{
               </select>
 
               <div className="border border-mist rounded-card overflow-hidden flex-1 max-h-[300px] overflow-y-auto">
-                {!hayFiltroActivo ? (
+                {buscando && alimentosEncontrados.length === 0 ? (
                   <div className="p-4 text-center text-ink-soft text-sm">
-                    Escribe un nombre o elige una categoría para buscar
+                    Cargando alimentos...
                   </div>
                 ) : errorBusqueda ? (
                   <div className="p-4 text-center text-clinical-red text-sm">
@@ -404,7 +406,11 @@ const FormularioPreparacion: React.FC<{
                     </ul>
                     <div className="p-2 border-t border-mist/70 bg-porcelain flex items-center justify-between">
                       <span className="text-[11px] text-ink-soft/60 pl-1">
-                        {resultados ? `${resultados.total} resultado${resultados.total === 1 ? '' : 's'}` : ''}
+                        {resultados
+                          ? resultados.total > alimentosEncontrados.length
+                            ? `Mostrando ${alimentosEncontrados.length} de ${resultados.total} — escribe para afinar`
+                            : `${resultados.total} resultado${resultados.total === 1 ? '' : 's'}`
+                          : ''}
                       </span>
                       <button
                         onClick={() => setModalAlimentoAbierto(true)}

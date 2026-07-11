@@ -5,6 +5,7 @@ import { NutritionTargetsPanel } from './NutritionTargetsPanel';
 vi.mock('lucide-react', () => ({
   Target: () => <span data-testid="icon-target" />,
   RefreshCw: () => <span data-testid="icon-refresh" />,
+  TriangleAlert: () => <span data-testid="icon-alerta" />,
 }));
 
 const TARGETS = { kcal: 2000, prot: 150, cho: 250, fat: 60 };
@@ -54,15 +55,34 @@ describe('NutritionTargetsPanel', () => {
       expect(textos50).toHaveLength(4);
     });
 
-    it('clampea a 100% cuando current supera el target', () => {
+    it('muestra el % real y el exceso cuando current supera el target', () => {
       render(
         <NutritionTargetsPanel
           targets={{ kcal: 200, prot: 100, cho: 100, fat: 50 }}
           current={{ kcal: 300, prot: 150, cho: 150, fat: 80 }}
         />,
       );
-      const textos100 = screen.getAllByText('100%');
-      expect(textos100).toHaveLength(4);
+      // kcal: 300/200 = 150%, exceso +100
+      expect(screen.getByText('150% · +100 sobre la meta')).toBeInTheDocument();
+      // prot y cho: 150/100 = 150%, exceso +50g
+      expect(screen.getAllByText('150% · +50g sobre la meta')).toHaveLength(2);
+      // fat: 80/50 = 160%, exceso +30g
+      expect(screen.getByText('160% · +30g sobre la meta')).toBeInTheDocument();
+      // Icono de alerta en las 4 barras
+      expect(screen.getAllByTestId('icon-alerta')).toHaveLength(4);
+      // El valor mostrado ya no se capa a la meta: 300/200
+      expect(screen.getByText('300/200')).toBeInTheDocument();
+    });
+
+    it('no muestra alerta cuando se llega exactamente a la meta (100%)', () => {
+      render(
+        <NutritionTargetsPanel
+          targets={{ kcal: 200, prot: 100, cho: 100, fat: 50 }}
+          current={{ kcal: 200, prot: 100, cho: 100, fat: 50 }}
+        />,
+      );
+      expect(screen.getAllByText('100%')).toHaveLength(4);
+      expect(screen.queryByTestId('icon-alerta')).not.toBeInTheDocument();
     });
 
     it('devuelve 0% cuando current y target son 0 (NaN guard)', () => {
@@ -84,15 +104,18 @@ describe('NutritionTargetsPanel', () => {
       expect(barraKcal).toHaveStyle({ width: '50%' });
     });
 
-    it('la barra de calorías llega al 100% cuando current supera el target', () => {
+    it('al superar la meta la barra se pinta roja y su ancho se capa al 100%', () => {
       const { container } = render(
         <NutritionTargetsPanel
           targets={{ kcal: 200, prot: 100, cho: 100, fat: 50 }}
           current={{ kcal: 400, prot: 200, cho: 200, fat: 100 }}
         />,
       );
-      const barraKcal = container.querySelector('.bg-macro-kcal');
-      expect(barraKcal).toHaveStyle({ width: '100%' });
+      // La barra deja de usar el color del macro y pasa a rojo clínico
+      expect(container.querySelector('.bg-macro-kcal')).not.toBeInTheDocument();
+      const barrasRojas = container.querySelectorAll('.bg-clinical-red');
+      expect(barrasRojas).toHaveLength(4);
+      expect(barrasRojas[0]).toHaveStyle({ width: '100%' });
     });
   });
 

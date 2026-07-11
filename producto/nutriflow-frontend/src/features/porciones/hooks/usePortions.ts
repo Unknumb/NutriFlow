@@ -21,7 +21,7 @@ export const usePortions = () => {
     const queryClient = useQueryClient();
 
     // 2. Estado Global de Zustand
-    const { targets, distributions, activeMeals, activeGroups, customFoods, libreConsumoIds, customMeals, mealTimes, addCustomMeal, removeCustomMeal, setMealTime, incrementPortion, decrementPortion, setPortion, removeTargetGroup, setInitialPortions, toggleMeal, toggleGroup, resetDistributions } = usePortionsStore();
+    const { targets, distributions, activeMeals, activeGroups, customFoods, libreConsumoIds, customMeals, mealTimes, sugerenciasComida, addCustomMeal, removeCustomMeal, setMealTime, incrementPortion, decrementPortion, setPortion, removeTargetGroup, setInitialPortions, toggleMeal, toggleGroup, resetDistributions, removeSugerenciaComida } = usePortionsStore();
 
     // 3. Datos del paciente conectado con backend
     const { activePatient } = useClinicalStore();
@@ -86,7 +86,8 @@ export const usePortions = () => {
                 activeGroups: grid.activeGroups || [],
                 libreConsumoIds: grid.libreConsumoIds || [],
                 customMeals: grid.customMeals || [],
-                mealTimes: grid.mealTimes || {}
+                mealTimes: grid.mealTimes || {},
+                sugerenciasComida: grid.sugerenciasComida || {}
             });
             setLoadedKey(selectedPautaId);
         }
@@ -144,6 +145,7 @@ export const usePortions = () => {
                 libreConsumoIds,
                 customMeals,
                 mealTimes,
+                sugerenciasComida,
             });
             const nuevaId = data?.pautaId;
             if (nuevaId) {
@@ -175,7 +177,7 @@ export const usePortions = () => {
 
     return {
         state: {
-            activeTab, patientContext, targets, distributions, activeMeals, activeGroups, customFoods, customMeals, mealTimes, libreConsumoIds, isSaving,
+            activeTab, patientContext, targets, distributions, activeMeals, activeGroups, customFoods, customMeals, mealTimes, libreConsumoIds, sugerenciasComida, isSaving,
             hayPacienteActivo: !!activePatient?.id,
             hayPlanificacionActiva: !!planificacionActiva,
             pautas: pautasDeActiva,
@@ -183,7 +185,7 @@ export const usePortions = () => {
             pautaSeleccionada,
             nombrePautaSugerido,
         },
-        actions: { setActiveTab, incrementPortion, decrementPortion, setPortion, guardarPauta, removeTargetGroup, toggleMeal, toggleGroup, resetDistributions, addCustomMeal, removeCustomMeal, setMealTime, setSelectedPautaId, nuevaPauta },
+        actions: { setActiveTab, incrementPortion, decrementPortion, setPortion, guardarPauta, removeTargetGroup, toggleMeal, toggleGroup, resetDistributions, addCustomMeal, removeCustomMeal, setMealTime, setSelectedPautaId, nuevaPauta, removeSugerenciaComida },
         computed: { getGroupTotal, getGroupBalance }
     };
 };

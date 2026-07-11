@@ -3,9 +3,10 @@ import { usePortions } from '../hooks/usePortions';
 import { NUTRITION_GROUPS, comidasOrdenadas } from '../constants';
 
 export const VistaPauta = () => {
-    const { state, computed } = usePortions();
-    const { patientContext, distributions, targets, activeMeals, customFoods, customMeals, mealTimes } = state;
+    const { state, computed, actions } = usePortions();
+    const { patientContext, distributions, targets, activeMeals, customFoods, customMeals, mealTimes, sugerenciasComida } = state;
     const { getGroupTotal } = computed;
+    const { removeSugerenciaComida } = actions;
 
     const visibleMeals = comidasOrdenadas(activeMeals, customMeals, mealTimes);
     
@@ -34,7 +35,8 @@ export const VistaPauta = () => {
                             {visibleMeals.map((meal, mealIdx) => {
                                 // Filtramos solo los grupos que tienen porciones > 0 en esta comida y están activos
                                 const mealActiveGroups = visibleGroups.filter(g => distributions[meal.id]?.[g.id] > 0);
-                                const rowCount = Math.max(1, mealActiveGroups.length);
+                                const sugerencias = sugerenciasComida?.[meal.id] || [];
+                                const rowCount = Math.max(1, mealActiveGroups.length) + (sugerencias.length > 0 ? 1 : 0);
                                 const rowBg = mealIdx % 2 === 0 ? 'bg-white' : 'bg-porcelain';
 
                                 return (
@@ -69,6 +71,31 @@ export const VistaPauta = () => {
                                                     <td className="border border-mist px-4 py-2.5 align-middle text-sm text-ink-soft">{(group as any).options}</td>
                                                 </tr>
                                             ))
+                                        )}
+                                        {sugerencias.length > 0 && (
+                                            <tr className={rowBg}>
+                                                <td colSpan={mealActiveGroups.length === 0 ? 4 : 2} className="border border-mist px-4 py-2.5">
+                                                    <p className="text-[10px] font-bold text-pine-soft uppercase tracking-wide mb-1">Ejemplos de preparación</p>
+                                                    <ul className="space-y-1">
+                                                        {sugerencias.map((s) => (
+                                                            <li key={s.id} className="text-sm text-ink flex items-start gap-2 group/sug">
+                                                                <span>
+                                                                    <span className="font-semibold">{s.nombre}</span>
+                                                                    {s.ingredientes && <span className="text-ink-soft"> — {s.ingredientes}</span>}
+                                                                </span>
+                                                                <button
+                                                                    onClick={() => removeSugerenciaComida(meal.id, s.id)}
+                                                                    aria-label={`Quitar sugerencia ${s.nombre}`}
+                                                                    title="Quitar de la pauta"
+                                                                    className="text-ink-soft/40 hover:text-clinical-red text-xs font-bold shrink-0 mt-0.5"
+                                                                >
+                                                                    ✕
+                                                                </button>
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                </td>
+                                            </tr>
                                         )}
                                     </React.Fragment>
                                 );

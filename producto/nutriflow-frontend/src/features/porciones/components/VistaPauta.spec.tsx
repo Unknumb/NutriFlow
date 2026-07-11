@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { VistaPauta } from './VistaPauta';
 
 const mockUsePortions = vi.hoisted(() => vi.fn());
@@ -45,16 +45,21 @@ const BASE_STATE = {
   customFoods: [],
   customMeals: [],
   mealTimes: {},
+  sugerenciasComida: {},
 };
 
 const BASE_COMPUTED = {
   getGroupTotal: (id: string) => (id === 'fru' ? 2 : 1),
 };
 
+const BASE_ACTIONS = {
+  removeSugerenciaComida: vi.fn(),
+};
+
 beforeEach(() => {
   vi.clearAllMocks();
   mockComidasOrdenadas.mockReturnValue(MEALS);
-  mockUsePortions.mockReturnValue({ state: BASE_STATE, computed: BASE_COMPUTED });
+  mockUsePortions.mockReturnValue({ state: BASE_STATE, computed: BASE_COMPUTED, actions: BASE_ACTIONS });
 });
 
 describe('VistaPauta', () => {
@@ -125,6 +130,34 @@ describe('VistaPauta', () => {
     it('muestra la relación total/meta en el resumen (getGroupTotal(fru)=2 con target=3 → "2/3")', () => {
       render(<VistaPauta />);
       expect(screen.getByText('2/3')).toBeInTheDocument();
+    });
+  });
+
+  describe('sugerencias del generador', () => {
+    const conSugerencias = {
+      ...BASE_STATE,
+      sugerenciasComida: {
+        desayuno: [{ id: 's-1', nombre: 'Avena con frutas', ingredientes: 'Avena (80g)' }],
+      },
+    };
+
+    it('muestra los ejemplos de preparación de la comida', () => {
+      mockUsePortions.mockReturnValue({ state: conSugerencias, computed: BASE_COMPUTED, actions: BASE_ACTIONS });
+      render(<VistaPauta />);
+      expect(screen.getByText('Ejemplos de preparación')).toBeInTheDocument();
+      expect(screen.getByText('Avena con frutas')).toBeInTheDocument();
+    });
+
+    it('permite quitar una sugerencia de la pauta', () => {
+      mockUsePortions.mockReturnValue({ state: conSugerencias, computed: BASE_COMPUTED, actions: BASE_ACTIONS });
+      render(<VistaPauta />);
+      fireEvent.click(screen.getByRole('button', { name: 'Quitar sugerencia Avena con frutas' }));
+      expect(BASE_ACTIONS.removeSugerenciaComida).toHaveBeenCalledWith('desayuno', 's-1');
+    });
+
+    it('no muestra la sección cuando no hay sugerencias', () => {
+      render(<VistaPauta />);
+      expect(screen.queryByText('Ejemplos de preparación')).not.toBeInTheDocument();
     });
   });
 });

@@ -1,8 +1,11 @@
 import logging
 
 from sqlalchemy import or_
-from sqlalchemy.orm import Session
-from models.preparacion import Preparacion
+from sqlalchemy.orm import Session, selectinload
+# Alimento debe estar importado para que SQLAlchemy resuelva la relación
+# IngredientePreparacion.alimento (declarada por nombre) al configurar mappers.
+from models.alimento import Alimento  # noqa: F401
+from models.preparacion import IngredientePreparacion, Preparacion
 from schemas.menus import InputGenerador, OutputGenerador, RecetaOut, IngredienteOut
 from core.valores_porciones import VALORES_PORCION
 from core.restricciones import (
@@ -43,6 +46,20 @@ MAPEO_CATEGORIAS = {
 # - "Otros" (~108 alimentos): pendiente de reclasificación manual con criterio nutricional.
 # - "Libre Consumo": misceláneos sin grupo de intercambio (galletas de soda, endulzantes, bebidas).
 CATEGORIAS_IGNORADAS = {"Otros", "Libre Consumo"}
+
+# Vocabulario de tiempos de comida (CHECK en DB / DTO de backend-core).
+TIPOS_COMIDA = {"desayuno", "almuerzo", "cena", "colacion"}
+
+# Una receta puede excederse hasta esto por grupo respecto de lo disponible:
+# con porciones redondeadas a 0.1 por ingrediente, descartar por 0.05 de exceso
+# elimina recetas clínicamente equivalentes al plan.
+TOLERANCIA_EXCESO = 0.2
+
+# Sobrante máximo por grupo para considerar el match "exacto".
+TOLERANCIA_EXACTO = 0.1
+
+# Máximo de sugerencias parciales devueltas (ya ordenadas por cobertura).
+MAX_PARCIALES = 20
 
 def ingrediente_violaciones(alimento, tags_excluidos: set, rechazos_normalizados: list) -> bool:
     """True si el alimento viola las restricciones del paciente.
@@ -91,8 +108,9 @@ def calcular_porciones_requeridas(ingredientes) -> dict:
 def generar_menu(input_data: InputGenerador, db: Session) -> OutputGenerador:
     matches_exactos = []
     matches_parciales = []
-    
+
     porciones_disp = input_data.porciones_disponibles.model_dump()
+    total_disponible = sum(c for c in porciones_disp.values() if c > 0)
 
     restricciones_desconocidas = [
         r for r in input_data.restricciones_dieteticas
@@ -109,7 +127,21 @@ def generar_menu(input_data: InputGenerador, db: Session) -> OutputGenerador:
         normalizar_texto(r) for r in input_data.alimentos_rechazados if r.strip()
     ]
 
-    query = db.query(Preparacion)
+    tipo_comida = (
+        normalizar_texto(input_data.tipo_comida)
+        if input_data.tipo_comida
+        else None
+    )
+    if tipo_comida and tipo_comida not in TIPOS_COMIDA:
+        logger.warning("tipo_comida fuera del vocabulario (ignorado): %s", tipo_comida)
+        tipo_comida = None
+
+    # selectinload evita el N+1 de cargar ingredientes/alimentos receta a receta.
+    query = db.query(Preparacion).options(
+        selectinload(Preparacion.ingredientes).selectinload(
+            IngredientePreparacion.alimento
+        )
+    )
     if input_data.nutricionista_id:
         # Preparaciones del sistema + propias del nutricionista solicitante
         query = query.filter(
@@ -118,8 +150,17 @@ def generar_menu(input_data: InputGenerador, db: Session) -> OutputGenerador:
                 Preparacion.nutricionista_id == input_data.nutricionista_id,
             )
         )
+    if tipo_comida:
+        # Las preparaciones sin clasificar (tipo_comida NULL) no se excluyen:
+        # penalizarlas dejaría fuera las recetas propias aún sin categorizar.
+        query = query.filter(
+            or_(
+                Preparacion.tipo_comida.is_(None),
+                Preparacion.tipo_comida == tipo_comida,
+            )
+        )
     preparaciones_db = query.all()
-    
+
     for receta in preparaciones_db:
         # 1. Filtro de restricciones dietéticas y alimentos rechazados:
         #    la preparación queda excluida si CUALQUIER ingrediente viola.
@@ -128,54 +169,82 @@ def generar_menu(input_data: InputGenerador, db: Session) -> OutputGenerador:
             for ing in receta.ingredientes
         ):
             continue
-            
+
         # 2. Calcular porciones que requiere la receta
         requeridas = calcular_porciones_requeridas(receta.ingredientes)
-        
-        # 3. Filtro de Capacidad
+
+        # Una receta que no consume porciones (solo ingredientes de categorías
+        # ignoradas o sin mapear) calzaría con cualquier plan: es ruido, fuera.
+        if not requeridas or sum(requeridas.values()) <= 0:
+            continue
+
+        # 3. Filtro de Capacidad (con tolerancia de exceso por grupo)
         puede_prepararse = True
         es_exacto = True
-        
+
         for grupo, cant_req in requeridas.items():
             cant_disp = porciones_disp.get(grupo, 0.0)
-            if cant_req > cant_disp:
+            if cant_req > cant_disp + TOLERANCIA_EXCESO:
                 puede_prepararse = False
                 break
-                
+
         if not puede_prepararse:
             continue
-            
+
         for grupo, cant_disp in porciones_disp.items():
             if cant_disp > 0:
                 cant_req = requeridas.get(grupo, 0.0)
-                # Tolerancia para matches exactos
-                if (cant_disp - cant_req) > 0.1:
+                if (cant_disp - cant_req) > TOLERANCIA_EXACTO:
                     es_exacto = False
                     break
-                    
+
+        marcar_sin_etiquetar = bool(tags_excluidos)
         ingredientes_out = [
             IngredienteOut(
                 nombre=ing.alimento.nombre,
                 marca=ing.alimento.marca,
-                cantidad_g=float(ing.cantidad_g)
+                cantidad_g=float(ing.cantidad_g),
+                sin_etiquetar=marcar_sin_etiquetar and not ing.alimento.restricciones,
             ) for ing in receta.ingredientes
         ]
-        
+
+        calorias_totales = sum(
+            float(ing.cantidad_g) * float(ing.alimento.calorias_100g) / 100.0
+            for ing in receta.ingredientes
+        )
+
+        # % de las porciones disponibles que la receta utiliza (cap a 100 por
+        # la tolerancia de exceso).
+        cobertura = (
+            min(100.0, round(100.0 * sum(requeridas.values()) / total_disponible))
+            if total_disponible > 0
+            else 0.0
+        )
+
         receta_out = RecetaOut(
             id=str(receta.id),
             nombre=receta.nombre,
             descripcion=receta.descripcion,
             instrucciones=receta.instrucciones,
+            tipo_comida=receta.tipo_comida,
+            imagen_url=receta.imagen_url,
+            calorias_totales=round(calorias_totales, 1),
+            cobertura=cobertura,
             ingredientes=ingredientes_out,
             porciones_requeridas=requeridas
         )
-        
+
         if es_exacto:
             matches_exactos.append(receta_out)
         else:
             matches_parciales.append(receta_out)
-            
+
+    # Mejor cobertura primero; nombre como desempate estable.
+    orden = lambda r: (-r.cobertura, r.nombre.lower())  # noqa: E731
+    matches_exactos.sort(key=orden)
+    matches_parciales.sort(key=orden)
+
     return OutputGenerador(
         matches_exactos=matches_exactos,
-        matches_parciales=matches_parciales
+        matches_parciales=matches_parciales[:MAX_PARCIALES]
     )

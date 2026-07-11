@@ -347,6 +347,84 @@ describe('toggleLibreConsumo', () => {
     });
 });
 
+describe('dirty — protección de cambios sin guardar', () => {
+    it('arranca limpio (dirty=false)', () => {
+        expect(usePortionsStore.getState().dirty).toBe(false);
+    });
+
+    it('las mutaciones del plan marcan dirty=true', () => {
+        usePortionsStore.getState().incrementTarget('cer');
+        expect(usePortionsStore.getState().dirty).toBe(true);
+    });
+
+    it('setPortion y setTargets marcan dirty=true', () => {
+        usePortionsStore.getState().setPortion('desayuno', 'cer', 2);
+        expect(usePortionsStore.getState().dirty).toBe(true);
+
+        usePortionsStore.setState({ dirty: false });
+        usePortionsStore.getState().setTargets({ veg: 3 });
+        expect(usePortionsStore.getState().dirty).toBe(true);
+    });
+
+    it('setInitialPortions (cargar pauta guardada) deja el estado limpio', () => {
+        usePortionsStore.getState().incrementTarget('cer');
+        usePortionsStore.getState().setInitialPortions({
+            targets: { cer: 4 },
+            distributions: {},
+            activeMeals: ['desayuno'],
+            activeGroups: ['cer'],
+        });
+        expect(usePortionsStore.getState().dirty).toBe(false);
+    });
+
+    it('seleccionarPauta descarta dirty y fuerza recarga (loadedPautaId=null)', () => {
+        usePortionsStore.setState({ dirty: true, loadedPautaId: 'pauta-vieja' });
+        usePortionsStore.getState().seleccionarPauta('pauta-9');
+        const s = usePortionsStore.getState();
+        expect(s.selectedPautaId).toBe('pauta-9');
+        expect(s.loadedPautaId).toBeNull();
+        expect(s.dirty).toBe(false);
+    });
+
+    it('marcarPautaGuardada deja la pauta como seleccionada/cargada y limpia', () => {
+        usePortionsStore.setState({ dirty: true });
+        usePortionsStore.getState().marcarPautaGuardada('pauta-7');
+        const s = usePortionsStore.getState();
+        expect(s.selectedPautaId).toBe('pauta-7');
+        expect(s.loadedPautaId).toBe('pauta-7');
+        expect(s.dirty).toBe(false);
+    });
+});
+
+describe('switchPatient — barrera entre pacientes', () => {
+    it('descarta el plan en construcción al cambiar de paciente', () => {
+        usePortionsStore.setState({
+            loadedPatientId: 'paciente-a',
+            targets: { azu: 2 },
+            distributions: { desayuno: { azu: 1 } },
+            dirty: true,
+        });
+        usePortionsStore.getState().switchPatient('paciente-b');
+        const s = usePortionsStore.getState();
+        expect(s.targets).toEqual({});
+        expect(s.distributions).toEqual({});
+        expect(s.dirty).toBe(false);
+        expect(s.loadedPatientId).toBe('paciente-b');
+    });
+
+    it('es idempotente para el mismo paciente (no pierde el trabajo)', () => {
+        usePortionsStore.setState({
+            loadedPatientId: 'paciente-a',
+            targets: { azu: 2 },
+            dirty: true,
+        });
+        usePortionsStore.getState().switchPatient('paciente-a');
+        const s = usePortionsStore.getState();
+        expect(s.targets).toEqual({ azu: 2 });
+        expect(s.dirty).toBe(true);
+    });
+});
+
 describe('incrementPortion', () => {
     it('incrementa en 0.5 desde cero', () => {
         usePortionsStore.getState().incrementPortion('desayuno', 'cer');

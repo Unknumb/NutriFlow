@@ -4,6 +4,7 @@ import { useMacronutrientsSetup } from './useMacronutrientsSetup';
 
 // ── hoisted mocks ──────────────────────────────────────────────────────────
 const mockMutate = vi.hoisted(() => vi.fn());
+const mockUpdateMutate = vi.hoisted(() => vi.fn());
 const mockSetActivePlanificacionId = vi.hoisted(() => vi.fn());
 
 // Objeto mutable: sus propiedades se leen en cada render del hook.
@@ -20,6 +21,7 @@ vi.mock('../../../shared/store/useClinicalStore', () => ({
 
 vi.mock('../../planificaciones/hooks/usePlanificaciones', () => ({
   useCreatePlanificacion: () => ({ mutate: mockMutate, isPending: false }),
+  useUpdatePlanificacion: () => ({ mutate: mockUpdateMutate, isPending: false }),
 }));
 
 // ── helpers ────────────────────────────────────────────────────────────────
@@ -252,6 +254,42 @@ describe('useMacronutrientsSetup', () => {
       act(() => { result.current.actions.handleSave(); });
       expect(alertSpy).toHaveBeenCalled();
       expect(mockMutate).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('handleOverwrite', () => {
+    it('llama a updatePlanificacion.mutate con el id y el payload de macros', () => {
+      const { result } = renderHook(() => useMacronutrientsSetup());
+      act(() => { result.current.actions.handleOverwrite('plan-9'); });
+      expect(mockUpdateMutate).toHaveBeenCalledWith(
+        {
+          id: 'plan-9',
+          data: expect.objectContaining({
+            calorias_totales: 2000,
+            distribucion_macros: { proteina: 28, grasa: 27, carbohidratos: 45 },
+          }),
+        },
+        expect.any(Object),
+      );
+      expect(mockMutate).not.toHaveBeenCalled();
+    });
+
+    it('no muta cuando no hay paciente activo (guard compartido con handleSave)', () => {
+      const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
+      mockState.activePatient = null;
+      const { result } = renderHook(() => useMacronutrientsSetup());
+      act(() => { result.current.actions.handleOverwrite('plan-9'); });
+      expect(alertSpy).toHaveBeenCalled();
+      expect(mockUpdateMutate).not.toHaveBeenCalled();
+    });
+
+    it('no muta cuando la TMB aún no está calculada', () => {
+      const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
+      mockState.tmbPromedio = 0;
+      const { result } = renderHook(() => useMacronutrientsSetup());
+      act(() => { result.current.actions.handleOverwrite('plan-9'); });
+      expect(alertSpy).toHaveBeenCalled();
+      expect(mockUpdateMutate).not.toHaveBeenCalled();
     });
   });
 

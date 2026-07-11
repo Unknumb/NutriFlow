@@ -5,6 +5,7 @@ import { planificacionesApi } from '../api/planificacionesApi';
 import {
   usePlanificaciones,
   useCreatePlanificacion,
+  useUpdatePlanificacion,
   useDeletePlanificacion,
   useSetActivaPlanificacion,
 } from './usePlanificaciones';
@@ -19,6 +20,7 @@ vi.mock('../api/planificacionesApi', () => ({
   planificacionesApi: {
     getPlanificaciones: vi.fn().mockResolvedValue([]),
     createPlanificacion: vi.fn().mockResolvedValue({ id: 'plan-1', paciente_id: 'p-1' }),
+    updatePlanificacion: vi.fn().mockResolvedValue({ id: 'plan-1', paciente_id: 'p-1', activa: true }),
     deletePlanificacion: vi.fn().mockResolvedValue(null),
     setActivaPlanificacion: vi.fn().mockResolvedValue({ id: 'plan-1', activa: true }),
   },
@@ -67,6 +69,20 @@ describe('useCreatePlanificacion', () => {
   it('en onSuccess invalida ["planificaciones"]', async () => {
     const { result } = renderHook(() => useCreatePlanificacion());
     await result.current.mutateAsync({ paciente_id: 'p-1', calorias_totales: 2000, distribucion_macros: {} });
+    expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: ['planificaciones'] });
+  });
+});
+
+describe('useUpdatePlanificacion', () => {
+  it('llama a planificacionesApi.updatePlanificacion con id y data', async () => {
+    const { result } = renderHook(() => useUpdatePlanificacion());
+    await result.current.mutateAsync({ id: 'plan-1', data: { calorias_totales: 1900 } });
+    expect(planificacionesApi.updatePlanificacion).toHaveBeenCalledWith('plan-1', { calorias_totales: 1900 });
+  });
+
+  it('en onSuccess invalida ["planificaciones"]', async () => {
+    const { result } = renderHook(() => useUpdatePlanificacion());
+    await result.current.mutateAsync({ id: 'plan-1', data: { calorias_totales: 1900 } });
     expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: ['planificaciones'] });
   });
 });

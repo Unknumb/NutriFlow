@@ -6,6 +6,7 @@ vi.mock('lucide-react', () => ({
   Target: () => <span data-testid="icon-target" />,
   RefreshCw: () => <span data-testid="icon-refresh" />,
   TriangleAlert: () => <span data-testid="icon-alerta" />,
+  Wand2: () => <span data-testid="icon-wand" />,
 }));
 
 const TARGETS = { kcal: 2000, prot: 150, cho: 250, fat: 60 };
@@ -132,6 +133,13 @@ describe('NutritionTargetsPanel', () => {
       render(<NutritionTargetsPanel targets={TARGETS} current={CURRENT} onReset={onReset} />);
       fireEvent.click(screen.getByRole('button', { name: 'Resetear' }));
       expect(onReset).toHaveBeenCalledTimes(1);
+    });
+
+    it('clic en "Completar al 100%" llama a onComplete', () => {
+      const onComplete = vi.fn();
+      render(<NutritionTargetsPanel targets={TARGETS} current={CURRENT} onComplete={onComplete} />);
+      fireEvent.click(screen.getByRole('button', { name: /Completar al 100%/i }));
+      expect(onComplete).toHaveBeenCalledTimes(1);
     });
 
     it('no lanza error si onSuggest y onReset son undefined', () => {

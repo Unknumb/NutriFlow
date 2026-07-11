@@ -18,6 +18,7 @@ describe('PlanificacionesController', () => {
     service = {
       create: jest.fn(),
       findAll: jest.fn(),
+      update: jest.fn(),
       setActiva: jest.fn(),
       remove: jest.fn(),
     };
@@ -47,6 +48,17 @@ describe('PlanificacionesController', () => {
       id: 'plan-1',
     });
     expect(service.create).toHaveBeenCalledWith(dto, USER.userId);
+  });
+
+  it('update() delega en el servicio con el id, el dto y el nutricionista del token', async () => {
+    const dto: any = { calorias_totales: 1900 };
+    service.update.mockResolvedValue({ id: 'plan-1', calorias_totales: 1900 });
+
+    await expect(controller.update('plan-1', dto, USER)).resolves.toEqual({
+      id: 'plan-1',
+      calorias_totales: 1900,
+    });
+    expect(service.update).toHaveBeenCalledWith('plan-1', dto, USER.userId);
   });
 
   it('setActiva() delega en el servicio con el id y el nutricionista del token', async () => {

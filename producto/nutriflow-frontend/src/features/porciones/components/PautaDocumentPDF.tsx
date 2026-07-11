@@ -129,6 +129,8 @@ export interface PautaPdfData {
   targets?: Record<string, number>;
   totals?: Record<string, number>;
   comidas?: { id: string; name: string; time: string }[];
+  /** Sugerencias del generador por comida (ejemplos de preparación). */
+  sugerenciasComida?: Record<string, { id: string; nombre: string; ingredientes: string }[]>;
 }
 
 export const PautaDocumentPDF = ({ data }: { data: PautaPdfData }) => {
@@ -140,6 +142,7 @@ export const PautaDocumentPDF = ({ data }: { data: PautaPdfData }) => {
     distributions = {},
     targets = {},
     totals = {},
+    sugerenciasComida = {},
   } = data ?? {};
 
   const grupos = ALL_GROUPS;
@@ -262,6 +265,17 @@ export const PautaDocumentPDF = ({ data }: { data: PautaPdfData }) => {
                         <Text style={styles.optionsCol}>{group.options}</Text>
                       </View>
                     ))
+                  )}
+                  {(sugerenciasComida[meal.id] || []).length > 0 && (
+                    <View style={{ paddingTop: 4, paddingBottom: 2, paddingHorizontal: 6, borderTopWidth: 0.5, borderTopColor: MIST }}>
+                      <Text style={{ fontSize: 7, fontWeight: "bold", color: PINE_SOFT, marginBottom: 2 }}>EJEMPLOS DE PREPARACIÓN</Text>
+                      {(sugerenciasComida[meal.id] || []).map((s) => (
+                        <Text key={s.id} style={{ fontSize: 8, color: INK, marginBottom: 1 }}>
+                          • <Text style={{ fontWeight: "bold" }}>{s.nombre}</Text>
+                          {s.ingredientes ? ` — ${s.ingredientes}` : ""}
+                        </Text>
+                      ))}
+                    </View>
                   )}
                 </View>
               </View>

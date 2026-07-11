@@ -48,6 +48,20 @@ describe('planificacionesApi', () => {
     });
   });
 
+  describe('updatePlanificacion', () => {
+    it('llama a PATCH /planificaciones/:id con el payload y devuelve response.data', async () => {
+      const data = {
+        calorias_totales: 1900,
+        distribucion_macros: { proteina: 30, grasa: 25, carbohidratos: 45 },
+      };
+      mockPatch.mockResolvedValue({ data: { ...PLAN, ...data, activa: true } });
+      const result = await planificacionesApi.updatePlanificacion('plan-1', data);
+      expect(mockPatch).toHaveBeenCalledWith('/planificaciones/plan-1', data);
+      expect(result.calorias_totales).toBe(1900);
+      expect(result.activa).toBe(true);
+    });
+  });
+
   describe('deletePlanificacion', () => {
     it('llama a DELETE /planificaciones/:id y devuelve response.data', async () => {
       mockDelete.mockResolvedValue({ data: null });

@@ -152,8 +152,25 @@ export const GestionAlimentos: React.FC = () => {
                         {a.nombre}
                         {a.marca && <span className="text-ink-soft/60 font-normal"> · {a.marca}</span>}
                       </p>
-                      <p className="text-xs text-ink-soft mt-0.5">
-                        <span className="inline-block px-1.5 py-0.5 rounded bg-mist/60 text-ink-soft mr-2">{a.categoria ?? 'Sin categoría'}</span>
+                      <p className="text-xs text-ink-soft mt-0.5 flex items-center gap-2 flex-wrap">
+                        {a.categoria ? (
+                          <span className="inline-block px-1.5 py-0.5 rounded bg-mist/60 text-ink-soft">{a.categoria}</span>
+                        ) : (
+                          <span
+                            className="inline-block px-1.5 py-0.5 rounded bg-apricot/25 text-[#8a5a2a] font-medium"
+                            title="Sin categoría no participa del cálculo de porciones del generador"
+                          >
+                            ⚠ Sin categoría
+                          </span>
+                        )}
+                        {(a.restricciones ?? []).length === 0 && (
+                          <span
+                            className="inline-block px-1.5 py-0.5 rounded bg-apricot/25 text-[#8a5a2a] font-medium"
+                            title="Sin etiquetas de restricción el generador no puede evaluarlo frente a alergias/restricciones del paciente"
+                          >
+                            ⚠ Sin etiquetas
+                          </span>
+                        )}
                         <span className="tnum">{Math.round(a.calorias_100g)} kcal/100g</span>
                       </p>
                     </div>

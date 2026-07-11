@@ -132,10 +132,11 @@ export const PautasPage = () => {
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 {/* PANEL IZQUIERDO */}
-                <NutritionTargetsPanel 
-                    targets={targets} 
-                    current={currentTotals} 
+                <NutritionTargetsPanel
+                    targets={targets}
+                    current={currentTotals}
                     onSuggest={actions.suggestDistribution}
+                    onComplete={actions.completeDistribution}
                     onReset={actions.resetPlan}
                 />
 

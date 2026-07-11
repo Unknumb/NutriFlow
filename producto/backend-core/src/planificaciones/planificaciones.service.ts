@@ -9,6 +9,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { RedisService } from 'src/redis/redis.service';
 
 import { CreatePlanificacionDto } from './dto/create-planificacion.dto';
+import { UpdatePlanificacionDto } from './dto/update-planificacion.dto';
 
 @Injectable()
 export class PlanificacionesService {
@@ -64,6 +65,64 @@ export class PlanificacionesService {
     } catch (error) {
       this.logger.error('Error al crear la planificación', error as Error);
       throw new InternalServerErrorException('Error al crear la planificación');
+    }
+  }
+
+  /**
+   * Sobrescribe una planificación existente (nombre, calorías y/o macros) y la
+   * deja como la activa del paciente — misma semántica que crear una nueva:
+   * es la planificación con la que se sigue trabajando.
+   */
+  async update(id: string, dto: UpdatePlanificacionDto, userId: string) {
+    const planificacion = await this.prisma.planificacion.findFirst({
+      where: { id, nutricionista_id: userId },
+    });
+    if (!planificacion) {
+      this.logger.warn(
+        `Acceso denegado: usuario ${userId} intentó sobrescribir la planificación ${id} (inexistente o de otro nutricionista)`,
+      );
+      throw new NotFoundException(
+        'Planificación no encontrada o no tienes permisos',
+      );
+    }
+
+    const nombre = dto.nombre?.trim();
+    try {
+      const [, updated] = await this.prisma.$transaction([
+        this.prisma.planificacion.updateMany({
+          where: {
+            paciente_id: planificacion.paciente_id,
+            nutricionista_id: userId,
+            activa: true,
+            id: { not: id },
+          },
+          data: { activa: false },
+        }),
+        this.prisma.planificacion.update({
+          where: { id },
+          data: {
+            activa: true,
+            ...(nombre ? { nombre } : {}),
+            ...(dto.calorias_totales !== undefined
+              ? { calorias_totales: dto.calorias_totales }
+              : {}),
+            ...(dto.distribucion_macros
+              ? {
+                  distribucion_macros:
+                    dto.distribucion_macros as unknown as Prisma.InputJsonValue,
+                }
+              : {}),
+          },
+        }),
+      ]);
+
+      await this.redisService.client.del(`planificaciones:${userId}`);
+      return updated;
+    } catch (error) {
+      this.logger.error('Error al actualizar la planificación', error as Error);
+      throw new InternalServerErrorException(
+        'Error al actualizar la planificación',
+      );
     }
   }
 

@@ -7,7 +7,6 @@ import {
   IsOptional,
   IsUUID,
   IsIn,
-  MaxLength,
 } from 'class-validator';
 import {
   RESTRICCIONES_DIETETICAS,
@@ -26,6 +25,16 @@ export class GenerarMenuDto {
   })
   @IsObject()
   porciones_disponibles: Record<string, number>;
+
+  @ApiPropertyOptional({
+    description:
+      'Tiempo de comida para el que se genera. Filtra preparaciones de otro ' +
+      'tiempo (las sin clasificar no se excluyen). Omitir = sin filtro.',
+    enum: ['desayuno', 'almuerzo', 'cena', 'colacion'],
+  })
+  @IsOptional()
+  @IsIn(['desayuno', 'almuerzo', 'cena', 'colacion'])
+  tipo_comida?: 'desayuno' | 'almuerzo' | 'cena' | 'colacion';
 
   @ApiPropertyOptional({
     description:
@@ -58,13 +67,4 @@ export class GenerarMenuDto {
   @IsArray()
   @IsString({ each: true })
   alimentos_rechazados?: string[];
-
-  @ApiPropertyOptional({
-    description: 'Preferencias adicionales en texto libre (informativo)',
-    example: 'prefiere preparaciones rápidas',
-  })
-  @IsOptional()
-  @IsString()
-  @MaxLength(500)
-  preferencias_texto?: string;
 }

@@ -43,6 +43,11 @@ export const TAGS_RESTRICCION_ALIMENTO = [
   'no_vegano',
   'alto_en_sodio',
   'alto_en_azucar',
+  // Marcador: el alimento FUE evaluado y no le aplica ninguna restricción
+  // (frutas, verduras, aceites vegetales, arroz...). No participa del
+  // filtrado; solo distingue "evaluado y limpio" de "nunca evaluado", para
+  // que las advertencias de "sin etiquetar" del generador sean reales.
+  'verificado_sin_restricciones',
 ] as const;
 
 export type TagRestriccionAlimento = (typeof TAGS_RESTRICCION_ALIMENTO)[number];

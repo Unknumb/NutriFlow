@@ -28,9 +28,9 @@ export class MenusService {
     // paciente (lo enviado en el request siempre manda sobre lo derivado).
     const payload = {
       porciones_disponibles: dto.porciones_disponibles,
+      tipo_comida: dto.tipo_comida,
       restricciones_dieteticas: dto.restricciones_dieteticas ?? [],
       alimentos_rechazados: dto.alimentos_rechazados ?? [],
-      preferencias_texto: dto.preferencias_texto,
       nutricionista_id: nutricionistaId,
     };
 

@@ -1,14 +1,17 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Link } from '@tanstack/react-router';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Check, ChevronDown, ChevronUp, Info, Plus, X } from 'lucide-react';
 import { useGenerarMenu } from '../../menus/hooks/useMenus';
+import type { RecetaOut } from '../../menus/types/menu.types';
 import { useClinicalStore } from '../../../shared/store/useClinicalStore';
 import { usePortionsStore } from '../../porciones/store/usePortionsStore';
 import { usePreparaciones } from '../../preparaciones/hooks/usePreparaciones';
 import { usePacientes } from '../../pacientes/hooks/usePacientes';
+import { useBuscarAlimentos } from '../../alimentos/hooks/useBuscarAlimentos';
+import { useDebouncedValue } from '../../../shared/hooks/useDebouncedValue';
 import { TIPO_COMIDA_LABELS, type TipoComida } from '../../preparaciones/types/preparacion.types';
-import { MEALS, NUTRITION_GROUPS } from '../../porciones/constants';
-import { traducirPorcionesParaMath } from '../../porciones/gruposMath';
+import { comidasOrdenadas, NUTRITION_GROUPS } from '../../porciones/constants';
+import { traducirPorcionesParaMath, GRUPO_A_MATH } from '../../porciones/gruposMath';
 import {
   RESTRICCIONES_DIETETICAS,
   RESTRICCION_LABELS,
@@ -24,6 +27,22 @@ const GRUPO_INFO: Record<string, { label: string; emoji: string; color: string }
   ]),
 );
 
+// Clave de backend-math -> id corto de grupo, para etiquetar porciones requeridas.
+const MATH_A_GRUPO: Record<string, string> = Object.fromEntries(
+  Object.entries(GRUPO_A_MATH).map(([corto, math]) => [math, corto]),
+);
+
+// Tiempo de comida de la pauta -> tipo_comida del catálogo de preparaciones.
+// Los tiempos sin equivalente (once, comidas personalizadas) no filtran por tipo.
+const COMIDA_A_TIPO: Record<string, TipoComida | undefined> = {
+  desayuno: 'desayuno',
+  colacion_am: 'colacion',
+  almuerzo: 'almuerzo',
+  colacion_pm: 'colacion',
+  once: undefined,
+  cena: 'cena',
+};
+
 // Fila de solo lectura que muestra las porciones reales asignadas a un grupo.
 const PorcionRow = ({ grupoId, cantidad }: { grupoId: string; cantidad: number }) => {
   const info = GRUPO_INFO[grupoId] ?? { label: grupoId, emoji: '•', color: 'text-ink' };
@@ -35,66 +54,227 @@ const PorcionRow = ({ grupoId, cantidad }: { grupoId: string; cantidad: number }
   );
 };
 
+/** Etiqueta legible de una clave de porciones de backend-math. */
+const etiquetaGrupoMath = (claveMath: string): string => {
+  const corto = MATH_A_GRUPO[claveMath];
+  const info = corto ? GRUPO_INFO[corto] : undefined;
+  return info ? `${info.emoji} ${info.label}` : claveMath.replace(/_/g, ' ');
+};
+
+/** Tarjeta de una sugerencia del generador, con detalle expandible y acción de pauta. */
+const SugerenciaCard = ({
+  receta,
+  variante,
+  enPauta,
+  hayRestricciones,
+  onUsarEnPauta,
+}: {
+  receta: RecetaOut;
+  variante: 'exacto' | 'parcial';
+  enPauta: boolean;
+  hayRestricciones: boolean;
+  onUsarEnPauta: (receta: RecetaOut) => void;
+}) => {
+  const [abierta, setAbierta] = useState(false);
+  const esExacto = variante === 'exacto';
+  const ingredientesSinEtiquetar = hayRestricciones
+    ? receta.ingredientes.filter((i) => i.sin_etiquetar)
+    : [];
+
+  return (
+    <div className={`border rounded-card shadow-sm overflow-hidden ${esExacto ? 'bg-pine-soft/5 border-pine-soft/20' : 'bg-white border-mist'}`}>
+      <div className="flex gap-3 p-4">
+        {receta.imagen_url && (
+          <img
+            src={receta.imagen_url}
+            alt={receta.nombre}
+            loading="lazy"
+            className="w-16 h-16 rounded-lg object-cover shrink-0"
+          />
+        )}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap mb-1">
+            {receta.tipo_comida && (
+              <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-pine-soft/10 text-pine-soft">
+                {TIPO_COMIDA_LABELS[receta.tipo_comida]}
+              </span>
+            )}
+            <span
+              className={`text-[10px] px-2 py-0.5 rounded-full font-semibold tnum ${esExacto ? 'bg-pine text-white' : 'bg-apricot/25 text-[#8a5a2a]'}`}
+              title="Porcentaje de las porciones de esta comida que la preparación utiliza"
+            >
+              Cubre {Math.round(receta.cobertura)}%
+            </span>
+            <span className="text-[10px] text-ink-soft font-medium ml-auto tnum shrink-0">
+              {Math.round(receta.calorias_totales)} kcal
+            </span>
+          </div>
+          <h4 className={`font-bold text-sm truncate ${esExacto ? 'text-pine-soft' : 'text-ink'}`}>{receta.nombre}</h4>
+          <p className="text-xs text-ink-soft mt-1 line-clamp-2">
+            {receta.ingredientes.map((i) => `${i.nombre} (${i.cantidad_g}g)`).join(', ')}
+          </p>
+          {ingredientesSinEtiquetar.length > 0 && (
+            <p className="text-[11px] text-[#8a5a2a] mt-1.5 flex items-start gap-1">
+              <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-px" />
+              <span>
+                Sin etiquetas de restricción: {ingredientesSinEtiquetar.map((i) => i.nombre).join(', ')}. Verifica compatibilidad manualmente.
+              </span>
+            </p>
+          )}
+        </div>
+      </div>
+
+      {abierta && (
+        <div className="px-4 pb-4 space-y-3 border-t border-mist/60 pt-3">
+          {receta.descripcion && (
+            <p className="text-xs text-ink-soft">{receta.descripcion}</p>
+          )}
+          {receta.instrucciones && (
+            <div>
+              <p className="text-[10px] font-semibold text-ink-soft uppercase tracking-wide mb-1">Instrucciones</p>
+              <p className="text-xs text-ink whitespace-pre-line">{receta.instrucciones}</p>
+            </div>
+          )}
+          <div>
+            <p className="text-[10px] font-semibold text-ink-soft uppercase tracking-wide mb-1">Porciones que utiliza</p>
+            <div className="flex flex-wrap gap-1.5">
+              {Object.entries(receta.porciones_requeridas).map(([grupo, cant]) => (
+                <span key={grupo} className="text-[11px] px-2 py-0.5 rounded bg-porcelain border border-mist/70 text-ink-soft tnum">
+                  {etiquetaGrupoMath(grupo)}: <span className="font-semibold text-ink">{cant}</span>
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="flex items-center gap-2 px-4 py-2.5 bg-white/60 border-t border-mist/60">
+        <button
+          type="button"
+          onClick={() => setAbierta((v) => !v)}
+          className="inline-flex items-center gap-1 text-xs font-medium text-ink-soft hover:text-ink transition-colors"
+        >
+          {abierta ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+          {abierta ? 'Ocultar detalle' : 'Ver detalle'}
+        </button>
+        <button
+          type="button"
+          onClick={() => onUsarEnPauta(receta)}
+          disabled={enPauta}
+          className={`ml-auto inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-md transition-colors ${
+            enPauta
+              ? 'bg-pine-soft/10 text-pine-soft cursor-default'
+              : 'bg-pine text-white hover:bg-pine-soft'
+          }`}
+        >
+          {enPauta ? (
+            <>
+              <Check className="w-3.5 h-3.5" /> En la pauta
+            </>
+          ) : (
+            <>
+              <Plus className="w-3.5 h-3.5" /> Usar en pauta
+            </>
+          )}
+        </button>
+      </div>
+    </div>
+  );
+};
+
 export const GeneradorPreparaciones: React.FC = () => {
   const [activeTab, setActiveTab] = useState('generador');
-  const [alimentosRechazados, setAlimentosRechazados] = useState('');
-  const [preferencias, setPreferencias] = useState('');
-  const [pacienteId, setPacienteId] = useState('');
-  const [restriccionesSel, setRestriccionesSel] = useState<Set<RestriccionDietetica>>(new Set());
+
+  // Alimentos rechazados como chips, con autocomplete contra el catálogo real.
+  const [rechazados, setRechazados] = useState<string[]>([]);
+  const [rechazadoInput, setRechazadoInput] = useState('');
+  const rechazadoDebounced = useDebouncedValue(rechazadoInput, 300);
+  const { data: sugerenciasAlimentos } = useBuscarAlimentos({
+    search: rechazadoDebounced,
+    categoria: null,
+  });
 
   const [busquedaBiblioteca, setBusquedaBiblioteca] = useState('');
   const [filtroTiempo, setFiltroTiempo] = useState<'todos' | TipoComida>('todos');
-  // Comida sobre la que se generan las sugerencias (sus porciones alimentan al motor).
-  const [comidaGenerar, setComidaGenerar] = useState('almuerzo');
 
-  const { distributions, activeMeals } = usePortionsStore();
+  const { distributions, activeMeals, customMeals, mealTimes, sugerenciasComida, addSugerenciaComida } = usePortionsStore();
   const { mutate, data: menusGenerados, isPending, isError } = useGenerarMenu();
   const { data: preparaciones, isLoading: cargandoBiblioteca } = usePreparaciones();
   const { data: pacientes } = usePacientes();
   const activePatient = useClinicalStore((s) => s.activePatient);
 
-  const pacienteSeleccionado = useMemo(
-    () => (pacientes ?? []).find((p) => p.id === pacienteId),
-    [pacientes, pacienteId],
+  // Comidas activas resueltas y ordenadas por horario, INCLUYENDO las
+  // personalizadas de la pizarra (ej. "Comida preentreno"): también se puede
+  // generar para ellas — sin filtro por tipo, solo por porciones.
+  const comidasDisponibles = useMemo(
+    () => comidasOrdenadas(activeMeals, customMeals, mealTimes),
+    [activeMeals, customMeals, mealTimes],
   );
 
-  // Al elegir paciente se precargan sus restricciones derivadas de la ficha
-  // (alergias + preferencias alimentarias). La selección queda editable solo
-  // para esta sesión: nunca se escribe de vuelta en la ficha.
-  const handleSeleccionPaciente = (id: string) => {
-    setPacienteId(id);
-    const paciente = (pacientes ?? []).find((p) => p.id === id);
-    if (!paciente) {
-      setRestriccionesSel(new Set());
-      return;
-    }
-    setRestriccionesSel(
-      new Set(
-        derivarRestriccionesDePaciente([
-          ...paciente.alergias,
-          ...paciente.preferencias_alimentarias,
-        ]),
-      ),
-    );
-  };
+  // Comida sobre la que se generan las sugerencias (sus porciones alimentan al
+  // motor). Parte en la primera comida activa; si la seleccionada deja de estar
+  // activa, se usa la primera disponible (derivado, sin efecto corrector).
+  const [comidaSeleccionada, setComidaSeleccionada] = useState(
+    () => comidasDisponibles.find((m) => m.id === 'almuerzo')?.id ?? comidasDisponibles[0]?.id ?? 'almuerzo',
+  );
+  const comidaGenerar = comidasDisponibles.some((m) => m.id === comidaSeleccionada)
+    ? comidaSeleccionada
+    : comidasDisponibles[0]?.id ?? comidaSeleccionada;
 
-  // El generador se relaciona con el paciente activo: al entrar (o al cambiar de
-  // paciente activo) se preselecciona y se cargan sus restricciones. Queda
-  // editable para la sesión; la nutricionista puede cambiarlo si lo necesita.
-  useEffect(() => {
-    if (activePatient?.id && (pacientes ?? []).some((p) => p.id === activePatient.id)) {
-      handleSeleccionPaciente(activePatient.id);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activePatient?.id, pacientes]);
+  // El generador trabaja SIEMPRE con el paciente activo: las porciones vienen
+  // de su pauta (Distribución de Porciones), así que no tiene sentido generar
+  // para otro paciente. Su ficha completa se busca en el listado.
+  const pacienteSeleccionado = useMemo(
+    () => (pacientes ?? []).find((p) => p.id === activePatient?.id),
+    [pacientes, activePatient?.id],
+  );
+
+  // Restricciones: se derivan de la ficha del paciente activo y la nutricionista
+  // puede editarlas solo para esta sesión (override por paciente; nunca se
+  // escribe de vuelta en la ficha). Al cambiar de paciente activo, el override
+  // deja de aplicar y vuelven las derivadas — sin efectos correctores.
+  const restriccionesDerivadas = useMemo(
+    () =>
+      new Set<RestriccionDietetica>(
+        pacienteSeleccionado
+          ? derivarRestriccionesDePaciente([
+              ...pacienteSeleccionado.alergias,
+              ...pacienteSeleccionado.preferencias_alimentarias,
+            ])
+          : [],
+      ),
+    [pacienteSeleccionado],
+  );
+  const [restriccionesOverride, setRestriccionesOverride] = useState<{
+    pacienteId: string | null;
+    seleccion: Set<RestriccionDietetica>;
+  } | null>(null);
+  const restriccionesSel =
+    restriccionesOverride && restriccionesOverride.pacienteId === (pacienteSeleccionado?.id ?? null)
+      ? restriccionesOverride.seleccion
+      : restriccionesDerivadas;
 
   const toggleRestriccion = (restriccion: RestriccionDietetica) => {
-    setRestriccionesSel((prev) => {
-      const siguiente = new Set(prev);
-      if (siguiente.has(restriccion)) siguiente.delete(restriccion);
-      else siguiente.add(restriccion);
-      return siguiente;
+    const siguiente = new Set(restriccionesSel);
+    if (siguiente.has(restriccion)) siguiente.delete(restriccion);
+    else siguiente.add(restriccion);
+    setRestriccionesOverride({
+      pacienteId: pacienteSeleccionado?.id ?? null,
+      seleccion: siguiente,
     });
+  };
+
+  const agregarRechazado = (valor: string) => {
+    const limpio = valor.trim();
+    if (!limpio) return;
+    setRechazados((prev) =>
+      prev.some((r) => r.toLowerCase() === limpio.toLowerCase()) ? prev : [...prev, limpio],
+    );
+    setRechazadoInput('');
+  };
+
+  const quitarRechazado = (valor: string) => {
+    setRechazados((prev) => prev.filter((r) => r !== valor));
   };
 
   const totalPreparaciones = preparaciones?.length ?? 0;
@@ -120,6 +300,12 @@ export const GeneradorPreparaciones: React.FC = () => {
   }, [distributions, comidaGenerar]);
 
   const tienePorciones = porcionesComida.length > 0;
+  const tipoComidaGenerar = COMIDA_A_TIPO[comidaGenerar];
+  const nombreComidaGenerar = comidasDisponibles.find((m) => m.id === comidaGenerar)?.name ?? 'la comida';
+  const idsEnPauta = useMemo(
+    () => new Set((sugerenciasComida[comidaGenerar] || []).map((s) => s.id)),
+    [sugerenciasComida, comidaGenerar],
+  );
 
   const handleGenerar = () => {
     // Traducimos los ids de grupo del frontend a las claves que espera backend-math.
@@ -128,10 +314,18 @@ export const GeneradorPreparaciones: React.FC = () => {
     );
     mutate({
       porciones_disponibles: porcionesDisponibles,
-      paciente_id: pacienteId || undefined,
+      tipo_comida: tipoComidaGenerar,
+      paciente_id: activePatient?.id || undefined,
       restricciones_dieteticas: Array.from(restriccionesSel),
-      alimentos_rechazados: alimentosRechazados.split(',').map(s => s.trim()).filter(Boolean),
-      preferencias_texto: preferencias.trim() || undefined,
+      alimentos_rechazados: rechazados,
+    });
+  };
+
+  const handleUsarEnPauta = (receta: RecetaOut) => {
+    addSugerenciaComida(comidaGenerar, {
+      id: receta.id,
+      nombre: receta.nombre,
+      ingredientes: receta.ingredientes.map((i) => `${i.nombre} (${i.cantidad_g}g)`).join(', '),
     });
   };
 
@@ -154,14 +348,14 @@ export const GeneradorPreparaciones: React.FC = () => {
       <div className="flex-1 flex flex-col overflow-hidden">
         <div className="px-4 sm:px-8 pt-4 bg-white border-b border-mist/70">
           <div className="text-ink-soft h-9 w-fit items-center justify-center rounded-card p-0.75 flex bg-mist/60">
-            <button 
+            <button
               onClick={() => setActiveTab('generador')}
               className={`inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center rounded-card px-4 py-1 text-sm font-medium transition-all gap-2 ${activeTab === 'generador' ? 'bg-white text-ink shadow-sm' : 'text-ink-soft hover:text-ink-soft'}`}
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"></path><path d="M20 3v4"></path><path d="M22 5h-4"></path><path d="M4 17v2"></path><path d="M5 18H3"></path></svg>
               Generador Automático
             </button>
-            <button 
+            <button
               onClick={() => setActiveTab('biblioteca')}
               className={`inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center rounded-card px-4 py-1 text-sm font-medium transition-all gap-2 ${activeTab === 'biblioteca' ? 'bg-white text-ink shadow-sm' : 'text-ink-soft hover:text-ink-soft'}`}
             >
@@ -177,7 +371,7 @@ export const GeneradorPreparaciones: React.FC = () => {
             {/* Panel Lateral Izquierdo (Controles) */}
             <div className="w-full md:w-96 border-b md:border-b-0 md:border-r border-mist overflow-y-auto bg-porcelain md:shrink-0">
               <div className="p-6 space-y-6">
-                
+
                 {/* Selector de comida + porciones reales */}
                 <div>
                   <h2 className="text-sm font-semibold text-ink mb-1">Plan de distribución</h2>
@@ -187,19 +381,24 @@ export const GeneradorPreparaciones: React.FC = () => {
                   <select
                     className="flex h-9 w-full rounded-md border border-mist px-3 py-1 bg-white text-sm outline-none focus-visible:ring-2 focus-visible:ring-pine-soft text-ink"
                     value={comidaGenerar}
-                    onChange={(e) => setComidaGenerar(e.target.value)}
+                    onChange={(e) => setComidaSeleccionada(e.target.value)}
                   >
-                    {MEALS.filter((m) => activeMeals.includes(m.id)).map((m) => (
+                    {comidasDisponibles.map((m) => (
                       <option key={m.id} value={m.id}>{m.name}</option>
                     ))}
                   </select>
+                  <p className="text-xs text-ink-soft/60 mt-1">
+                    {tipoComidaGenerar
+                      ? `Solo se sugieren preparaciones de tipo ${TIPO_COMIDA_LABELS[tipoComidaGenerar]} (y sin clasificar)`
+                      : 'Este tiempo de comida no filtra por tipo de preparación'}
+                  </p>
                 </div>
 
                 {/* Porciones reales de la comida seleccionada */}
                 <div className="bg-white rounded-card border border-mist overflow-hidden shadow-sm">
                   <div className="flex items-center gap-2 px-4 py-3 border-b border-mist/70">
                     <span className="text-sm font-semibold text-ink">
-                      {MEALS.find((m) => m.id === comidaGenerar)?.name ?? 'Comida'}
+                      {nombreComidaGenerar}
                     </span>
                     <span className="ml-auto text-xs text-pine-soft font-medium bg-pine-soft/5 px-2 py-0.5 rounded-full tnum">
                       {porcionesComida.reduce((acc, [, c]) => acc + c, 0)} porciones
@@ -233,20 +432,25 @@ export const GeneradorPreparaciones: React.FC = () => {
                   </h2>
                   <div className="space-y-4">
 
-                    {/* Selector de Paciente */}
+                    {/* Paciente activo (las porciones provienen de SU pauta) */}
                     <div>
-                      <label className="text-xs font-medium text-ink-soft mb-1.5 block">Paciente (opcional)</label>
-                      <select
-                        className="flex h-9 w-full rounded-md border border-mist px-3 py-1 bg-white text-sm outline-none focus-visible:ring-2 focus-visible:ring-pine-soft text-ink-soft"
-                        value={pacienteId}
-                        onChange={(e) => handleSeleccionPaciente(e.target.value)}
-                      >
-                        <option value="">Sin paciente asociado</option>
-                        {(pacientes ?? []).map((p) => (
-                          <option key={p.id} value={p.id}>{p.nombre} {p.apellido}</option>
-                        ))}
-                      </select>
-                      <p className="text-xs text-ink-soft/60 mt-1">Al elegir, se precargan sus restricciones (editables solo para esta sesión)</p>
+                      <label className="text-xs font-medium text-ink-soft mb-1.5 block">Paciente activo</label>
+                      {pacienteSeleccionado ? (
+                        <>
+                          <div className="flex h-9 w-full items-center rounded-md border border-mist px-3 bg-white text-sm text-ink font-medium">
+                            {pacienteSeleccionado.nombre} {pacienteSeleccionado.apellido}
+                          </div>
+                          <p className="text-xs text-ink-soft/60 mt-1">Sus restricciones se precargan desde la ficha (editables solo para esta sesión)</p>
+                        </>
+                      ) : (
+                        <div className="rounded-md border border-dashed border-mist bg-white px-3 py-2.5">
+                          <p className="text-xs text-ink-soft">
+                            No hay paciente activo. Actívalo desde{' '}
+                            <Link to="/pacientes" className="font-semibold text-pine-soft hover:underline">Pacientes</Link>{' '}
+                            para precargar sus restricciones.
+                          </p>
+                        </div>
+                      )}
                     </div>
 
                     {/* Contexto de la ficha del paciente */}
@@ -290,16 +494,47 @@ export const GeneradorPreparaciones: React.FC = () => {
                       </div>
                     )}
 
-                    {/* Alimentos Rechazados */}
+                    {/* Alimentos Rechazados (chips + autocomplete del catálogo) */}
                     <div>
-                      <label className="text-xs font-medium text-ink-soft mb-1.5 block">Alimentos no preferidos / rechazados</label>
-                      <input 
-                        type="text" 
-                        className="flex h-9 w-full rounded-md border border-mist px-3 py-1 bg-white text-sm outline-none focus-visible:ring-2 focus-visible:ring-pine-soft" 
-                        placeholder="Ej: pan, salmón, huevo (separados por coma)" 
-                        value={alimentosRechazados}
-                        onChange={(e) => setAlimentosRechazados(e.target.value)}
+                      <label htmlFor="rechazado-input" className="text-xs font-medium text-ink-soft mb-1.5 block">Alimentos no preferidos / rechazados</label>
+                      {rechazados.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 mb-2">
+                          {rechazados.map((r) => (
+                            <span key={r} className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-clinical-red/10 text-clinical-red font-medium">
+                              {r}
+                              <button
+                                type="button"
+                                onClick={() => quitarRechazado(r)}
+                                aria-label={`Quitar ${r}`}
+                                className="hover:opacity-70"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      <input
+                        id="rechazado-input"
+                        type="text"
+                        list="alimentos-catalogo"
+                        className="flex h-9 w-full rounded-md border border-mist px-3 py-1 bg-white text-sm outline-none focus-visible:ring-2 focus-visible:ring-pine-soft"
+                        placeholder="Escribe y presiona Enter (ej: pan, salmón)"
+                        value={rechazadoInput}
+                        onChange={(e) => setRechazadoInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ',') {
+                            e.preventDefault();
+                            agregarRechazado(rechazadoInput);
+                          }
+                        }}
+                        onBlur={() => agregarRechazado(rechazadoInput)}
                       />
+                      <datalist id="alimentos-catalogo">
+                        {(sugerenciasAlimentos?.items ?? []).map((a) => (
+                          <option key={a.id} value={a.nombre} />
+                        ))}
+                      </datalist>
                       <p className="text-xs text-ink-soft/60 mt-1">Las preparaciones con estos alimentos no aparecerán</p>
                     </div>
 
@@ -327,18 +562,14 @@ export const GeneradorPreparaciones: React.FC = () => {
                         })}
                       </div>
                       <p className="text-xs text-ink-soft/60 mt-1.5">Se excluirán preparaciones con ingredientes incompatibles (según etiquetado de alimentos)</p>
-                    </div>
-
-                    {/* Preferencias Extra */}
-                    <div>
-                      <label className="text-xs font-medium text-ink-soft mb-1.5 block">Preferencias adicionales (opcional)</label>
-                      <input 
-                        type="text" 
-                        className="flex h-9 w-full rounded-md border border-mist px-3 py-1 bg-white text-sm outline-none focus-visible:ring-2 focus-visible:ring-pine-soft" 
-                        placeholder="Ej: prefiere preparaciones rápidas, sin gluten..." 
-                        value={preferencias}
-                        onChange={(e) => setPreferencias(e.target.value)}
-                      />
+                      {restriccionesSel.size > 0 && (
+                        <div className="mt-2 flex items-start gap-1.5 rounded-lg bg-apricot/15 border border-apricot/40 px-2.5 py-2" role="note">
+                          <Info className="w-3.5 h-3.5 text-[#8a5a2a] shrink-0 mt-px" />
+                          <p className="text-[11px] text-[#8a5a2a]">
+                            El filtrado depende del etiquetado del catálogo: los alimentos sin etiquetas no se pueden evaluar y se marcarán en cada sugerencia. Valida siempre la sugerencia final.
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -386,25 +617,45 @@ export const GeneradorPreparaciones: React.FC = () => {
                 </div>
               ) : menusGenerados ? (
                 <div>
-                  <h3 className="text-lg font-semibold mb-4 text-pine-soft">Sugerencias Exactas</h3>
+                  {idsEnPauta.size > 0 && (
+                    <div className="mb-4 flex items-center gap-2 rounded-lg bg-pine-soft/5 border border-pine-soft/20 px-3 py-2">
+                      <Check className="w-4 h-4 text-pine-soft shrink-0" />
+                      <p className="text-xs text-pine-soft">
+                        {idsEnPauta.size} sugerencia(s) agregada(s) a {nombreComidaGenerar}. Se guardan con la pauta en{' '}
+                        <Link to="/porciones" className="font-semibold underline">Distribución de Porciones</Link>.
+                      </p>
+                    </div>
+                  )}
+
+                  <h3 className="text-lg font-semibold mb-1 text-pine-soft">Sugerencias Exactas</h3>
+                  <p className="text-xs text-ink-soft mb-4">Usan (casi) todas las porciones de {nombreComidaGenerar}, ordenadas por cobertura.</p>
                   {menusGenerados.matches_exactos.length === 0 && <p className="text-ink-soft text-sm mb-4">No se encontraron combinaciones exactas.</p>}
                   <div className="space-y-3 mb-8">
                     {menusGenerados.matches_exactos.map(m => (
-                       <div key={m.id} className="border p-4 rounded-card bg-pine-soft/5 border-pine-soft/20 shadow-sm">
-                          <h4 className="font-bold text-pine-soft">{m.nombre}</h4>
-                          <p className="text-xs text-pine-soft mt-1">Ingredientes: {m.ingredientes.map(i => `${i.nombre} (${i.cantidad_g}g)`).join(', ')}</p>
-                       </div>
+                      <SugerenciaCard
+                        key={m.id}
+                        receta={m}
+                        variante="exacto"
+                        enPauta={idsEnPauta.has(m.id)}
+                        hayRestricciones={restriccionesSel.size > 0}
+                        onUsarEnPauta={handleUsarEnPauta}
+                      />
                     ))}
                   </div>
 
-                  <h3 className="text-lg font-semibold mb-4 text-[#8a5a2a]">Sugerencias Parciales</h3>
+                  <h3 className="text-lg font-semibold mb-1 text-[#8a5a2a]">Sugerencias Parciales</h3>
+                  <p className="text-xs text-ink-soft mb-4">Caben en el plan pero dejan porciones sin usar; combínalas o complementa.</p>
                   {menusGenerados.matches_parciales.length === 0 && <p className="text-ink-soft text-sm">No se encontraron combinaciones parciales.</p>}
                   <div className="space-y-3">
                     {menusGenerados.matches_parciales.map(m => (
-                       <div key={m.id} className="border p-4 rounded-card bg-apricot/10 border-apricot/30 shadow-sm">
-                          <h4 className="font-bold text-[#8a5a2a]">{m.nombre}</h4>
-                          <p className="text-xs text-[#8a5a2a] mt-1">Ingredientes: {m.ingredientes.map(i => `${i.nombre} (${i.cantidad_g}g)`).join(', ')}</p>
-                       </div>
+                      <SugerenciaCard
+                        key={m.id}
+                        receta={m}
+                        variante="parcial"
+                        enPauta={idsEnPauta.has(m.id)}
+                        hayRestricciones={restriccionesSel.size > 0}
+                        onUsarEnPauta={handleUsarEnPauta}
+                      />
                     ))}
                   </div>
                 </div>
@@ -415,7 +666,7 @@ export const GeneradorPreparaciones: React.FC = () => {
                   </div>
                   <h3 className="text-lg font-semibold text-ink-soft mb-2">Configura la distribución del plan</h3>
                   <p className="text-sm text-ink-soft max-w-sm">Ingresa las porciones por grupo de alimento para cada tiempo de comida y el sistema sugerirá preparaciones compatibles automáticamente usando la API.</p>
-                  
+
                   <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4 text-left max-w-lg w-full">
                     <div className="bg-porcelain rounded-card p-4 text-center border border-mist/70">
                       <div className="w-8 h-8 mx-auto mb-2 rounded-full bg-pine-soft/10 text-pine-soft font-semibold flex items-center justify-center tnum">1</div>
@@ -427,7 +678,7 @@ export const GeneradorPreparaciones: React.FC = () => {
                     </div>
                     <div className="bg-porcelain rounded-card p-4 text-center border border-mist/70">
                       <div className="w-8 h-8 mx-auto mb-2 rounded-full bg-pine-soft/10 text-pine-soft font-semibold flex items-center justify-center tnum">3</div>
-                      <p className="text-xs text-ink-soft font-medium">Genera sugerencias dinámicamente</p>
+                      <p className="text-xs text-ink-soft font-medium">Genera y ancla sugerencias a la pauta</p>
                     </div>
                   </div>
                 </div>

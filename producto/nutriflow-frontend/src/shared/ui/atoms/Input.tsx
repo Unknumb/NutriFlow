@@ -11,7 +11,7 @@ export const Input = ({ label, id, ...props }: InputProps) => (
         </label>
         <input
             id={id}
-            className="flex h-9 w-full rounded-md border border-mist bg-white px-3 py-1 text-sm text-ink placeholder:text-ink-soft/50 outline-none transition-colors duration-150 focus:border-pine-soft focus:ring-1 focus:ring-pine-soft disabled:opacity-50"
+            className="flex min-h-11 md:h-9 md:min-h-0 w-full rounded-md border border-mist bg-white px-3 py-1.5 md:py-1 text-base md:text-sm text-ink placeholder:text-ink-soft/50 outline-none transition-colors duration-150 focus:border-pine-soft focus:ring-1 focus:ring-pine-soft disabled:opacity-50"
             {...props}
         />
     </div>

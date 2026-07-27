@@ -81,7 +81,7 @@ export const PatientInfoCard = () => {
         <Card className="mb-6">
             <CardHeader title="Información del Paciente" icon={UserCircle} />
             <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 sm:gap-4 mb-4">
                     <div className="col-span-2 flex items-end gap-2 min-w-0">
                         <div className="flex-1 min-w-0">
                             <label className="block text-sm font-medium text-ink-soft mb-1">Nombre</label>
@@ -99,7 +99,7 @@ export const PatientInfoCard = () => {
                         </div>
                         <button
                             onClick={goToFichasPacientes}
-                            className="bg-pine-soft/10 hover:bg-pine-soft/20 text-pine-soft p-2 rounded-md transition-colors duration-150 h-[38px] w-[38px] flex items-center justify-center flex-shrink-0"
+                            className="bg-pine-soft/10 hover:bg-pine-soft/20 text-pine-soft p-2 rounded-md transition-colors duration-150 h-9.5 w-9.5 flex items-center justify-center shrink-0"
                             title="Crear paciente en Fichas de Pacientes"
                         >
                             <Plus size={18} />
@@ -126,7 +126,7 @@ export const PatientInfoCard = () => {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-end gap-3 mt-6 pt-4 border-t border-mist">
                     <div className="flex flex-col sm:flex-row sm:items-center gap-2 min-w-0">
                         {(peso <= 0 || talla <= 0 || edad <= 0 || !sexo) && selectedId && (
-                            <span className="text-xs text-apricot font-medium break-words">
+                            <span className="text-xs text-apricot font-medium wrap-break-word">
                                 Faltan datos requeridos (Edad, Sexo, Talla, Peso) para activarlo.
                             </span>
                         )}

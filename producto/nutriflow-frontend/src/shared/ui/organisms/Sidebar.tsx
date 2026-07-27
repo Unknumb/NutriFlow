@@ -1,7 +1,7 @@
 import { Link } from '@tanstack/react-router';
 import {
     Calculator, PieChart, FileText, Grid3x3, BookOpen, Sparkles,
-    Users, LogOut, Apple, Menu,
+    Users, LogOut, Apple, Menu, X,
 } from 'lucide-react';
 import { supabase } from '../../utils/supabase';
 import { useState } from 'react';
@@ -70,7 +70,7 @@ export const Sidebar = () => {
             {!isMobileOpen && typeof document !== 'undefined' && createPortal(
                 <button
                     onClick={() => setIsMobileOpen(true)}
-                    className="md:hidden fixed top-3 left-3 z-[60] p-2 bg-white rounded-md shadow-md text-pine border border-gray-100"
+                    className="md:hidden fixed top-2 left-2 z-60 p-2.5 min-w-11 min-h-11 flex items-center justify-center bg-white rounded-md shadow-md text-pine border border-gray-100 active:scale-95 transition-all"
                     aria-label="Abrir menú"
                 >
                     <Menu className="w-5 h-5" />
@@ -81,19 +81,19 @@ export const Sidebar = () => {
             {/* Overlay oscuro — solo en móvil cuando el sidebar está abierto */}
             {isMobileOpen && typeof document !== 'undefined' && createPortal(
                 <div
-                    className="md:hidden fixed inset-0 bg-ink/60 z-[50] backdrop-blur-sm"
+                    className="md:hidden fixed inset-0 bg-ink/60 z-50 backdrop-blur-sm"
                     onClick={closeMobile}
                 />,
                 document.body
             )}
 
-            <aside className={`bg-pine text-porcelain flex flex-col h-screen transition-all duration-300 ease-in-out overflow-hidden fixed inset-y-0 left-0 z-[55] ${isMobileOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'} md:relative md:sticky md:top-0 md:translate-x-0 md:shadow-none ${isCollapsed ? 'w-20' : 'w-64'}`}>
+            <aside className={`bg-pine text-porcelain flex flex-col h-screen transition-all duration-300 ease-in-out overflow-hidden fixed inset-y-0 left-0 z-55 ${isMobileOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'} md:sticky md:top-0 md:translate-x-0 md:shadow-none ${isCollapsed ? 'w-20' : 'w-64'}`}>
                 {/* ── Header ── */}
                 {isCollapsed ? (
                     <div className="flex justify-center pt-6 pb-5">
                         <button
                             onClick={() => setIsCollapsed(false)}
-                            className="p-1.5 text-porcelain/60 hover:text-porcelain hover:bg-pine-soft/60 rounded-md transition-colors duration-150"
+                            className="p-2 min-w-11 min-h-11 flex items-center justify-center text-porcelain/60 hover:text-porcelain hover:bg-pine-soft/60 rounded-md transition-colors duration-150"
                             aria-label="Expandir menú"
                         >
                             <Menu className="w-5 h-5" />
@@ -110,11 +110,12 @@ export const Sidebar = () => {
                             </h1>
                         </div>
                         <button
-                            onClick={() => setIsCollapsed(true)}
-                            className="p-1.5 text-porcelain/60 hover:text-porcelain hover:bg-pine-soft/60 rounded-md transition-colors duration-150"
-                            aria-label="Colapsar menú"
+                            onClick={() => isMobileOpen ? closeMobile() : setIsCollapsed(true)}
+                            className="p-2 min-w-11 min-h-11 flex items-center justify-center text-porcelain/60 hover:text-porcelain hover:bg-pine-soft/60 rounded-md transition-colors duration-150 active:scale-95"
+                            aria-label={isMobileOpen ? "Cerrar menú móvil" : "Colapsar menú"}
                         >
-                            <Menu className="w-5 h-5" />
+                            {isMobileOpen ? <X className="w-5 h-5 md:hidden" /> : null}
+                            <Menu className={`w-5 h-5 ${isMobileOpen ? 'hidden md:block' : ''}`} />
                         </button>
                     </div>
                 )}
@@ -144,7 +145,7 @@ export const Sidebar = () => {
                                                     className: 'border-apricot bg-pine-soft text-porcelain font-medium',
                                                 }}
                                             >
-                                                <Icon className="w-[18px] h-[18px] shrink-0" />
+                                                <Icon className="w-4.5 h-4.5 shrink-0" />
                                                 {!isCollapsed && <span className="text-sm">{item.label}</span>}
                                             </Link>
                                         </li>
@@ -222,7 +223,7 @@ export const Sidebar = () => {
                 {showLogoutModal &&
                     typeof document !== 'undefined' &&
                     createPortal(
-                        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-ink/40 p-4 animate-in fade-in duration-200">
+                        <div className="fixed inset-0 z-9999 flex items-center justify-center bg-ink/40 p-4 animate-in fade-in duration-200">
                             <div className="bg-white rounded-card shadow-card w-full max-w-sm p-6 animate-in zoom-in-95 duration-200">
                                 <div className="flex flex-col items-center text-center">
                                     <div className="w-12 h-12 rounded-full bg-clinical-red/10 flex items-center justify-center mb-4 text-clinical-red">

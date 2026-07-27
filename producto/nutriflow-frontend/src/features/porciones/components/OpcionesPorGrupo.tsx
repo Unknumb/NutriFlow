@@ -45,7 +45,7 @@ export const OpcionesPorGrupo = () => {
                     <h2 className="text-lg font-semibold text-ink">Opciones por grupo de alimento</h2>
                     <p className="text-sm text-ink-soft mt-1">Referencia de equivalencias para cada grupo.</p>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                     {visibleOptions.map((group) => (
                         <GroupOptionCard 
                             key={group.id} 

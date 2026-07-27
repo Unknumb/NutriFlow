@@ -231,7 +231,7 @@ export const MacronutrientSetupCard = ({
           };
 
   return (
-    <div className="col-span-7 flex flex-col h-full gap-6">
+    <div className="flex flex-col h-full gap-6">
       <div
         className="bg-mist/60 p-1 min-h-9 items-center justify-center rounded-md flex border border-mist"
         role="tablist"

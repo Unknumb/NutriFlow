@@ -113,7 +113,7 @@ export const RegisterScreen: React.FC = () => {
           type="button"
           onClick={handleGoogle}
           disabled={isGoogleLoading || isSubmitting}
-          className="w-full flex items-center justify-center gap-3 border border-mist rounded-md py-2.5 px-4 text-sm font-medium text-ink bg-white hover:bg-mist/30 transition-colors duration-150 disabled:opacity-60 disabled:cursor-not-allowed"
+          className="w-full flex items-center justify-center gap-3 border border-mist rounded-md py-3 px-4 text-sm font-medium text-ink bg-white hover:bg-mist/30 transition-colors duration-150 disabled:opacity-60 disabled:cursor-not-allowed"
         >
           {isGoogleLoading ? (
             <Loader2 className="w-4 h-4 animate-spin text-ink-soft" />
@@ -135,7 +135,7 @@ export const RegisterScreen: React.FC = () => {
 
       <form className="space-y-6 flex flex-col" onSubmit={handleSubmit}>
         {/* Nombre y Apellido */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="flex flex-col gap-1.5">
             <label className={authLabelClass} htmlFor="nombre">
               Nombre
@@ -221,7 +221,7 @@ export const RegisterScreen: React.FC = () => {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-soft hover:text-ink transition-colors duration-150"
+              className="absolute right-1 top-1/2 -translate-y-1/2 text-ink-soft hover:text-ink transition-colors duration-150 p-3"
             >
               {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
             </button>

@@ -57,7 +57,7 @@ export const NutritionTargetsPanel = ({ targets, current, onSuggest, onComplete,
     return (
         <div className="col-span-full lg:col-span-3 space-y-4">
             {/* TARJETA 1: Inputs de Objetivos */}
-            <div className="bg-white text-ink flex flex-col gap-6 rounded-card border border-mist shadow-sm sticky top-4">
+            <div className="bg-white text-ink flex flex-col gap-6 rounded-card border border-mist shadow-sm lg:sticky lg:top-4">
                 <div className="px-6 pt-6 border-b border-mist/50 pb-3">
                     <h4 className="flex items-center gap-2 text-sm font-bold text-ink">
                         <Target className="w-4 h-4 text-pine-soft" /> Objetivos Nutricionales

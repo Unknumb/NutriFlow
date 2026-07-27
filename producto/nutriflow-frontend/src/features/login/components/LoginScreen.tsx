@@ -60,7 +60,7 @@ export const LoginScreen: React.FC = () => {
           type="button"
           onClick={handleGoogle}
           disabled={isGoogleLoading || isLoggingIn}
-          className="w-full flex items-center justify-center gap-3 border border-mist rounded-md py-2.5 px-4 text-sm font-medium text-ink bg-white hover:bg-mist/30 transition-colors duration-150 disabled:opacity-60 disabled:cursor-not-allowed"
+          className="w-full flex items-center justify-center gap-3 border border-mist rounded-md py-3 px-4 text-sm font-medium text-ink bg-white hover:bg-mist/30 transition-colors duration-150 disabled:opacity-60 disabled:cursor-not-allowed"
         >
           {isGoogleLoading ? (
             <Loader2 className="w-4 h-4 animate-spin text-ink-soft" />
@@ -109,7 +109,7 @@ export const LoginScreen: React.FC = () => {
             <label className={authLabelClass} htmlFor="password">
               Contraseña
             </label>
-            <Link to="/forgot-password" className="text-xs font-semibold text-pine-soft hover:underline">
+            <Link to="/forgot-password" className="text-xs font-semibold text-pine-soft hover:underline inline-flex items-center min-h-11">
               ¿Olvidaste tu contraseña?
             </Link>
           </div>
@@ -130,7 +130,7 @@ export const LoginScreen: React.FC = () => {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-soft hover:text-ink transition-colors duration-150"
+              className="absolute right-1 top-1/2 -translate-y-1/2 text-ink-soft hover:text-ink transition-colors duration-150 p-3"
               aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
             >
               {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}

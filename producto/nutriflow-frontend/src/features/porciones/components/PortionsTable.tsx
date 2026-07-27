@@ -17,12 +17,25 @@ import { NUTRITION_GROUPS, comidasOrdenadas } from "../constants";
 
 export const PortionsTable = () => {
   const { state, actions, computed } = usePortions();
-  const { targets, distributions, activeMeals, customFoods, customMeals, mealTimes } = state;
+  const {
+    targets,
+    distributions,
+    activeMeals,
+    customFoods,
+    customMeals,
+    mealTimes,
+  } = state;
   const { incrementPortion, decrementPortion, setPortion } = actions;
   const { getGroupTotal, getGroupBalance } = computed;
 
-  const [activeDragGroupId, setActiveDragGroupId] = useState<string | null>(null);
-  const [activeDragPortion, setActiveDragPortion] = useState<{ mealId: string, groupId: string, value: number } | null>(null);
+  const [activeDragGroupId, setActiveDragGroupId] = useState<string | null>(
+    null,
+  );
+  const [activeDragPortion, setActiveDragPortion] = useState<{
+    mealId: string;
+    groupId: string;
+    value: number;
+  } | null>(null);
 
   const COMBINED_GROUPS = [...NUTRITION_GROUPS, ...(customFoods || [])];
 
@@ -37,7 +50,7 @@ export const PortionsTable = () => {
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
     useSensor(TouchSensor, {
-      activationConstraint: { delay: 250, tolerance: 5 },
+      activationConstraint: { distance: 5 },
     }),
   );
 
@@ -47,7 +60,11 @@ export const PortionsTable = () => {
     if (activeData[0] === "drag" && activeData[1] === "group") {
       setActiveDragGroupId(activeData[2]);
     } else if (activeData[0] === "drag" && activeData[1] === "portion") {
-      setActiveDragPortion({ mealId: activeData[2], groupId: activeData[3], value: distributions[activeData[2]]?.[activeData[3]] || 0 });
+      setActiveDragPortion({
+        mealId: activeData[2],
+        groupId: activeData[3],
+        value: distributions[activeData[2]]?.[activeData[3]] || 0,
+      });
     }
   };
 
@@ -94,7 +111,7 @@ export const PortionsTable = () => {
       const groupId = activeData[3];
       decrementPortion(mealId, groupId);
     }
-    
+
     // active: drag-portion-[sourceMealId]-[groupId]
     // over: drop-meal-[targetMealId]
     if (
@@ -111,7 +128,11 @@ export const PortionsTable = () => {
         // Mover la porción completa de una comida a otra.
         const val = distributions[sourceMealId]?.[groupId] || 0;
         setPortion(sourceMealId, groupId, 0);
-        setPortion(targetMealId, groupId, (distributions[targetMealId]?.[groupId] || 0) + val);
+        setPortion(
+          targetMealId,
+          groupId,
+          (distributions[targetMealId]?.[groupId] || 0) + val,
+        );
       }
     }
   };
@@ -119,7 +140,7 @@ export const PortionsTable = () => {
   const activeDragGroup = activeDragGroupId
     ? COMBINED_GROUPS.find((g) => g.id === activeDragGroupId)
     : null;
-    
+
   const activeDragPortionGroup = activeDragPortion
     ? COMBINED_GROUPS.find((g) => g.id === activeDragPortion.groupId)
     : null;
@@ -161,141 +182,148 @@ export const PortionsTable = () => {
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="w-full overflow-x-auto pb-4 scrollbar-hide">
-          <table className="border-collapse bg-white shadow-sm rounded-xl overflow-hidden w-full text-sm min-w-[800px]">
-            <thead
-              ref={setHeaderRef}
-              className={`transition-colors ${isHeaderOver ? "bg-red-50 outline outline-2 outline-red-300 outline-offset-[-2px]" : ""}`}
-            >
-              <tr>
-                <td
-                  rowSpan={2}
-                  className="bg-yellow-50 border border-mist text-center align-middle p-3 w-[130px]"
-                >
-                  <p className="text-xs text-ink-soft italic leading-snug">
-                    Guíate por el libro de{" "}
-                    <strong className="text-ink not-italic">
-                      porciones de intercambio
-                    </strong>
-                  </p>
-                </td>
-                {visibleGroups.map((g) => (
-                  <DraggableGroupHeader key={g.id} group={g} />
-                ))}
-              </tr>
-              <tr>
-                {visibleGroups.map((g) => (
+        {/* Indicador de scroll horizontal — visible en móvil y tablets/iPads hasta resolución PC (xl) */}
+        <p className="text-[11px] text-ink-soft/70 mb-2 flex items-center gap-1.5 xl:hidden">
+          <span aria-hidden="true">👆</span> Desliza horizontalmente para ver
+          todos los grupos
+        </p>
+        <div className="relative w-full before:absolute before:left-0 before:top-0 before:bottom-4 before:w-6 before:bg-linear-to-r before:from-white before:to-transparent before:z-10 before:pointer-events-none xl:before:hidden after:absolute after:right-0 after:top-0 after:bottom-4 after:w-6 after:bg-linear-to-l after:from-white after:to-transparent after:z-10 after:pointer-events-none xl:after:hidden">
+          <div className="w-full overflow-x-auto pb-4 scrollbar-hide">
+            <table className="border-collapse bg-white shadow-sm rounded-xl overflow-hidden w-full text-sm min-w-200">
+              <thead
+                ref={setHeaderRef}
+                className={`transition-colors ${isHeaderOver ? "bg-red-50 outline-2 outline-red-300 -outline-offset-2" : ""} md:sticky md:top-0 md:z-20 md:bg-white md:shadow-xs`}
+              >
+                <tr>
                   <td
-                    key={`target-${g.id}`}
-                    className={`${g.targetBg} border text-center py-1`}
+                    rowSpan={2}
+                    className="bg-yellow-50 border border-mist text-center align-middle p-3 w-32.5"
                   >
-                    <button className="font-bold text-sm text-white">
-                      {targets[g.id]}
-                    </button>
+                    <p className="text-xs text-ink-soft italic leading-snug">
+                      Guíate por el libro de{" "}
+                      <strong className="text-ink not-italic">
+                        porciones de intercambio
+                      </strong>
+                    </p>
                   </td>
-                ))}
-              </tr>
-              <tr className="bg-mist/60">
-                <td className="border border-mist px-3 py-2 text-xs font-semibold text-ink-soft text-center">
-                  N° Porciones DIARIO
-                </td>
-                {visibleGroups.map((g) => (
-                  <td
-                    key={`target-txt-${g.id}`}
-                    className="border border-mist text-center"
-                  >
-                    <span className="text-sm font-bold text-ink-soft">
-                      {targets[g.id]}
-                    </span>
-                  </td>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {visibleMeals.map((meal, idx) => (
-                <DroppableMealRow key={meal.id} mealId={meal.id} idx={idx}>
-                  <td className="border border-mist p-2 text-left pointer-events-none select-none">
-                    <div className="text-xs text-ink-soft font-mono">
-                      {meal.time}
-                    </div>
-                    <span className="font-bold text-sm text-ink">
-                      {meal.name}
-                    </span>
+                  {visibleGroups.map((g) => (
+                    <DraggableGroupHeader key={g.id} group={g} />
+                  ))}
+                </tr>
+                <tr>
+                  {visibleGroups.map((g) => (
+                    <td
+                      key={`target-${g.id}`}
+                      className={`${g.targetBg} border text-center py-1`}
+                    >
+                      <button className="font-bold text-sm text-white">
+                        {targets[g.id]}
+                      </button>
+                    </td>
+                  ))}
+                </tr>
+                <tr className="bg-mist/60">
+                  <td className="border border-mist px-3 py-2 text-xs font-semibold text-ink-soft text-center">
+                    N° Porciones DIARIO
                   </td>
                   {visibleGroups.map((g) => (
                     <td
-                      key={`${meal.id}-${g.id}`}
-                      className="border border-mist text-center p-1"
+                      key={`target-txt-${g.id}`}
+                      className="border border-mist text-center"
                     >
-                      <PortionCell
-                        value={distributions[meal.id]?.[g.id] || 0}
-                        cellBg={g.cellBg}
-                        textBtn={g.textBtn}
-                        mealId={meal.id}
-                        groupId={g.id}
-                        onIncrement={() => incrementPortion(meal.id, g.id)}
-                        onDecrement={() => decrementPortion(meal.id, g.id)}
-                        onSetPortion={(val) => setPortion(meal.id, g.id, val)}
-                      />
-                    </td>
-                  ))}
-                </DroppableMealRow>
-              ))}
-              <tr className="bg-mist/60 border-t-2 border-mist">
-                <td className="border border-mist p-2 text-xs font-bold text-ink-soft text-right uppercase tracking-wide">
-                  Total
-                </td>
-                {visibleGroups.map((g) => {
-                  const total = getGroupTotal(g.id);
-                  const balance = getGroupBalance(g.id);
-                  const colorClass =
-                    balance === "exact"
-                      ? "text-emerald-700"
-                      : balance === "over"
-                        ? "text-red-600"
-                        : "text-amber-600";
-                  return (
-                    <td
-                      key={`total-${g.id}`}
-                      className="border border-mist text-center py-2"
-                    >
-                      <span className={`text-sm font-bold ${colorClass}`}>
-                        {total}
+                      <span className="text-sm font-bold text-ink-soft">
+                        {targets[g.id]}
                       </span>
                     </td>
-                  );
-                })}
-              </tr>
-              <tr className="bg-white">
-                <td className="border border-mist p-2 text-xs font-bold text-ink-soft text-right uppercase tracking-wide">
-                  Balance
-                </td>
-                {visibleGroups.map((g) => {
-                  const balance = getGroupBalance(g.id);
-                  return (
-                    <td
-                      key={`balance-${g.id}`}
-                      className={`border border-mist/70 text-center py-2 ${balance === "exact" ? "bg-emerald-50" : balance === "over" ? "bg-red-50" : "bg-amber-50"}`}
-                    >
-                      {balance === "exact" && (
-                        <CheckCircle className="w-5 h-5 text-emerald-500 mx-auto" />
-                      )}
-                      {balance === "under" && (
-                        <span className="text-amber-600 font-bold text-lg leading-none">
-                          -
-                        </span>
-                      )}
-                      {balance === "over" && (
-                        <span className="text-red-500 font-bold text-lg leading-none">
-                          +
-                        </span>
-                      )}
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {visibleMeals.map((meal, idx) => (
+                  <DroppableMealRow key={meal.id} mealId={meal.id} idx={idx}>
+                    <td className="border border-mist p-2 text-left pointer-events-none select-none">
+                      <div className="text-xs text-ink-soft font-mono">
+                        {meal.time}
+                      </div>
+                      <span className="font-bold text-sm text-ink">
+                        {meal.name}
+                      </span>
                     </td>
-                  );
-                })}
-              </tr>
-            </tbody>
-          </table>
+                    {visibleGroups.map((g) => (
+                      <td
+                        key={`${meal.id}-${g.id}`}
+                        className="border border-mist text-center p-1"
+                      >
+                        <PortionCell
+                          value={distributions[meal.id]?.[g.id] || 0}
+                          cellBg={g.cellBg}
+                          textBtn={g.textBtn}
+                          mealId={meal.id}
+                          groupId={g.id}
+                          onIncrement={() => incrementPortion(meal.id, g.id)}
+                          onDecrement={() => decrementPortion(meal.id, g.id)}
+                          onSetPortion={(val) => setPortion(meal.id, g.id, val)}
+                        />
+                      </td>
+                    ))}
+                  </DroppableMealRow>
+                ))}
+                <tr className="bg-mist/60 border-t-2 border-mist">
+                  <td className="border border-mist p-2 text-xs font-bold text-ink-soft text-right uppercase tracking-wide">
+                    Total
+                  </td>
+                  {visibleGroups.map((g) => {
+                    const total = getGroupTotal(g.id);
+                    const balance = getGroupBalance(g.id);
+                    const colorClass =
+                      balance === "exact"
+                        ? "text-emerald-700"
+                        : balance === "over"
+                          ? "text-red-600"
+                          : "text-amber-600";
+                    return (
+                      <td
+                        key={`total-${g.id}`}
+                        className="border border-mist text-center py-2"
+                      >
+                        <span className={`text-sm font-bold ${colorClass}`}>
+                          {total}
+                        </span>
+                      </td>
+                    );
+                  })}
+                </tr>
+                <tr className="bg-white">
+                  <td className="border border-mist p-2 text-xs font-bold text-ink-soft text-right uppercase tracking-wide">
+                    Balance
+                  </td>
+                  {visibleGroups.map((g) => {
+                    const balance = getGroupBalance(g.id);
+                    return (
+                      <td
+                        key={`balance-${g.id}`}
+                        className={`border border-mist/70 text-center py-2 ${balance === "exact" ? "bg-emerald-50" : balance === "over" ? "bg-red-50" : "bg-amber-50"}`}
+                      >
+                        {balance === "exact" && (
+                          <CheckCircle className="w-5 h-5 text-emerald-500 mx-auto" />
+                        )}
+                        {balance === "under" && (
+                          <span className="text-amber-600 font-bold text-lg leading-none">
+                            -
+                          </span>
+                        )}
+                        {balance === "over" && (
+                          <span className="text-red-500 font-bold text-lg leading-none">
+                            +
+                          </span>
+                        )}
+                      </td>
+                    );
+                  })}
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
 
         <DragOverlay dropAnimation={{ duration: 200, easing: "ease" }}>
@@ -308,11 +336,15 @@ export const PortionsTable = () => {
             </div>
           ) : activeDragPortion && activeDragPortionGroup ? (
             <div
-              className={`${activeDragPortionGroup.cellBg} rounded-lg px-2 py-0.5 flex flex-col items-center shadow-xl scale-110 rotate-3 opacity-90`}
+              className={`${activeDragPortionGroup.cellBg} rounded-lg px-2 py-0.5 w-12 flex flex-col items-center shadow-xl scale-110 rotate-3 opacity-90`}
             >
-                <div className="flex items-center gap-0.5 py-1">
-                    <span className={`font-bold text-base ${activeDragPortionGroup.textBtn}`}>{activeDragPortion.value}</span>
-                </div>
+              <div className="flex items-center gap-0.5 py-1">
+                <span
+                  className={`font-bold text-base ${activeDragPortionGroup.textBtn}`}
+                >
+                  {activeDragPortion.value}
+                </span>
+              </div>
             </div>
           ) : null}
         </DragOverlay>
@@ -336,7 +368,8 @@ export const PortionsTable = () => {
           <span className="font-medium">Excede meta</span>
         </div>
         <span className="text-ink-soft/60 ml-auto">
-          · Haz click en horas o metas para editarlas · Usa "Guardar pauta" arriba para guardar
+          · Haz click en horas o metas para editarlas · Usa "Guardar pauta"
+          arriba para guardar
         </span>
       </div>
     </div>

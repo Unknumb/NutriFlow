@@ -131,7 +131,7 @@ export const ResetPasswordScreen: React.FC = () => {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-soft hover:text-ink transition-colors duration-150"
+              className="absolute right-1 top-1/2 -translate-y-1/2 text-ink-soft hover:text-ink transition-colors duration-150 p-3"
             >
               {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
             </button>

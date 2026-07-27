@@ -15,15 +15,15 @@ const STEPS = [
 
 export const FlowStepper = ({ current }: { current: 1 | 2 | 3 }) => {
     return (
-        <nav aria-label="Flujo de planificación" className="mb-5">
-            <ol className="flex items-center gap-1 rounded-card border border-mist bg-white px-3 py-2 shadow-sm">
+        <nav aria-label="Flujo de planificación" className="mb-4 sm:mb-5">
+            <ol className="flex items-center gap-0.5 sm:gap-1 rounded-card border border-mist bg-white px-2 sm:px-3 py-2 shadow-sm overflow-x-auto">
                 {STEPS.map((step, i) => {
                     const estado = step.n < current ? 'done' : step.n === current ? 'active' : 'todo';
                     return (
-                        <li key={step.n} className="flex items-center">
+                        <li key={step.n} className="flex items-center shrink-0">
                             <Link
                                 to={step.to}
-                                className={`group inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                                className={`group inline-flex items-center gap-1.5 sm:gap-2 rounded-lg px-2 sm:px-3 py-1.5 text-xs font-medium transition-colors ${
                                     estado === 'active'
                                         ? 'bg-pine text-porcelain'
                                         : 'text-ink-soft hover:bg-porcelain'
@@ -40,10 +40,10 @@ export const FlowStepper = ({ current }: { current: 1 | 2 | 3 }) => {
                                 >
                                     {estado === 'done' ? <Check className="h-3 w-3" /> : step.n}
                                 </span>
-                                <span className="whitespace-nowrap">{step.label}</span>
+                                <span className="hidden sm:inline whitespace-nowrap">{step.label}</span>
                             </Link>
                             {i < STEPS.length - 1 && (
-                                <span className="mx-1 h-px w-5 bg-mist sm:w-8" aria-hidden="true" />
+                                <span className="mx-0.5 sm:mx-1 h-px w-3 sm:w-8 bg-mist" aria-hidden="true" />
                             )}
                         </li>
                     );

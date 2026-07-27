@@ -15,7 +15,7 @@ export const MacronutrientsHeader = ({ context, totals, isBalanced, onPesoChange
     const totalKcalCalculado = totals.prot.kcal + totals.cho.kcal + totals.fat.kcal;
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-12 gap-4 sm:gap-6 mb-6">
             <div className="bg-white flex flex-col gap-6 rounded-card border border-mist lg:col-span-3 shadow-card">
                 <div className="px-6 pt-6 pb-6">
                     <label className="items-center gap-2 text-sm font-medium mb-2 block text-ink-soft">Calorías Totales Objetivo</label>

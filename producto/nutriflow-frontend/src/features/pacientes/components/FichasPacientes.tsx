@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { usePacientes, useDeletePaciente } from "../hooks/usePacientes";
 import { useClinicalStore } from "../../../shared/store/useClinicalStore";
 import { useAuthStore } from "../../../shared/store/useAuthStore";
-import { Loader2, Star, Trash2, Printer, Plus } from "lucide-react";
+import { Loader2, Star, Trash2, Printer, Plus, ChevronLeft } from "lucide-react";
 import type { Paciente } from "../types/paciente.types";
 import { ModalNuevoPaciente } from "./ModalNuevoPaciente";
 import { DatosPersonalesPaciente } from "./DatosPersonalesPaciente";
@@ -59,6 +59,7 @@ export const FichasPacientes: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"datos" | "pautas">("datos");
   const [showNuevoPaciente, setShowNuevoPaciente] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [isMobileDetailView, setIsMobileDetailView] = useState(false);
   const deletePaciente = useDeletePaciente();
 
   const { data: evaluaciones, isLoading: loadingEvals } =
@@ -141,18 +142,18 @@ export const FichasPacientes: React.FC = () => {
     <div className="flex flex-col h-full bg-porcelain flex-1 overflow-hidden w-full">
       <div className="p-3 sm:p-4 md:p-8 max-w-7xl mx-auto w-full lg:h-full flex flex-col overflow-x-hidden">
         {/* Encabezado Principal */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-semibold text-ink">
+        <div className="mb-4 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-semibold text-ink">
             Fichas de Pacientes
           </h1>
-          <p className="text-ink-soft mt-1">Gestión y seguimiento clínico</p>
+          <p className="text-ink-soft mt-1 text-sm sm:text-base">Gestión y seguimiento clínico</p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:flex-1 lg:min-h-0">
+        <div className="flex flex-col lg:grid lg:grid-cols-12 gap-6 flex-1 min-h-0">
           {/* PANEL IZQUIERDO: LISTA DE PACIENTES */}
-          <div className="lg:col-span-4 flex flex-col h-72 lg:h-auto lg:min-h-0">
+          <div className={`lg:col-span-4 flex-col flex-1 lg:flex-none lg:h-auto min-h-0 ${isMobileDetailView ? 'hidden lg:flex' : 'flex'}`}>
             <div className="bg-white text-ink flex flex-col rounded-card border border-mist h-full overflow-hidden shadow-sm">
-              <div className="px-6 pt-6 pb-4 border-b border-mist/70 flex items-start justify-between gap-3">
+              <div className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4 border-b border-mist/70 flex items-start justify-between gap-3">
                 <div>
                   <h4 className="font-semibold text-lg leading-none mb-1">
                     Pacientes Activos
@@ -173,7 +174,7 @@ export const FichasPacientes: React.FC = () => {
                 </button>
               </div>
 
-              <div className="px-6 py-4 flex-1 overflow-y-auto space-y-3">
+              <div className="px-3 sm:px-6 py-3 sm:py-4 flex-1 overflow-y-auto space-y-2 sm:space-y-3">
                 {isLoading && (
                   <div className="flex justify-center p-4">
                     <Loader2 className="w-6 h-6 animate-spin text-pine-soft" />
@@ -202,8 +203,9 @@ export const FichasPacientes: React.FC = () => {
                       onClick={() => {
                         setSelectedPatientId(paciente.id);
                         setShowNuevaEval(false);
+                        setIsMobileDetailView(true);
                       }}
-                      className={`w-full text-left p-4 rounded-lg border-2 cursor-pointer transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-apricot ${
+                      className={`w-full text-left p-3 sm:p-4 rounded-lg border-2 cursor-pointer transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-apricot ${
                         selectedPatientId === paciente.id
                           ? "border-pine-soft bg-pine-soft/5"
                           : "border-mist hover:border-mist bg-white"
@@ -239,15 +241,22 @@ export const FichasPacientes: React.FC = () => {
           </div>
 
           {/* PANEL DERECHO: DETALLES DEL PACIENTE */}
-          <div className="lg:col-span-8 flex flex-col lg:min-h-0">
-            <div className="bg-white text-ink flex flex-col rounded-card border border-mist min-h-100 lg:h-full lg:min-h-0 overflow-hidden shadow-sm">
+          <div className={`lg:col-span-8 flex-col flex-1 lg:flex-none lg:min-h-0 ${isMobileDetailView ? 'flex' : 'hidden lg:flex'}`}>
+            <div className="bg-white text-ink flex flex-col rounded-card border border-mist lg:h-full lg:min-h-0 overflow-hidden shadow-sm">
               {!pacienteSeleccionado ? (
                 <div className="flex items-center justify-center h-full text-ink-soft">
                   Selecciona un paciente para ver sus detalles
                 </div>
               ) : (
                 <>
-                  <div className="px-6 pt-6">
+                  <div className="px-4 sm:px-6 pt-4 sm:pt-6">
+                    <button
+                      onClick={() => setIsMobileDetailView(false)}
+                      className="lg:hidden mb-4 inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium border border-mist rounded-md bg-white hover:bg-mist/30 text-ink-soft shadow-sm"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                      Volver a la lista
+                    </button>
                     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
                       <div className="flex items-start gap-3 min-w-0">
                         <span className="relative flex h-12 w-12 sm:h-16 sm:w-16 shrink-0 overflow-hidden rounded-full">
@@ -279,7 +288,7 @@ export const FichasPacientes: React.FC = () => {
                             className="inline-flex items-center justify-center rounded-md border border-mist px-3 py-1.5 text-sm font-medium bg-white text-ink-soft hover:bg-pine-soft/5 hover:text-pine-soft transition-colors shadow-sm gap-2 flex-1 sm:flex-none"
                           >
                             <Star className="w-4 h-4" />
-                            Establecer como Paciente Activo
+                            <span className="hidden sm:inline">Establecer como Paciente </span>Activo
                           </button>
                         )}
                         <button
@@ -293,7 +302,7 @@ export const FichasPacientes: React.FC = () => {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+                    <div className="grid grid-cols-2 gap-2 sm:gap-3 mb-4 sm:mb-6">
                       <div className="flex items-center gap-2 text-sm text-ink-soft min-w-0">
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
@@ -417,7 +426,7 @@ export const FichasPacientes: React.FC = () => {
                   </div>
 
                   {/* CONTENIDO PESTAÑAS */}
-                  <div className="flex-1 overflow-y-auto px-6 pb-6">
+                  <div className="flex-1 overflow-y-auto px-4 sm:px-6 pb-4 sm:pb-6">
                     {/* --- TAB 1: DATOS CLÍNICOS --- */}
                     {activeTab === "datos" && (
                       <div className="space-y-6 animate-in fade-in duration-300 mt-2">
@@ -1121,7 +1130,7 @@ export const FichasPacientes: React.FC = () => {
 
       {confirmDelete && pacienteSeleccionado && (
         <div
-          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+          className="fixed inset-0 z-9999 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200"
           onClick={() => setConfirmDelete(false)}
         >
           <div

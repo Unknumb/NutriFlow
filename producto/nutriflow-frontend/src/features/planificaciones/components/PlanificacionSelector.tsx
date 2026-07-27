@@ -49,9 +49,9 @@ export const PlanificacionSelector = () => {
     };
 
     return (
-        <div className="inline-flex items-center gap-2">
+        <div className="inline-flex items-center gap-2 max-w-full">
             <Layers className="h-4 w-4 shrink-0 text-pine-soft" />
-            <label htmlFor="planif-selector" className="text-xs font-medium text-ink-soft">
+            <label htmlFor="planif-selector" className="text-xs font-medium text-ink-soft shrink-0 whitespace-nowrap">
                 Planificación:
             </label>
             <select
@@ -59,7 +59,7 @@ export const PlanificacionSelector = () => {
                 value={planificacionActiva?.id || ''}
                 onChange={(e) => handleChange(e.target.value)}
                 disabled={setActiva.isPending}
-                className="max-w-[220px] rounded-lg border border-mist bg-white px-3 py-1.5 text-xs font-medium text-ink outline-none focus:border-pine-soft disabled:opacity-60"
+                className="max-w-45 sm:max-w-65 rounded-lg border border-mist bg-white pl-3 pr-8 py-1.5 text-xs font-medium text-ink outline-none focus:border-pine-soft disabled:opacity-60 truncate"
             >
                 {delPaciente.map((p) => (
                     <option key={p.id} value={p.id}>
@@ -67,7 +67,7 @@ export const PlanificacionSelector = () => {
                     </option>
                 ))}
             </select>
-            {setActiva.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin text-ink-soft" />}
+            {setActiva.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin text-ink-soft shrink-0" />}
         </div>
     );
 };

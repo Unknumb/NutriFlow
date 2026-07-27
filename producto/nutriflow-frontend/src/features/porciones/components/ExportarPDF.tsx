@@ -9,11 +9,33 @@ import { useMacronutrientsSetup } from "../../macronutrients/hooks/useMacronutri
 import { useObjetivosActivos } from "../../planificaciones/hooks/useObjetivosActivos";
 import { comidasOrdenadas } from "../constants";
 
-const GROUP_IDS = ["cer", "fru", "veg", "cag", "cbg", "leg", "lag", "lmg", "lbg", "ace", "arg", "gbg", "azu"];
+const GROUP_IDS = [
+  "cer",
+  "fru",
+  "veg",
+  "cag",
+  "cbg",
+  "leg",
+  "lag",
+  "lmg",
+  "lbg",
+  "ace",
+  "arg",
+  "gbg",
+  "azu",
+];
 
 export const ExportarPDF = () => {
   const { state, computed } = usePortions();
-  const { patientContext, distributions, targets, activeMeals, customMeals, mealTimes, sugerenciasComida } = state;
+  const {
+    patientContext,
+    distributions,
+    targets,
+    activeMeals,
+    customMeals,
+    mealTimes,
+    sugerenciasComida,
+  } = state;
   const { getGroupTotal } = computed;
 
   const activePatient = useClinicalStore((s) => s.activePatient);
@@ -25,7 +47,9 @@ export const ExportarPDF = () => {
   const { objetivos } = useObjetivosActivos();
 
   // Datos completos del paciente (RUT y demás) desde la ficha; si no hay, usamos el contexto.
-  const fichaPaciente = (pacientes ?? []).find((p) => p.id === activePatient?.id);
+  const fichaPaciente = (pacientes ?? []).find(
+    (p) => p.id === activePatient?.id,
+  );
 
   const fechaEmision = new Intl.DateTimeFormat("es-CL", {
     day: "2-digit",
@@ -34,9 +58,10 @@ export const ExportarPDF = () => {
   }).format(new Date());
 
   const tallaM = (activePatient?.talla || 0) / 100;
-  const imc = tallaM > 0 && activePatient?.peso
-    ? (activePatient.peso / (tallaM * tallaM)).toFixed(1)
-    : "";
+  const imc =
+    tallaM > 0 && activePatient?.peso
+      ? (activePatient.peso / (tallaM * tallaM)).toFixed(1)
+      : "";
 
   const nombreNutri = perfil
     ? `${perfil.nombre} ${perfil.apellido}`.trim()
@@ -75,35 +100,82 @@ export const ExportarPDF = () => {
     sugerenciasComida,
     // Comidas activas resueltas y ordenadas por horario (predefinidas + personalizadas)
     comidas: comidasOrdenadas(activeMeals, customMeals, mealTimes),
-    totals: GROUP_IDS.reduce((acc, id) => {
-      acc[id] = getGroupTotal(id);
-      return acc;
-    }, {} as Record<string, number>),
+    totals: GROUP_IDS.reduce(
+      (acc, id) => {
+        acc[id] = getGroupTotal(id);
+        return acc;
+      },
+      {} as Record<string, number>,
+    ),
   };
 
   const fileName = `Pauta_${patientContext.name.replace(/\s+/g, "_")}.pdf`;
 
   return (
     <div className="animate-in fade-in duration-300 outline-none flex-1 overflow-auto m-0 p-6 bg-porcelain">
-      <div className="flex items-center justify-between mb-5 max-w-[820px] mx-auto">
-        <div>
-          <h2 className="text-lg font-semibold text-ink">Exportar a PDF</h2>
-          <p className="text-sm text-ink-soft mt-0.5">Documento para el paciente y la ficha clínica</p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-5 max-w-205 mx-auto gap-4">
+        <div className="text-center md:text-left">
+          <h2 className="text-xl md:text-lg font-bold md:font-semibold text-ink">
+            Exportar a PDF
+          </h2>
+          <p className="text-sm text-ink-soft mt-0.5">
+            Documento para el paciente y la ficha clínica
+          </p>
         </div>
 
-        <PDFDownloadLink document={<PautaDocumentPDF data={pdfData} />} fileName={fileName}>
+        <div className="hidden md:block">
+          <PDFDownloadLink
+            document={<PautaDocumentPDF data={pdfData} />}
+            fileName={fileName}
+          >
+            {({ loading }) => (
+              <button
+                disabled={loading}
+                className="inline-flex items-center gap-2 bg-pine hover:bg-pine-soft disabled:opacity-60 text-porcelain px-6 py-2.5 rounded-md text-sm font-semibold transition-colors duration-150 shadow-sm cursor-pointer w-full md:w-auto justify-center"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" /> Procesando...
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-4 h-4" /> Descargar PDF
+                  </>
+                )}
+              </button>
+            )}
+          </PDFDownloadLink>
+        </div>
+      </div>
+
+      {/* Vista Móvil: Tarjeta de descarga (sin PDFViewer) */}
+      <div className="flex flex-col items-center justify-center p-8 bg-white border border-mist rounded-xl md:hidden text-center shadow-sm mt-4">
+        <div className="w-20 h-20 bg-pine/5 text-pine rounded-full flex items-center justify-center mb-5">
+          <Download className="w-10 h-10" />
+        </div>
+        <h3 className="text-xl font-bold text-ink">El documento está listo</h3>
+        <p className="text-sm text-ink-soft mt-2 mb-8 px-4">
+          La previsualización en línea no está disponible para móviles. Descarga
+          el archivo PDF para verlo, imprimirlo o enviarlo a tu paciente.
+        </p>
+
+        <PDFDownloadLink
+          document={<PautaDocumentPDF data={pdfData} />}
+          fileName={fileName}
+        >
           {({ loading }) => (
             <button
               disabled={loading}
-              className="inline-flex items-center gap-2 bg-pine hover:bg-pine-soft disabled:opacity-60 text-porcelain px-6 py-2.5 rounded-md text-sm font-semibold transition-colors duration-150 shadow-sm cursor-pointer"
+              className="inline-flex w-full sm:w-auto justify-center items-center gap-2 bg-pine hover:bg-pine-soft disabled:opacity-60 text-white px-8 py-3.5 rounded-xl text-base font-bold transition-all shadow-md active:scale-95"
             >
               {loading ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" /> Procesando...
+                  <Loader2 className="w-5 h-5 animate-spin" /> Preparando
+                  archivo...
                 </>
               ) : (
                 <>
-                  <Download className="w-4 h-4" /> Descargar PDF
+                  <Download className="w-5 h-5" /> Descargar Pauta en PDF
                 </>
               )}
             </button>
@@ -111,11 +183,16 @@ export const ExportarPDF = () => {
         </PDFDownloadLink>
       </div>
 
-      {/* Vista previa real: renderiza el mismo documento que se descarga. */}
-      <div className="flex justify-center pb-12">
+      {/* Vista previa real para Desktop */}
+      <div className="hidden md:flex justify-center pb-12 mt-4">
         <PDFViewer
           showToolbar={false}
-          style={{ width: "820px", height: "1160px", border: "1px solid #E8EAE3", borderRadius: 8 }}
+          style={{
+            width: "820px",
+            height: "1160px",
+            border: "1px solid #E8EAE3",
+            borderRadius: 8,
+          }}
         >
           <PautaDocumentPDF data={pdfData} />
         </PDFViewer>

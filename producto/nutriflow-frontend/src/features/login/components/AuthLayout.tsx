@@ -18,7 +18,7 @@ export const authButtonClass =
 export const authErrorClass =
   "mb-6 p-3 bg-clinical-red/5 border border-clinical-red/30 rounded-md text-sm text-clinical-red";
 
-export const authLinkClass = "text-pine-soft font-medium hover:underline";
+export const authLinkClass = "text-pine-soft font-medium hover:underline inline-flex items-center min-h-11";
 
 /**
  * Layout compartido para las pantallas de autenticación (login, registro,
@@ -37,10 +37,10 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ title, subtitle, childre
         </div>
 
         <div>
-          <h2 className="font-display text-[40px] leading-[1.15] font-semibold text-porcelain max-w-[400px]">
+          <h2 className="font-display text-[40px] leading-[1.15] font-semibold text-porcelain max-w-100">
             La consulta nutricional, ordenada.
           </h2>
-          <p className="text-porcelain/60 mt-4 max-w-[380px]">
+          <p className="text-porcelain/60 mt-4 max-w-95">
             Fichas, cálculos y pautas de tus pacientes en un solo lugar.
           </p>
         </div>
@@ -52,7 +52,7 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ title, subtitle, childre
 
       {/* Formulario */}
       <main className="flex-1 flex items-center justify-center p-6 md:p-12 page-enter">
-        <div className="w-full max-w-[420px]">
+        <div className="w-full max-w-105">
           {/* Marca visible solo cuando el panel izquierdo está oculto */}
           <p className="lg:hidden font-display text-xl font-semibold text-pine mb-8">NutriFlow</p>
 

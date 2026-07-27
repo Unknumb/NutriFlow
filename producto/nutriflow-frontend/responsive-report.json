@@ -1,0 +1,422 @@
+{
+  "iPhone 375x667 → /login": [
+    {
+      "type": "SMALL_TOUCH_TARGET",
+      "severity": "LOW",
+      "element": "button.w-full.flex.items-center",
+      "width": 327,
+      "height": 42,
+      "minRecommended": 44,
+      "classes": "w-full flex items-center justify-center gap-3 border border-mist rounded-md py-2.5 px-4 text-sm font-medium text-ink bg-white hover:bg-mist/30 transition-colors duration-150 disabled:opacity-60 disabl"
+    },
+    {
+      "type": "SMALL_TOUCH_TARGET",
+      "severity": "LOW",
+      "element": "a.text-xs.font-semibold.text-pine-soft",
+      "width": 145,
+      "height": 16,
+      "minRecommended": 44,
+      "classes": "text-xs font-semibold text-pine-soft hover:underline"
+    },
+    {
+      "type": "SMALL_TOUCH_TARGET",
+      "severity": "LOW",
+      "element": "button.absolute.right-3.top-1/2",
+      "width": 20,
+      "height": 20,
+      "minRecommended": 44,
+      "classes": "absolute right-3 top-1/2 -translate-y-1/2 text-ink-soft hover:text-ink transition-colors duration-150"
+    },
+    {
+      "type": "SMALL_TOUCH_TARGET",
+      "severity": "LOW",
+      "element": "a.text-pine-soft.font-medium.hover:underline",
+      "width": 84,
+      "height": 17,
+      "minRecommended": 44,
+      "classes": "text-pine-soft font-medium hover:underline"
+    }
+  ],
+  "iPhone 375x667 → /register": [
+    {
+      "type": "SMALL_TOUCH_TARGET",
+      "severity": "LOW",
+      "element": "button.w-full.flex.items-center",
+      "width": 327,
+      "height": 42,
+      "minRecommended": 44,
+      "classes": "w-full flex items-center justify-center gap-3 border border-mist rounded-md py-2.5 px-4 text-sm font-medium text-ink bg-white hover:bg-mist/30 transition-colors duration-150 disabled:opacity-60 disabl"
+    },
+    {
+      "type": "SMALL_TOUCH_TARGET",
+      "severity": "LOW",
+      "element": "button.absolute.right-3.top-1/2",
+      "width": 20,
+      "height": 20,
+      "minRecommended": 44,
+      "classes": "absolute right-3 top-1/2 -translate-y-1/2 text-ink-soft hover:text-ink transition-colors duration-150"
+    },
+    {
+      "type": "SMALL_TOUCH_TARGET",
+      "severity": "LOW",
+      "element": "a.text-pine-soft.font-medium.hover:underline",
+      "width": 86,
+      "height": 17,
+      "minRecommended": 44,
+      "classes": "text-pine-soft font-medium hover:underline"
+    }
+  ],
+  "iPhone 375x667 → /forgot-password": [
+    {
+      "type": "SMALL_TOUCH_TARGET",
+      "severity": "LOW",
+      "element": "a.text-pine-soft.font-medium.hover:underline",
+      "width": 86,
+      "height": 17,
+      "minRecommended": 44,
+      "classes": "text-pine-soft font-medium hover:underline"
+    }
+  ],
+  "iPhone 375x667 → /dashboard": [
+    {
+      "type": "SMALL_TOUCH_TARGET",
+      "severity": "LOW",
+      "element": "button.w-full.flex.items-center",
+      "width": 327,
+      "height": 42,
+      "minRecommended": 44,
+      "classes": "w-full flex items-center justify-center gap-3 border border-mist rounded-md py-2.5 px-4 text-sm font-medium text-ink bg-white hover:bg-mist/30 transition-colors duration-150 disabled:opacity-60 disabl"
+    },
+    {
+      "type": "SMALL_TOUCH_TARGET",
+      "severity": "LOW",
+      "element": "a.text-xs.font-semibold.text-pine-soft",
+      "width": 145,
+      "height": 16,
+      "minRecommended": 44,
+      "classes": "text-xs font-semibold text-pine-soft hover:underline"
+    },
+    {
+      "type": "SMALL_TOUCH_TARGET",
+      "severity": "LOW",
+      "element": "button.absolute.right-3.top-1/2",
+      "width": 20,
+      "height": 20,
+      "minRecommended": 44,
+      "classes": "absolute right-3 top-1/2 -translate-y-1/2 text-ink-soft hover:text-ink transition-colors duration-150"
+    },
+    {
+      "type": "SMALL_TOUCH_TARGET",
+      "severity": "LOW",
+      "element": "a.text-pine-soft.font-medium.hover:underline",
+      "width": 84,
+      "height": 17,
+      "minRecommended": 44,
+      "classes": "text-pine-soft font-medium hover:underline"
+    }
+  ],
+  "iPhone 375x667 → /pacientes": [
+    {
+      "type": "SMALL_TOUCH_TARGET",
+      "severity": "LOW",
+      "element": "button.w-full.flex.items-center",
+      "width": 327,
+      "height": 42,
+      "minRecommended": 44,
+      "classes": "w-full flex items-center justify-center gap-3 border border-mist rounded-md py-2.5 px-4 text-sm font-medium text-ink bg-white hover:bg-mist/30 transition-colors duration-150 disabled:opacity-60 disabl"
+    },
+    {
+      "type": "SMALL_TOUCH_TARGET",
+      "severity": "LOW",
+      "element": "a.text-xs.font-semibold.text-pine-soft",
+      "width": 145,
+      "height": 16,
+      "minRecommended": 44,
+      "classes": "text-xs font-semibold text-pine-soft hover:underline"
+    },
+    {
+      "type": "SMALL_TOUCH_TARGET",
+      "severity": "LOW",
+      "element": "button.absolute.right-3.top-1/2",
+      "width": 20,
+      "height": 20,
+      "minRecommended": 44,
+      "classes": "absolute right-3 top-1/2 -translate-y-1/2 text-ink-soft hover:text-ink transition-colors duration-150"
+    },
+    {
+      "type": "SMALL_TOUCH_TARGET",
+      "severity": "LOW",
+      "element": "a.text-pine-soft.font-medium.hover:underline",
+      "width": 84,
+      "height": 17,
+      "minRecommended": 44,
+      "classes": "text-pine-soft font-medium hover:underline"
+    }
+  ],
+  "iPhone 375x667 → /macronutrientes": [
+    {
+      "type": "SMALL_TOUCH_TARGET",
+      "severity": "LOW",
+      "element": "button.w-full.flex.items-center",
+      "width": 327,
+      "height": 42,
+      "minRecommended": 44,
+      "classes": "w-full flex items-center justify-center gap-3 border border-mist rounded-md py-2.5 px-4 text-sm font-medium text-ink bg-white hover:bg-mist/30 transition-colors duration-150 disabled:opacity-60 disabl"
+    },
+    {
+      "type": "SMALL_TOUCH_TARGET",
+      "severity": "LOW",
+      "element": "a.text-xs.font-semibold.text-pine-soft",
+      "width": 145,
+      "height": 16,
+      "minRecommended": 44,
+      "classes": "text-xs font-semibold text-pine-soft hover:underline"
+    },
+    {
+      "type": "SMALL_TOUCH_TARGET",
+      "severity": "LOW",
+      "element": "button.absolute.right-3.top-1/2",
+      "width": 20,
+      "height": 20,
+      "minRecommended": 44,
+      "classes": "absolute right-3 top-1/2 -translate-y-1/2 text-ink-soft hover:text-ink transition-colors duration-150"
+    },
+    {
+      "type": "SMALL_TOUCH_TARGET",
+      "severity": "LOW",
+      "element": "a.text-pine-soft.font-medium.hover:underline",
+      "width": 84,
+      "height": 17,
+      "minRecommended": 44,
+      "classes": "text-pine-soft font-medium hover:underline"
+    }
+  ],
+  "iPhone 375x667 → /porciones": [
+    {
+      "type": "SMALL_TOUCH_TARGET",
+      "severity": "LOW",
+      "element": "button.w-full.flex.items-center",
+      "width": 327,
+      "height": 42,
+      "minRecommended": 44,
+      "classes": "w-full flex items-center justify-center gap-3 border border-mist rounded-md py-2.5 px-4 text-sm font-medium text-ink bg-white hover:bg-mist/30 transition-colors duration-150 disabled:opacity-60 disabl"
+    },
+    {
+      "type": "SMALL_TOUCH_TARGET",
+      "severity": "LOW",
+      "element": "a.text-xs.font-semibold.text-pine-soft",
+      "width": 145,
+      "height": 16,
+      "minRecommended": 44,
+      "classes": "text-xs font-semibold text-pine-soft hover:underline"
+    },
+    {
+      "type": "SMALL_TOUCH_TARGET",
+      "severity": "LOW",
+      "element": "button.absolute.right-3.top-1/2",
+      "width": 20,
+      "height": 20,
+      "minRecommended": 44,
+      "classes": "absolute right-3 top-1/2 -translate-y-1/2 text-ink-soft hover:text-ink transition-colors duration-150"
+    },
+    {
+      "type": "SMALL_TOUCH_TARGET",
+      "severity": "LOW",
+      "element": "a.text-pine-soft.font-medium.hover:underline",
+      "width": 84,
+      "height": 17,
+      "minRecommended": 44,
+      "classes": "text-pine-soft font-medium hover:underline"
+    }
+  ],
+  "iPhone 375x667 → /pautas": [
+    {
+      "type": "SMALL_TOUCH_TARGET",
+      "severity": "LOW",
+      "element": "button.w-full.flex.items-center",
+      "width": 327,
+      "height": 42,
+      "minRecommended": 44,
+      "classes": "w-full flex items-center justify-center gap-3 border border-mist rounded-md py-2.5 px-4 text-sm font-medium text-ink bg-white hover:bg-mist/30 transition-colors duration-150 disabled:opacity-60 disabl"
+    },
+    {
+      "type": "SMALL_TOUCH_TARGET",
+      "severity": "LOW",
+      "element": "a.text-xs.font-semibold.text-pine-soft",
+      "width": 145,
+      "height": 16,
+      "minRecommended": 44,
+      "classes": "text-xs font-semibold text-pine-soft hover:underline"
+    },
+    {
+      "type": "SMALL_TOUCH_TARGET",
+      "severity": "LOW",
+      "element": "button.absolute.right-3.top-1/2",
+      "width": 20,
+      "height": 20,
+      "minRecommended": 44,
+      "classes": "absolute right-3 top-1/2 -translate-y-1/2 text-ink-soft hover:text-ink transition-colors duration-150"
+    },
+    {
+      "type": "SMALL_TOUCH_TARGET",
+      "severity": "LOW",
+      "element": "a.text-pine-soft.font-medium.hover:underline",
+      "width": 84,
+      "height": 17,
+      "minRecommended": 44,
+      "classes": "text-pine-soft font-medium hover:underline"
+    }
+  ],
+  "iPhone 375x667 → /generador": [
+    {
+      "type": "SMALL_TOUCH_TARGET",
+      "severity": "LOW",
+      "element": "button.w-full.flex.items-center",
+      "width": 327,
+      "height": 42,
+      "minRecommended": 44,
+      "classes": "w-full flex items-center justify-center gap-3 border border-mist rounded-md py-2.5 px-4 text-sm font-medium text-ink bg-white hover:bg-mist/30 transition-colors duration-150 disabled:opacity-60 disabl"
+    },
+    {
+      "type": "SMALL_TOUCH_TARGET",
+      "severity": "LOW",
+      "element": "a.text-xs.font-semibold.text-pine-soft",
+      "width": 145,
+      "height": 16,
+      "minRecommended": 44,
+      "classes": "text-xs font-semibold text-pine-soft hover:underline"
+    },
+    {
+      "type": "SMALL_TOUCH_TARGET",
+      "severity": "LOW",
+      "element": "button.absolute.right-3.top-1/2",
+      "width": 20,
+      "height": 20,
+      "minRecommended": 44,
+      "classes": "absolute right-3 top-1/2 -translate-y-1/2 text-ink-soft hover:text-ink transition-colors duration-150"
+    },
+    {
+      "type": "SMALL_TOUCH_TARGET",
+      "severity": "LOW",
+      "element": "a.text-pine-soft.font-medium.hover:underline",
+      "width": 84,
+      "height": 17,
+      "minRecommended": 44,
+      "classes": "text-pine-soft font-medium hover:underline"
+    }
+  ],
+  "iPhone 375x667 → /biblioteca": [
+    {
+      "type": "SMALL_TOUCH_TARGET",
+      "severity": "LOW",
+      "element": "button.w-full.flex.items-center",
+      "width": 327,
+      "height": 42,
+      "minRecommended": 44,
+      "classes": "w-full flex items-center justify-center gap-3 border border-mist rounded-md py-2.5 px-4 text-sm font-medium text-ink bg-white hover:bg-mist/30 transition-colors duration-150 disabled:opacity-60 disabl"
+    },
+    {
+      "type": "SMALL_TOUCH_TARGET",
+      "severity": "LOW",
+      "element": "a.text-xs.font-semibold.text-pine-soft",
+      "width": 145,
+      "height": 16,
+      "minRecommended": 44,
+      "classes": "text-xs font-semibold text-pine-soft hover:underline"
+    },
+    {
+      "type": "SMALL_TOUCH_TARGET",
+      "severity": "LOW",
+      "element": "button.absolute.right-3.top-1/2",
+      "width": 20,
+      "height": 20,
+      "minRecommended": 44,
+      "classes": "absolute right-3 top-1/2 -translate-y-1/2 text-ink-soft hover:text-ink transition-colors duration-150"
+    },
+    {
+      "type": "SMALL_TOUCH_TARGET",
+      "severity": "LOW",
+      "element": "a.text-pine-soft.font-medium.hover:underline",
+      "width": 84,
+      "height": 17,
+      "minRecommended": 44,
+      "classes": "text-pine-soft font-medium hover:underline"
+    }
+  ],
+  "iPhone 375x667 → /alimentos": [
+    {
+      "type": "SMALL_TOUCH_TARGET",
+      "severity": "LOW",
+      "element": "button.w-full.flex.items-center",
+      "width": 327,
+      "height": 42,
+      "minRecommended": 44,
+      "classes": "w-full flex items-center justify-center gap-3 border border-mist rounded-md py-2.5 px-4 text-sm font-medium text-ink bg-white hover:bg-mist/30 transition-colors duration-150 disabled:opacity-60 disabl"
+    },
+    {
+      "type": "SMALL_TOUCH_TARGET",
+      "severity": "LOW",
+      "element": "a.text-xs.font-semibold.text-pine-soft",
+      "width": 145,
+      "height": 16,
+      "minRecommended": 44,
+      "classes": "text-xs font-semibold text-pine-soft hover:underline"
+    },
+    {
+      "type": "SMALL_TOUCH_TARGET",
+      "severity": "LOW",
+      "element": "button.absolute.right-3.top-1/2",
+      "width": 20,
+      "height": 20,
+      "minRecommended": 44,
+      "classes": "absolute right-3 top-1/2 -translate-y-1/2 text-ink-soft hover:text-ink transition-colors duration-150"
+    },
+    {
+      "type": "SMALL_TOUCH_TARGET",
+      "severity": "LOW",
+      "element": "a.text-pine-soft.font-medium.hover:underline",
+      "width": 84,
+      "height": 17,
+      "minRecommended": 44,
+      "classes": "text-pine-soft font-medium hover:underline"
+    }
+  ],
+  "iPhone 375x667 → /perfil": [
+    {
+      "type": "SMALL_TOUCH_TARGET",
+      "severity": "LOW",
+      "element": "button.w-full.flex.items-center",
+      "width": 327,
+      "height": 42,
+      "minRecommended": 44,
+      "classes": "w-full flex items-center justify-center gap-3 border border-mist rounded-md py-2.5 px-4 text-sm font-medium text-ink bg-white hover:bg-mist/30 transition-colors duration-150 disabled:opacity-60 disabl"
+    },
+    {
+      "type": "SMALL_TOUCH_TARGET",
+      "severity": "LOW",
+      "element": "a.text-xs.font-semibold.text-pine-soft",
+      "width": 145,
+      "height": 16,
+      "minRecommended": 44,
+      "classes": "text-xs font-semibold text-pine-soft hover:underline"
+    },
+    {
+      "type": "SMALL_TOUCH_TARGET",
+      "severity": "LOW",
+      "element": "button.absolute.right-3.top-1/2",
+      "width": 20,
+      "height": 20,
+      "minRecommended": 44,
+      "classes": "absolute right-3 top-1/2 -translate-y-1/2 text-ink-soft hover:text-ink transition-colors duration-150"
+    },
+    {
+      "type": "SMALL_TOUCH_TARGET",
+      "severity": "LOW",
+      "element": "a.text-pine-soft.font-medium.hover:underline",
+      "width": 84,
+      "height": 17,
+      "minRecommended": 44,
+      "classes": "text-pine-soft font-medium hover:underline"
+    }
+  ]
+}

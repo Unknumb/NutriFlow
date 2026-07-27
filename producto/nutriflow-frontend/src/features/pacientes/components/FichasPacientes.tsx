@@ -285,6 +285,8 @@ export const FichasPacientes: React.FC = () => {
                         ) : (
                           <button
                             onClick={handleSetActive}
+                            aria-label="Establecer como Paciente Activo"
+                            title="Establecer como Paciente Activo"
                             className="inline-flex items-center justify-center rounded-md border border-mist px-3 py-1.5 text-sm font-medium bg-white text-ink-soft hover:bg-pine-soft/5 hover:text-pine-soft transition-colors shadow-sm gap-2 flex-1 sm:flex-none"
                           >
                             <Star className="w-4 h-4" />

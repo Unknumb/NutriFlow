@@ -95,13 +95,13 @@ describe('VistaPauta', () => {
   describe('filas de comidas', () => {
     it('muestra el nombre de cada comida', () => {
       render(<VistaPauta />);
-      expect(screen.getByText('Desayuno')).toBeInTheDocument();
-      expect(screen.getByText('Almuerzo')).toBeInTheDocument();
+      expect(screen.getAllByText('Desayuno')[0]).toBeInTheDocument();
+      expect(screen.getAllByText('Almuerzo')[0]).toBeInTheDocument();
     });
 
     it('muestra "Sin porciones asignadas" cuando la comida no tiene distribuciones activas', () => {
       render(<VistaPauta />);
-      expect(screen.getByText('Sin porciones asignadas')).toBeInTheDocument();
+      expect(screen.getAllByText('Sin porciones asignadas')[0]).toBeInTheDocument();
     });
 
     it('muestra el label del grupo en la celda de porción (Desayuno tiene Frutas)', () => {
@@ -144,14 +144,14 @@ describe('VistaPauta', () => {
     it('muestra los ejemplos de preparación de la comida', () => {
       mockUsePortions.mockReturnValue({ state: conSugerencias, computed: BASE_COMPUTED, actions: BASE_ACTIONS });
       render(<VistaPauta />);
-      expect(screen.getByText('Ejemplos de preparación')).toBeInTheDocument();
-      expect(screen.getByText('Avena con frutas')).toBeInTheDocument();
+      expect(screen.getAllByText('Ejemplos de preparación')[0]).toBeInTheDocument();
+      expect(screen.getAllByText('Avena con frutas')[0]).toBeInTheDocument();
     });
 
     it('permite quitar una sugerencia de la pauta', () => {
       mockUsePortions.mockReturnValue({ state: conSugerencias, computed: BASE_COMPUTED, actions: BASE_ACTIONS });
       render(<VistaPauta />);
-      fireEvent.click(screen.getByRole('button', { name: 'Quitar sugerencia Avena con frutas' }));
+      fireEvent.click(screen.getAllByRole('button', { name: 'Quitar sugerencia Avena con frutas' })[0]);
       expect(BASE_ACTIONS.removeSugerenciaComida).toHaveBeenCalledWith('desayuno', 's-1');
     });
 

@@ -66,7 +66,7 @@ describe('CardContent', () => {
 
   it('aplica padding horizontal y vertical', () => {
     const { container } = render(<CardContent>x</CardContent>);
-    expect(container.firstChild).toHaveClass('px-6', 'pb-6');
+    expect(container.firstChild).toHaveClass('px-4', 'sm:px-6', 'pb-5', 'sm:pb-6');
   });
 
   it('puede renderizar múltiples hijos', () => {
